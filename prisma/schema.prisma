@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String   @id @default(cuid())
+  name              String?
+  email             String?  @unique
+  image             String?
+  leetcodeUsername  String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  problems          RevisionProblem[]
+}
+
+model RevisionProblem {
+  id               String   @id @default(cuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  leetcodeSlug     String   // e.g. "two-sum"
+  title            String
+  difficulty       String   // “Easy” | “Medium” | “Hard”
+  url              String
+  firstSolvedAt    DateTime
+  lastSolvedAt     DateTime
+  nextReviewAt     DateTime
+  reviewCount      Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([userId, leetcodeSlug])
+}
