@@ -12,6 +12,30 @@ export function useProblems(filter: 'solved-today' | 'due' | 'upcoming' | 'all' 
     })
 }
 
+export function useStats() {
+    return useQuery<{
+        total: number
+        easy: number
+        medium: number
+        hard: number
+        reviewedToday: number
+        streak: number
+        xp: number
+        level: number
+        xpForNextLevel: number
+        xpProgress: number
+        heatmapData: Record<string, number>
+        achievements: Array<{ id: string; name: string; emoji: string; description: string }>
+    }>({
+        queryKey: ["stats"],
+        queryFn: async () => {
+            const res = await fetch("/api/stats")
+            if (!res.ok) throw new Error("Failed to fetch stats")
+            return res.json()
+        },
+    })
+}
+
 export function useUser() {
     return useQuery<User>({
         queryKey: ["me"],
@@ -33,6 +57,7 @@ export function useSync() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["problems"] })
+            queryClient.invalidateQueries({ queryKey: ["stats"] })
         },
     })
 }
@@ -47,6 +72,7 @@ export function useReviewProblem() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["problems"] })
+            queryClient.invalidateQueries({ queryKey: ["stats"] })
         },
     })
 }
@@ -60,7 +86,10 @@ export function useUpdateLeetCodeUsername() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ leetcodeUsername: username }),
             })
-            if (!res.ok) throw new Error("Update failed")
+            if (!res.ok) {
+                const errorText = await res.text()
+                throw new Error(errorText || "Update failed")
+            }
             return res.json()
         },
         onSuccess: () => {

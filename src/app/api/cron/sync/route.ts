@@ -34,22 +34,23 @@ export async function GET(req: Request) {
                     where: {
                         userId_leetcodeSlug: {
                             userId: user.id,
-                            leetcodeSlug: problem.slug,
+                            leetcodeSlug: problem.titleSlug,
                         },
                     },
                 })
 
                 if (!existing) {
+                    const solvedAt = new Date(parseInt(problem.timestamp) * 1000)
                     await prisma.revisionProblem.create({
                         data: {
                             userId: user.id,
-                            leetcodeSlug: problem.slug,
+                            leetcodeSlug: problem.titleSlug,
                             title: problem.title,
                             difficulty: problem.difficulty,
-                            url: problem.url,
-                            firstSolvedAt: problem.timestamp,
-                            lastSolvedAt: problem.timestamp,
-                            nextReviewAt: getNextReviewDate(0, problem.timestamp),
+                            url: `https://leetcode.com/problems/${problem.titleSlug}/`,
+                            firstSolvedAt: solvedAt,
+                            lastSolvedAt: solvedAt,
+                            nextReviewAt: getNextReviewDate(0, solvedAt),
                             reviewCount: 0,
                         },
                     })
