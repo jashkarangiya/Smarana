@@ -4,48 +4,51 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 9%;
-    --primary: 32 95% 44%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 96%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
-    --accent: 0 0% 96%;
-    --accent-foreground: 0 0% 9%;
+    --background: 40 6% 97%;
+    --foreground: 40 6% 10%;
+    --card: 40 6% 100%;
+    --card-foreground: 40 6% 10%;
+    --popover: 40 6% 100%;
+    --popover-foreground: 40 6% 10%;
+    --primary: 32 60% 47%;
+    --primary-foreground: 40 6% 97%;
+    --secondary: 40 6% 93%;
+    --secondary-foreground: 40 6% 10%;
+    --muted: 40 6% 93%;
+    --muted-foreground: 40 6% 40%;
+    --accent: 32 60% 47%;
+    --accent-foreground: 40 6% 97%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
-    --ring: 32 95% 44%;
-    --radius: 0.5rem;
+    --border: 40 6% 85%;
+    --input: 40 6% 85%;
+    --ring: 32 60% 47%;
+    --radius: 0.75rem;
+    --gold: 32 60% 47%;
   }
 
   .dark {
-    --background: 0 0% 10%;
-    --foreground: 0 0% 95%;
-    --card: 0 0% 13%;
-    --card-foreground: 0 0% 95%;
-    --popover: 0 0% 13%;
-    --popover-foreground: 0 0% 95%;
-    --primary: 32 95% 44%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 17%;
-    --secondary-foreground: 0 0% 95%;
-    --muted: 0 0% 17%;
-    --muted-foreground: 0 0% 60%;
-    --accent: 0 0% 17%;
-    --accent-foreground: 0 0% 95%;
+    /* Tatva-inspired deep dark theme */
+    --background: 240 6% 4%;
+    --foreground: 40 12% 90%;
+    --card: 240 4% 8%;
+    --card-foreground: 40 12% 90%;
+    --popover: 240 4% 10%;
+    --popover-foreground: 40 12% 90%;
+    --primary: 32 60% 47%;
+    --primary-foreground: 40 6% 97%;
+    --secondary: 240 4% 12%;
+    --secondary-foreground: 40 12% 85%;
+    --muted: 240 4% 14%;
+    --muted-foreground: 40 6% 55%;
+    --accent: 32 60% 47%;
+    --accent-foreground: 40 6% 97%;
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
-    --ring: 32 95% 44%;
+    --border: 240 4% 16%;
+    --input: 240 4% 16%;
+    --ring: 32 60% 47%;
+    --gold: 32 60% 47%;
   }
 }
 
@@ -59,13 +62,42 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Elegant heading styles */
+  h1,
+  h2,
+  h3 {
+    font-weight: 600;
+    letter-spacing: -0.02em;
   }
 }
 
 @layer utilities {
   .font-mono {
     font-family: var(--font-mono), ui-monospace, monospace;
+  }
+
+  /* Gold accent utility */
+  .text-gold {
+    color: hsl(32 60% 47%);
+  }
+
+  .bg-gold {
+    background-color: hsl(32 60% 47%);
+  }
+
+  /* Glassmorphism utilities */
+  .glass {
+    background: hsl(var(--card) / 0.6);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  .glass-border {
+    border: 1px solid hsl(var(--border) / 0.3);
   }
 }
 
@@ -156,6 +188,28 @@
   }
 }
 
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%) skewX(-15deg);
+  }
+
+  100% {
+    transform: translateX(200%) skewX(-15deg);
+  }
+}
+
+@keyframes gentle-pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
+}
+
 .animate-float {
   animation: float 6s ease-in-out infinite;
 }
@@ -182,20 +236,39 @@
   animation: count-up 0.5s ease-out forwards;
 }
 
+.animate-shimmer {
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+.animate-gentle-pulse {
+  animation: gentle-pulse 2s ease-in-out infinite;
+}
+
 html {
   scroll-behavior: smooth;
 }
 
-@keyframes shimmer {
-  0% {
-    transform: translateX(-100%) skewX(-15deg);
-  }
-
-  100% {
-    transform: translateX(200%) skewX(-15deg);
-  }
+/* Selection styling */
+::selection {
+  background: hsl(32 60% 47% / 0.3);
+  color: hsl(40 12% 95%);
 }
 
-.animate-shimmer {
-  animation: shimmer 3s ease-in-out infinite;
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
 }

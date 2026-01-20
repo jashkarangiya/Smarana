@@ -16,7 +16,7 @@ function SignInContent() {
     const callbackUrl = searchParams.get("callbackUrl") || "/dashboard"
     const error = searchParams.get("error")
 
-    const [email, setEmail] = useState("")
+    const [identifier, setIdentifier] = useState("")
     const [password, setPassword] = useState("")
     const [loading, setLoading] = useState(false)
 
@@ -24,7 +24,7 @@ function SignInContent() {
         if (error) {
             toast.error(
                 error === "CredentialsSignin"
-                    ? "Invalid email or password"
+                    ? "Invalid username/email or password"
                     : "Something went wrong"
             )
         }
@@ -36,7 +36,7 @@ function SignInContent() {
 
         try {
             await signIn("credentials", {
-                email,
+                identifier,
                 password,
                 callbackUrl,
             })
@@ -104,14 +104,14 @@ function SignInContent() {
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="email">Email</Label>
+                                <Label htmlFor="identifier">Email or Username</Label>
                                 <Input
-                                    id="email"
-                                    type="email"
-                                    placeholder="you@example.com"
+                                    id="identifier"
+                                    type="text"
+                                    placeholder="you@example.com or username"
                                     required
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
+                                    value={identifier}
+                                    onChange={(e) => setIdentifier(e.target.value)}
                                 />
                             </div>
                             <div className="space-y-2">

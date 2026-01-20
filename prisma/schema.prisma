@@ -41,6 +41,8 @@ model User {
   emailVerified     DateTime?
   password          String?
   image             String?
+  username          String?   @unique
+  usernameChangedAt DateTime?
   leetcodeUsername  String?   @unique
   xp                Int       @default(0)
   createdAt         DateTime  @default(now())

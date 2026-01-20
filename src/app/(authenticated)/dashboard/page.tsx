@@ -7,6 +7,8 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Progress } from "@/components/ui/progress"
 import { Heatmap } from "@/components/heatmap"
 import { DailyChallenge } from "@/components/daily-challenge"
+import { PomodoroTimer } from "@/components/pomodoro-timer"
+import { FriendsList } from "@/components/friends-list"
 import { formatDistanceToNow } from "date-fns"
 import { Brain, CheckCircle2, Calendar, RefreshCw, ArrowUpRight, Flame, TrendingUp, Trophy, Star, Zap, Lightbulb } from "lucide-react"
 import Link from "next/link"
@@ -53,7 +55,7 @@ export default function DashboardPage() {
     const totalDue = dueProblems?.length || 0
 
     return (
-        <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <div className="container mx-auto px-4 pt-24 pb-8 max-w-6xl">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                 <div>
@@ -324,6 +326,12 @@ export default function DashboardPage() {
 
                     {/* Motivational Tips */}
                     <MotivationalTip />
+
+                    {/* Pomodoro Timer */}
+                    <PomodoroTimer />
+
+                    {/* Friends */}
+                    <FriendsList />
                 </div>
             </div>
         </div>
