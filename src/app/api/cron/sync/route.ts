@@ -1,10 +1,12 @@
 import { prisma } from "@/lib/prisma"
-import { fetchRecentSolvedProblems } from "@/lib/leetcode"
 import { getNextReviewDate } from "@/lib/repetition"
 import { NextResponse } from "next/server"
+import { fetchLeetCodeSolvedProblems } from "@/lib/platforms/leetcode"
+import { fetchCodeforcesSolvedProblems } from "@/lib/platforms/codeforces"
+import { fetchAtCoderSolvedProblems } from "@/lib/platforms/atcoder"
+import { PlatformProblem } from "@/lib/platforms"
 
 export async function GET(req: Request) {
-    const { searchParams } = new URL(req.url)
     const authHeader = req.headers.get("authorization")
 
     // Simple secret check (e.g. Bearer my-secret)
@@ -13,49 +15,36 @@ export async function GET(req: Request) {
     }
 
     try {
-        // Find all users with a leetcode username
+        // Find all users with any platform username
         const users = await prisma.user.findMany({
             where: {
-                leetcodeUsername: {
-                    not: null,
-                },
+                OR: [
+                    { leetcodeUsername: { not: null } },
+                    { codeforcesUsername: { not: null } },
+                    { atcoderUsername: { not: null } },
+                ],
             },
         })
 
         let totalAdded = 0
 
         for (const user of users) {
-            if (!user.leetcodeUsername) continue
+            // Sync LeetCode
+            if (user.leetcodeUsername) {
+                const problems = await fetchLeetCodeSolvedProblems(user.leetcodeUsername)
+                totalAdded += await syncProblems(user.id, "leetcode", problems)
+            }
 
-            const recentProblems = await fetchRecentSolvedProblems(user.leetcodeUsername)
+            // Sync Codeforces
+            if (user.codeforcesUsername) {
+                const problems = await fetchCodeforcesSolvedProblems(user.codeforcesUsername)
+                totalAdded += await syncProblems(user.id, "codeforces", problems)
+            }
 
-            for (const problem of recentProblems) {
-                const existing = await prisma.revisionProblem.findUnique({
-                    where: {
-                        userId_leetcodeSlug: {
-                            userId: user.id,
-                            leetcodeSlug: problem.titleSlug,
-                        },
-                    },
-                })
-
-                if (!existing) {
-                    const solvedAt = new Date(parseInt(problem.timestamp) * 1000)
-                    await prisma.revisionProblem.create({
-                        data: {
-                            userId: user.id,
-                            leetcodeSlug: problem.titleSlug,
-                            title: problem.title,
-                            difficulty: problem.difficulty,
-                            url: `https://leetcode.com/problems/${problem.titleSlug}/`,
-                            firstSolvedAt: solvedAt,
-                            lastSolvedAt: solvedAt,
-                            nextReviewAt: getNextReviewDate(0, solvedAt),
-                            reviewCount: 0,
-                        },
-                    })
-                    totalAdded++
-                }
+            // Sync AtCoder
+            if (user.atcoderUsername) {
+                const problems = await fetchAtCoderSolvedProblems(user.atcoderUsername)
+                totalAdded += await syncProblems(user.id, "atcoder", problems)
             }
         }
 
@@ -68,4 +57,40 @@ export async function GET(req: Request) {
         console.error("Cron sync failed:", error)
         return new NextResponse("Internal Server Error", { status: 500 })
     }
+}
+
+async function syncProblems(userId: string, platform: string, problems: PlatformProblem[]): Promise<number> {
+    let addedCount = 0
+
+    for (const problem of problems) {
+        const existing = await prisma.revisionProblem.findUnique({
+            where: {
+                userId_platform_problemSlug: {
+                    userId,
+                    platform,
+                    problemSlug: problem.problemSlug,
+                },
+            },
+        })
+
+        if (!existing) {
+            await prisma.revisionProblem.create({
+                data: {
+                    userId,
+                    platform,
+                    problemSlug: problem.problemSlug,
+                    title: problem.title,
+                    difficulty: problem.difficulty,
+                    url: problem.url,
+                    firstSolvedAt: problem.solvedAt,
+                    lastSolvedAt: problem.solvedAt,
+                    nextReviewAt: getNextReviewDate(0, problem.solvedAt),
+                    reviewCount: 0,
+                },
+            })
+            addedCount++
+        }
+    }
+
+    return addedCount
 }

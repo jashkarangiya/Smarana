@@ -1,6 +1,6 @@
 "use client"
 
-import { useProblems, useReviewProblem, useSync, useUser, useStats } from "@/hooks/use-problems"
+import { useProblems, useReviewProblem, useUndoReview, useSync, useUser, useStats } from "@/hooks/use-problems"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -9,11 +9,12 @@ import { Heatmap } from "@/components/heatmap"
 import { DailyChallenge } from "@/components/daily-challenge"
 import { PomodoroTimer } from "@/components/pomodoro-timer"
 import { FriendsList } from "@/components/friends-list"
+import { ProblemNotesModal } from "@/components/problem-notes-modal"
 import { formatDistanceToNow } from "date-fns"
-import { Brain, CheckCircle2, Calendar, RefreshCw, ArrowUpRight, Flame, TrendingUp, Trophy, Star, Zap, Lightbulb } from "lucide-react"
+import { Brain, CheckCircle2, Calendar, RefreshCw, ArrowUpRight, Flame, TrendingUp, Trophy, Star, Zap, Lightbulb, FileText } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 
 export default function DashboardPage() {
     const { data: user } = useUser()
@@ -22,6 +23,14 @@ export default function DashboardPage() {
     const { data: upcoming, isLoading: upcomingLoading } = useProblems("upcoming")
     const { mutate: sync, isPending: syncing } = useSync()
     const { mutate: review, isPending: reviewing } = useReviewProblem()
+    const { mutate: undoReview } = useUndoReview()
+
+    // Notes modal state
+    const [notesModal, setNotesModal] = useState<{ isOpen: boolean; problemId: string; title: string }>({
+        isOpen: false,
+        problemId: "",
+        title: "",
+    })
 
     const getDifficultyColor = (difficulty: string) => {
         switch (difficulty.toLowerCase()) {
@@ -41,12 +50,27 @@ export default function DashboardPage() {
         }
     }
 
-    const handleReview = (problemId: string, difficulty: string) => {
+    const handleReview = (problemId: string, difficulty: string, title: string) => {
         review(problemId, {
             onSuccess: () => {
                 const xp = getXpForDifficulty(difficulty)
                 toast.success(`+${xp} XP earned!`, {
                     description: `${difficulty} problem reviewed`,
+                    action: {
+                        label: "Undo",
+                        onClick: () => {
+                            undoReview(problemId, {
+                                onSuccess: () => {
+                                    toast.info("Review undone", {
+                                        description: `${title} marked as not reviewed`,
+                                    })
+                                },
+                                onError: () => {
+                                    toast.error("Failed to undo review")
+                                },
+                            })
+                        },
+                    },
                 })
             }
         })
@@ -250,13 +274,24 @@ export default function DashboardPage() {
                                                     <span>Review #{problem.reviewCount + 1}</span>
                                                 </div>
                                             </div>
-                                            <Button
-                                                onClick={() => handleReview(problem.id, problem.difficulty)}
-                                                disabled={reviewing}
-                                                className="sm:ml-4 w-full sm:w-auto"
-                                            >
-                                                Mark Reviewed
-                                            </Button>
+                                            <div className="flex gap-2 sm:ml-4 w-full sm:w-auto">
+                                                <Button
+                                                    variant="outline"
+                                                    size="icon"
+                                                    onClick={() => setNotesModal({ isOpen: true, problemId: problem.id, title: problem.title })}
+                                                    className="shrink-0"
+                                                    title="Notes & Solution"
+                                                >
+                                                    <FileText className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    onClick={() => handleReview(problem.id, problem.difficulty, problem.title)}
+                                                    disabled={reviewing}
+                                                    className="flex-1 sm:flex-initial"
+                                                >
+                                                    Mark Reviewed
+                                                </Button>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
@@ -286,7 +321,7 @@ export default function DashboardPage() {
                                 difficulty: dueProblems[0].difficulty,
                                 url: dueProblems[0].url,
                             }}
-                            onComplete={() => handleReview(dueProblems[0].id, dueProblems[0].difficulty)}
+                            onComplete={() => handleReview(dueProblems[0].id, dueProblems[0].difficulty, dueProblems[0].title)}
                         />
                     )}
 
@@ -334,6 +369,14 @@ export default function DashboardPage() {
                     <FriendsList />
                 </div>
             </div>
+
+            {/* Notes Modal */}
+            <ProblemNotesModal
+                problemId={notesModal.problemId}
+                problemTitle={notesModal.title}
+                isOpen={notesModal.isOpen}
+                onClose={() => setNotesModal({ isOpen: false, problemId: "", title: "" })}
+            />
         </div>
     )
 }

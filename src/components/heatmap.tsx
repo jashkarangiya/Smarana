@@ -29,7 +29,7 @@ export function Heatmap({ data, className = "", year }: HeatmapProps) {
 
     const { monthsBlocks, totalContributions, activeDays, maxStreak, maxCount, yearLabel } = useMemo(() => {
         const now = new Date()
-        const targetYear = year ?? now.getFullYear() + 1
+        const targetYear = year ?? now.getFullYear() // Default to current year
 
         const yearStart = startOfYear(new Date(targetYear, 0, 1))
         const yearEnd = endOfYear(new Date(targetYear, 0, 1))

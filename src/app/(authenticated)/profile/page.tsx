@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useUser, useUpdateLeetCodeUsername, useSync, useStats } from "@/hooks/use-problems"
 import { toast } from "sonner"
 import { RefreshCw, User, Link as LinkIcon, CheckCircle2, AlertCircle, Lock, AtSign, Camera, Clock } from "lucide-react"
+import { PlatformConnector } from "@/components/platform-connector"
 
 export default function ProfilePage() {
     const { data: session, update: updateSession } = useSession()
@@ -340,6 +341,9 @@ export default function ProfilePage() {
                         </Button>
                     </CardContent>
                 </Card>
+
+                {/* Connected Platforms */}
+                <PlatformConnector />
 
                 {/* LeetCode Integration */}
                 <Card>

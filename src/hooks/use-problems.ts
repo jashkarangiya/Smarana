@@ -97,3 +97,19 @@ export function useUpdateLeetCodeUsername() {
         },
     })
 }
+
+export function useUndoReview() {
+    const queryClient = useQueryClient()
+    return useMutation({
+        mutationFn: async (id: string) => {
+            const res = await fetch(`/api/problems/${id}/undo-review`, { method: "POST" })
+            if (!res.ok) throw new Error("Undo failed")
+            return res.json()
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["problems"] })
+            queryClient.invalidateQueries({ queryKey: ["stats"] })
+        },
+    })
+}
+

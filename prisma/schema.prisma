@@ -35,18 +35,21 @@ model Session {
 }
 
 model User {
-  id                String    @id @default(cuid())
-  name              String?
-  email             String?   @unique
-  emailVerified     DateTime?
-  password          String?
-  image             String?
-  username          String?   @unique
-  usernameChangedAt DateTime?
-  leetcodeUsername  String?   @unique
-  xp                Int       @default(0)
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id                 String    @id @default(cuid())
+  name               String?
+  email              String?   @unique
+  emailVerified      DateTime?
+  password           String?
+  image              String?
+  username           String?   @unique
+  usernameChangedAt  DateTime?
+  leetcodeUsername   String?
+  codeforcesUsername String?
+  codechefUsername   String?
+  atcoderUsername    String?
+  xp                 Int       @default(0)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
   accounts    Account[]
   sessions    Session[]
@@ -66,7 +69,8 @@ model RevisionProblem {
   id               String   @id @default(cuid())
   userId           String
   user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  leetcodeSlug     String
+  platform         String   @default("leetcode")
+  problemSlug      String
   title            String
   difficulty       String
   url              String
@@ -74,10 +78,12 @@ model RevisionProblem {
   lastSolvedAt     DateTime
   nextReviewAt     DateTime
   reviewCount      Int      @default(0)
+  notes            String?  @default("")
+  solution         String?  @default("")
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  @@unique([userId, leetcodeSlug])
+  @@unique([userId, platform, problemSlug])
 }
 
 model ReviewLog {
