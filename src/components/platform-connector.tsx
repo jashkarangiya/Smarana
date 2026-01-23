@@ -7,13 +7,14 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Check, Loader2, Link2, Trash2, ChevronRight } from "lucide-react"
 import { toast } from "sonner"
+import Image from "next/image"
 
-// Platform configurations with URL patterns
+// Platform configurations with URL patterns and SVG icons
 const PLATFORM_CONFIG = [
     {
         id: "leetcode",
         name: "LeetCode",
-        icon: "⚡",
+        icon: "/platforms/leetcode.svg",
         color: "#FFA116",
         urlPrefix: "leetcode.com/u/",
         available: true,
@@ -21,7 +22,7 @@ const PLATFORM_CONFIG = [
     {
         id: "codeforces",
         name: "CodeForces",
-        icon: "🔵",
+        icon: "/platforms/codeforces.svg",
         color: "#1F8ACB",
         urlPrefix: "codeforces.com/profile/",
         available: true,
@@ -29,7 +30,7 @@ const PLATFORM_CONFIG = [
     {
         id: "codechef",
         name: "CodeChef",
-        icon: "👨‍🍳",
+        icon: "/platforms/codechef.svg",
         color: "#5B4638",
         urlPrefix: "codechef.com/users/",
         available: true,
@@ -37,7 +38,7 @@ const PLATFORM_CONFIG = [
     {
         id: "atcoder",
         name: "AtCoder",
-        icon: "🔴",
+        icon: "/platforms/atcoder.svg",
         color: "#222222",
         urlPrefix: "atcoder.jp/users/",
         available: true,
@@ -45,7 +46,7 @@ const PLATFORM_CONFIG = [
     {
         id: "hackerrank",
         name: "HackerRank",
-        icon: "🟢",
+        icon: "/platforms/hackerrank.svg",
         color: "#00EA64",
         urlPrefix: "hackerrank.com/profile/",
         available: false,
@@ -53,7 +54,7 @@ const PLATFORM_CONFIG = [
     {
         id: "geeksforgeeks",
         name: "GeeksForGeeks",
-        icon: "🌿",
+        icon: "/platforms/geeksforgeeks.svg",
         color: "#2F8D46",
         urlPrefix: "geeksforgeeks.org/user/",
         available: false,
@@ -61,7 +62,7 @@ const PLATFORM_CONFIG = [
     {
         id: "interviewbit",
         name: "InterviewBit",
-        icon: "💼",
+        icon: "/platforms/interviewbit.svg",
         color: "#5B9BD5",
         urlPrefix: "interviewbit.com/profile/",
         available: false,
@@ -69,7 +70,7 @@ const PLATFORM_CONFIG = [
     {
         id: "codestudio",
         name: "CodeStudio",
-        icon: "🟠",
+        icon: "/platforms/codestudio.svg",
         color: "#FF6B35",
         urlPrefix: "naukri.com/code360/profile/",
         available: false,
@@ -238,10 +239,17 @@ export function PlatformConnector() {
                             {/* Platform Icon & Name */}
                             <div className="flex items-center gap-3 min-w-[140px]">
                                 <div
-                                    className="w-9 h-9 rounded-lg flex items-center justify-center text-base"
+                                    className="w-9 h-9 rounded-lg flex items-center justify-center p-2"
                                     style={{ backgroundColor: config.color + "20" }}
                                 >
-                                    {config.icon}
+                                    <Image
+                                        src={config.icon}
+                                        alt={config.name}
+                                        width={20}
+                                        height={20}
+                                        className="opacity-90"
+                                        style={{ filter: `drop-shadow(0 0 0 ${config.color})` }}
+                                    />
                                 </div>
                                 <div className="flex items-center gap-1">
                                     <span className="font-medium text-sm">{config.name}</span>
