@@ -1,5 +1,6 @@
 "use client"
 
+import { use } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { notFound } from "next/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -37,6 +38,7 @@ interface UserProfile {
         leetcodeUsername: string | null
         showLeetCodePublicly: boolean
     }
+    activityHeatmap: Record<string, number>
 }
 
 async function getProfile(username: string): Promise<UserProfile> {
@@ -46,10 +48,11 @@ async function getProfile(username: string): Promise<UserProfile> {
     return res.json()
 }
 
-export default function PublicProfilePage({ params }: { params: { username: string } }) {
+export default function PublicProfilePage({ params }: { params: Promise<{ username: string }> }) {
+    const { username } = use(params)
     const { data: profile, isLoading, error } = useQuery({
-        queryKey: ["profile", params.username],
-        queryFn: () => getProfile(params.username),
+        queryKey: ["profile", username],
+        queryFn: () => getProfile(username),
         retry: false
     })
 
@@ -58,7 +61,7 @@ export default function PublicProfilePage({ params }: { params: { username: stri
         return (
             <div className="container py-20 text-center">
                 <h1 className="text-2xl font-bold">User not found</h1>
-                <p className="text-muted-foreground">The user @{params.username} does not exist.</p>
+                <p className="text-muted-foreground">The user @{username} does not exist.</p>
             </div>
         )
     }
@@ -92,7 +95,7 @@ export default function PublicProfilePage({ params }: { params: { username: stri
     const { user } = profile
 
     return (
-        <div className="container max-w-5xl py-8 space-y-8">
+        <div className="container max-w-7xl py-8 pt-24 space-y-8">
             {/* Hero Card */}
             <div className="card-glow rounded-3xl p-8 md:p-10 text-white relative overflow-hidden">
                 <div className="relative z-10 flex flex-col md:flex-row gap-8 items-center md:items-start text-center md:text-left">
@@ -181,28 +184,17 @@ export default function PublicProfilePage({ params }: { params: { username: stri
                                 {user.stats.reviewsThisWeek} reviews this week
                             </p>
                             {/* Placeholder for now as Heatmap component needs refactor to accept userId */}
-                            <div className="h-32 bg-muted/20 rounded-lg flex items-center justify-center text-muted-foreground text-sm">
-                                Activity Heatmap Coming Soon
-                            </div>
+                            <Heatmap
+                                data={profile.activityHeatmap}
+                                className="w-full overflow-hidden"
+                                year={new Date().getFullYear()}
+                            />
                         </CardContent>
                     </Card>
 
                     {/* Maybe recent achievements here later */}
                     {/* Recent Activity (Private for now or could be extended) */}
                 </div>
-
-                {/* LeetCode History */}
-                {user.showLeetCodePublicly && user.stats?.leetcodeActivity && (
-                    <div className="md:col-span-3 space-y-4">
-                        <h2 className="text-xl font-bold flex items-center gap-2">
-                            <Code2 className="w-5 h-5 text-green-500" />
-                            LeetCode Activity
-                        </h2>
-                        <Card className="p-6 border-zinc-200/50 dark:border-zinc-800/50 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl">
-                            <LeetCodeHeatmap data={user.stats.leetcodeActivity} />
-                        </Card>
-                    </div>
-                )}
 
                 {/* Sidebar Info */}
                 <div className="space-y-6">
@@ -229,6 +221,19 @@ export default function PublicProfilePage({ params }: { params: { username: stri
                         </CardContent>
                     </Card>
                 </div>
+
+                {/* LeetCode History */}
+                {user.showLeetCodePublicly && user.stats?.leetcodeActivity && (
+                    <div className="md:col-span-3 space-y-4">
+                        <h2 className="text-xl font-bold flex items-center gap-2">
+                            <Code2 className="w-5 h-5 text-green-500" />
+                            LeetCode Activity
+                        </h2>
+                        <Card className="p-6 border-zinc-200/50 dark:border-zinc-800/50 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl">
+                            <LeetCodeHeatmap data={user.stats.leetcodeActivity} />
+                        </Card>
+                    </div>
+                )}
             </div>
         </div>
     )

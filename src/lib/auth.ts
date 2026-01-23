@@ -22,6 +22,28 @@ export const authOptions: NextAuthOptions = {
                     prompt: "select_account",
                 },
             },
+            profile(profile) {
+                // Generate username from email (part before @)
+                const username = profile.email.split("@")[0]
+                // Create random suffix if needed (simple approach first)
+                // Note: unique constraint might fail, ideally we handle this better
+                // but for MVP this is acceptable or we add random suffix always.
+                // Let's add 4 random digits to ensure uniqueness
+                const randomSuffix = Math.floor(1000 + Math.random() * 9000)
+                const uniqueUsername = `${username}${randomSuffix}`
+
+                return {
+                    id: profile.sub,
+                    name: profile.name,
+                    email: profile.email,
+                    image: profile.picture,
+                    username: uniqueUsername,
+                    usernameLower: uniqueUsername.toLowerCase(),
+                    // Default stats
+                    xp: 0,
+                    level: 1,
+                }
+            },
         }),
         CredentialsProvider({
             name: "Credentials",

@@ -5,10 +5,10 @@ import { NextResponse } from "next/server"
 
 export async function GET(
     req: Request,
-    { params }: { params: { username: string } }
+    { params }: { params: Promise<{ username: string }> }
 ) {
     try {
-        const username = params.username
+        const { username } = await params
         const session = await getServerSession(authOptions)
         const viewerId = session?.user?.id
 
@@ -41,6 +41,17 @@ export async function GET(
                 leetcodeUsername: true, // Checked later based on privacy
                 friendsAsUser: { where: { friendId: viewerId || "" }, select: { id: true } }, // Check friendship A->B
                 friendsAsFriend: { where: { userId: viewerId || "" }, select: { id: true } }, // Check friendship B->A
+                reviewLogs: {
+                    where: {
+                        date: {
+                            gte: new Date(new Date().setFullYear(new Date().getFullYear() - 1))
+                        }
+                    },
+                    select: {
+                        date: true,
+                        count: true
+                    }
+                }
             }
         })
 
@@ -92,9 +103,15 @@ export async function GET(
                     // Streak privacy
                     currentStreak: (isSelf || user.showStreakPublicly) ? (user.stats?.currentStreak || 0) : null,
                     longestStreak: (isSelf || user.showStreakPublicly) ? (user.stats?.longestStreak || 0) : null,
+                    leetcodeActivity: (isSelf || user.showLeetCodePublicly) ? (user.stats?.leetcodeActivity || null) : null,
                 },
                 leetcodeUsername: (isSelf || user.showLeetCodePublicly) ? user.leetcodeUsername : null,
-            }
+            },
+            activityHeatmap: user.reviewLogs.reduce((acc, log) => {
+                const dateStr = log.date.toISOString().split("T")[0]
+                acc[dateStr] = log.count
+                return acc
+            }, {} as Record<string, number>)
         }
 
         return NextResponse.json(responseData)

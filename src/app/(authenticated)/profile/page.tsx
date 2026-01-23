@@ -318,9 +318,17 @@ export default function ProfilePage() {
                                         <AtSign className="h-5 w-5" />
                                         Username
                                     </CardTitle>
-                                    <CardDescription>
-                                        Your unique username for AlgoRecall
-                                    </CardDescription>
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                        <CardDescription>
+                                            Your unique username for AlgoRecall
+                                        </CardDescription>
+                                        <Button variant="outline" size="sm" asChild className="shrink-0 gap-2">
+                                            <a href={`/u/${username}`} target="_blank" rel="noopener noreferrer">
+                                                <Link2 className="h-4 w-4" />
+                                                View Public Profile
+                                            </a>
+                                        </Button>
+                                    </div>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     <div className="flex flex-col sm:flex-row gap-2">

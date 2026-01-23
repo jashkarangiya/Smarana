@@ -32,13 +32,27 @@ export function LeetCodeHeatmap({ data }: LeetCodeHeatmapProps) {
             const oneYearAgo = new Date()
             oneYearAgo.setFullYear(today.getFullYear() - 1)
 
-            return activity.filter(item => new Date(item.date) >= oneYearAgo)
-        } catch {
+            const filtered = activity.filter(item => {
+                const itemDate = new Date(item.date)
+                return itemDate >= oneYearAgo
+            })
+
+            console.log("LeetCode Data:", { total: activity.length, filtered: filtered.length, first: activity[0], last: activity[activity.length - 1] })
+
+            return filtered.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+        } catch (e) {
+            console.error("Failed to parse LeetCode data", e)
             return []
         }
     })()
 
-    if (calendarData.length === 0) return null
+    if (calendarData.length === 0) {
+        return (
+            <div className="w-full h-32 flex items-center justify-center text-muted-foreground bg-muted/10 rounded-lg border border-dashed">
+                <p>No LeetCode activity found in the last year.</p>
+            </div>
+        )
+    }
 
     return (
         <div className="w-full flex justify-center py-4">
