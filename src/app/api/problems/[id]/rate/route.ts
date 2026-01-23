@@ -114,6 +114,29 @@ export async function POST(
             },
         })
 
+        // Log the review activity (upsert for the day)
+        const today = new Date()
+        today.setHours(0, 0, 0, 0) // Normalize to midnight
+
+        await prisma.reviewLog.upsert({
+            where: {
+                userId_date: {
+                    userId: session.user.id,
+                    date: today,
+                },
+            },
+            update: {
+                count: { increment: 1 },
+                xpEarned: { increment: xpReward },
+            },
+            create: {
+                userId: session.user.id,
+                date: today,
+                count: 1,
+                xpEarned: xpReward,
+            },
+        })
+
         return NextResponse.json({
             success: true,
             xpReward,

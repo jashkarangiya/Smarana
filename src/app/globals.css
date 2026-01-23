@@ -25,6 +25,13 @@
     --ring: 32 60% 47%;
     --radius: 0.75rem;
     --gold: 32 60% 47%;
+
+    /* Motion Tokens */
+    --ease-out: cubic-bezier(.2, .8, .2, 1);
+    --ease: cubic-bezier(.3, .0, .2, 1);
+    --dur-1: 120ms;
+    --dur-2: 180ms;
+    --dur-3: 240ms;
   }
 
   .dark {
@@ -72,6 +79,69 @@
   h3 {
     font-weight: 600;
     letter-spacing: -0.02em;
+  }
+}
+
+@layer components {
+  /* Signature Surfaces */
+
+  /* A) Edge Glow Card - Primary Brand Surface */
+  .card-glow {
+    @apply relative overflow-hidden bg-black/40 border border-white/10 rounded-2xl shadow-2xl;
+    box-shadow: 0 20px 55px rgba(0, 0, 0, 0.55);
+  }
+
+  .card-glow::before {
+    content: "";
+    @apply absolute inset-[-2px] pointer-events-none;
+    background: radial-gradient(600px 240px at 20% 0%, rgba(214, 162, 75, 0.22), transparent 60%);
+  }
+
+  .card-glow::after {
+    content: "";
+    @apply absolute left-[14px] right-[14px] top-0 h-[1px] pointer-events-none;
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  /* B) Quiet Card - Secondary Info */
+  .card-quiet {
+    @apply bg-secondary/30 border border-border/50 rounded-xl shadow-sm text-sm;
+  }
+
+  /* C) List Row - Interactive Tables */
+  .list-row {
+    @apply relative transition-colors duration-200 hover:bg-white/5 border-b border-border/40 last:border-0;
+  }
+
+  .list-row .list-row-actions {
+    @apply opacity-0 transition-opacity duration-200;
+  }
+
+  .list-row:hover .list-row-actions {
+    @apply opacity-100;
+  }
+
+  /* Motion Interactions */
+  .interactive-card {
+    transition:
+      transform var(--dur-2) var(--ease-out),
+      box-shadow var(--dur-2) var(--ease-out),
+      border-color var(--dur-2) var(--ease-out);
+  }
+
+  .interactive-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(214, 162, 75, 0.18);
+    box-shadow: 0 26px 70px rgba(0, 0, 0, 0.6);
+  }
+
+  /* Premium Button Press */
+  .btn-premium {
+    transition: transform var(--dur-1) var(--ease-out), filter var(--dur-1) var(--ease-out);
+  }
+
+  .btn-premium:active {
+    transform: translateY(1px) scale(0.99);
   }
 }
 

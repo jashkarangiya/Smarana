@@ -10,7 +10,10 @@ import { Label } from "@/components/ui/label"
 import { Logo } from "@/components/logo"
 import { toast } from "sonner"
 import Link from "next/link"
-import { Brain, BarChart3, Trophy, Zap, Target, Flame, TrendingUp, Clock, Sparkles } from "lucide-react"
+import { Brain, BarChart3, Trophy, Zap, Target, Flame, TrendingUp, Clock, Sparkles, Check, X, Loader2, Info } from "lucide-react"
+import { PasswordStrength } from "@/components/password-strength"
+import { z } from "zod"
+import { useDebounce } from "use-debounce"
 
 // Sign Up Features
 const SIGNUP_FEATURES = [
@@ -35,6 +38,27 @@ const GoogleIcon = () => (
     </svg>
 )
 
+const usernameRegex = /^[a-z0-9_]{3,20}$/
+
+const SignUpSchema = z.object({
+    name: z.string().min(1, "Name is required").max(80),
+    email: z.string().email("Invalid email address"),
+    username: z.string()
+        .min(3, "Username must be at least 3 chars")
+        .max(20, "Username must be at most 20 chars")
+        .regex(usernameRegex, "Only lowercase letters, numbers, and underscores"),
+    password: z.string()
+        .min(12, "Password must be at least 12 characters")
+        .refine(v => /[a-z]/.test(v), "Add a lowercase letter")
+        .refine(v => /[A-Z]/.test(v), "Add an uppercase letter")
+        .refine(v => /[0-9]/.test(v), "Add a number")
+        .refine(v => /[^A-Za-z0-9]/.test(v), "Add a symbol"),
+    confirmPassword: z.string()
+}).refine((d) => d.password === d.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"]
+})
+
 function AuthPageContent() {
     const pathname = usePathname()
     const searchParams = useSearchParams()
@@ -48,7 +72,13 @@ function AuthPageContent() {
     const [password, setPassword] = useState("")
     const [signingIn, setSigningIn] = useState(false)
     const [registering, setRegistering] = useState(false)
-    const [formData, setFormData] = useState({ name: "", email: "", password: "" })
+
+    // Register specific state
+    const [formData, setFormData] = useState({ name: "", email: "", username: "", password: "", confirmPassword: "" })
+    const [debouncedUsername] = useDebounce(formData.username, 500)
+    const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null)
+    const [checkingUsername, setCheckingUsername] = useState(false)
+    const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
 
     useEffect(() => {
         if (error) {
@@ -56,9 +86,39 @@ function AuthPageContent() {
         }
     }, [error])
 
+    // Username check effect
+    useEffect(() => {
+        const checkUsername = async () => {
+            if (!debouncedUsername || debouncedUsername.length < 3) {
+                setUsernameAvailable(null)
+                return
+            }
+            if (!usernameRegex.test(debouncedUsername)) {
+                setUsernameAvailable(false) // Invalid format
+                return
+            }
+
+            setCheckingUsername(true)
+            try {
+                const res = await fetch(`/api/register/check-username?username=${debouncedUsername}`)
+                const data = await res.json()
+                setUsernameAvailable(data.available)
+            } catch {
+                setUsernameAvailable(null)
+            } finally {
+                setCheckingUsername(false)
+            }
+        }
+
+        if (mode === "register") {
+            checkUsername()
+        }
+    }, [debouncedUsername, mode])
+
     const handleModeChange = (newMode: "signin" | "register") => {
         setMode(newMode)
         window.history.replaceState(null, "", newMode === "register" ? "/register" : "/sign-in")
+        setValidationErrors({})
     }
 
     const handleGoogleSignIn = () => signIn("google", { callbackUrl })
@@ -74,7 +134,26 @@ function AuthPageContent() {
 
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault()
+
+        // Validate with Zod
+        const result = SignUpSchema.safeParse(formData)
+        if (!result.success) {
+            const errors: Record<string, string> = {}
+            result.error.errors.forEach(err => {
+                if (err.path[0]) errors[err.path[0].toString()] = err.message
+            })
+            setValidationErrors(errors)
+            return
+        }
+
+        if (usernameAvailable === false) {
+            toast.error("Username is already taken")
+            return
+        }
+
         setRegistering(true)
+        setValidationErrors({})
+
         try {
             const res = await fetch("/api/register", {
                 method: "POST",
@@ -83,9 +162,19 @@ function AuthPageContent() {
             })
             if (!res.ok) throw new Error(await res.text())
             toast.success("Account created!")
+
+            // Auto sign in after register? Or just switch to sign in
+            // Typically auto-sign in is better UX but requires creds. 
+            // For now, switch to sign in mode and pre-fill email
+            setIdentifier(formData.email)
+            setPassword("") // Don't pre-fill password for security
             handleModeChange("signin")
-        } catch (err: any) { toast.error(err.message || "Something went wrong") }
-        finally { setRegistering(false) }
+
+        } catch (err: any) {
+            toast.error(err.message || "Something went wrong")
+        } finally {
+            setRegistering(false)
+        }
     }
 
     const isSignIn = mode === "signin"
@@ -161,6 +250,9 @@ function AuthPageContent() {
                                     <Input id="signin-id" placeholder="you@example.com" required value={identifier} onChange={(e) => setIdentifier(e.target.value)} className="h-11" />
                                 </div>
                                 <div className="space-y-2">
+                                    <Button asChild variant="link" className="px-0 font-normal h-auto float-right text-xs">
+                                        <Link href="/forgot-password">Forgot password?</Link>
+                                    </Button>
                                     <Label htmlFor="signin-pw">Password</Label>
                                     <Input id="signin-pw" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="h-11" />
                                 </div>
@@ -201,18 +293,94 @@ function AuthPageContent() {
                             <form onSubmit={handleRegister} className="mt-4 space-y-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="reg-name">Name</Label>
-                                    <Input id="reg-name" placeholder="Your name" required value={formData.name} onChange={(e) => setFormData(p => ({ ...p, name: e.target.value }))} className="h-11" />
+                                    <Input
+                                        id="reg-name"
+                                        placeholder="Your name"
+                                        required
+                                        value={formData.name}
+                                        onChange={(e) => setFormData(p => ({ ...p, name: e.target.value }))}
+                                        className="h-11"
+                                    />
+                                    {validationErrors.name && <p className="text-destructive text-xs">{validationErrors.name}</p>}
                                 </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="reg-username">Username</Label>
+                                    <div className="relative">
+                                        <Input
+                                            id="reg-username"
+                                            placeholder="username (lowercase)"
+                                            required
+                                            value={formData.username}
+                                            onChange={(e) => setFormData(p => ({ ...p, username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') }))}
+                                            className={`h-11 ${usernameAvailable === false ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                                        />
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                            {checkingUsername ? (
+                                                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                                            ) : formData.username.length >= 3 && (
+                                                usernameAvailable === true ? (
+                                                    <Check className="h-4 w-4 text-emerald-500" />
+                                                ) : usernameAvailable === false ? (
+                                                    <X className="h-4 w-4 text-destructive" />
+                                                ) : null
+                                            )}
+                                        </div>
+                                    </div>
+                                    {validationErrors.username ? (
+                                        <p className="text-destructive text-xs">{validationErrors.username}</p>
+                                    ) : usernameAvailable === false ? (
+                                        <p className="text-destructive text-xs">Username is taken</p>
+                                    ) : (
+                                        <p className="text-xs text-muted-foreground">Unique identifier, only letters, numbers, _</p>
+                                    )}
+                                </div>
+
                                 <div className="space-y-2">
                                     <Label htmlFor="reg-email">Email</Label>
-                                    <Input id="reg-email" type="email" placeholder="you@example.com" required value={formData.email} onChange={(e) => setFormData(p => ({ ...p, email: e.target.value }))} className="h-11" />
+                                    <Input
+                                        id="reg-email"
+                                        type="email"
+                                        placeholder="you@example.com"
+                                        required
+                                        value={formData.email}
+                                        onChange={(e) => setFormData(p => ({ ...p, email: e.target.value }))}
+                                        className="h-11"
+                                    />
+                                    {validationErrors.email && <p className="text-destructive text-xs">{validationErrors.email}</p>}
                                 </div>
+
                                 <div className="space-y-2">
                                     <Label htmlFor="reg-pw">Password</Label>
-                                    <Input id="reg-pw" type="password" placeholder="Min 6 characters" required value={formData.password} onChange={(e) => setFormData(p => ({ ...p, password: e.target.value }))} className="h-11" />
+                                    <Input
+                                        id="reg-pw"
+                                        type="password"
+                                        placeholder="Min 12 chars"
+                                        required
+                                        value={formData.password}
+                                        onChange={(e) => setFormData(p => ({ ...p, password: e.target.value }))}
+                                        className="h-11"
+                                    />
+                                    {formData.password && <PasswordStrength password={formData.password} />}
+                                    {validationErrors.password && <p className="text-destructive text-xs">{validationErrors.password}</p>}
                                 </div>
-                                <Button type="submit" className="w-full h-11" disabled={registering}>
-                                    {registering ? "Creating..." : "Create Account"}
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="reg-confirm-pw">Confirm Password</Label>
+                                    <Input
+                                        id="reg-confirm-pw"
+                                        type="password"
+                                        placeholder="Confirm password"
+                                        required
+                                        value={formData.confirmPassword}
+                                        onChange={(e) => setFormData(p => ({ ...p, confirmPassword: e.target.value }))}
+                                        className="h-11"
+                                    />
+                                    {validationErrors.confirmPassword && <p className="text-destructive text-xs">{validationErrors.confirmPassword}</p>}
+                                </div>
+
+                                <Button type="submit" className="w-full h-11" disabled={registering || usernameAvailable === false}>
+                                    {registering ? "Creating account..." : "Create Account"}
                                 </Button>
                                 <p className="text-xs text-center text-muted-foreground">
                                     By signing up, you agree to our <Link href="#" className="underline">Terms</Link> and <Link href="#" className="underline">Privacy</Link>

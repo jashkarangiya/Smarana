@@ -37,8 +37,13 @@ interface RateResponse {
     nextReviewAt: string
 }
 
+import { useSearchParams } from "next/navigation"
+
 export default function ReviewPage() {
-    const { data: dueProblems, isLoading } = useProblems("due")
+    const searchParams = useSearchParams()
+    const limit = searchParams.get("limit") ? parseInt(searchParams.get("limit")!) : null
+
+    const { data: allDueProblems, isLoading } = useProblems("due")
     const { data: stats } = useStats()
     const queryClient = useQueryClient()
 
@@ -48,7 +53,7 @@ export default function ReviewPage() {
     const [sessionXp, setSessionXp] = useState(0)
     const [reviewedCount, setReviewedCount] = useState(0)
 
-    const problems = dueProblems || []
+    const problems = limit && allDueProblems ? allDueProblems.slice(0, limit) : (allDueProblems || [])
     const currentProblem = problems[currentIndex]
     const totalProblems = problems.length
     const estimatedTime = Math.ceil(totalProblems * 2) // ~2 min per problem

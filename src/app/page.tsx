@@ -84,6 +84,72 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* Product Preview Section (CSS Mockup) */}
+        <section className="py-12 px-4 relative overflow-hidden">
+          <div className="max-w-6xl mx-auto relative z-10">
+            <div className="rounded-xl border border-white/10 bg-[#0c0c0c] shadow-2xl overflow-hidden relative group">
+              {/* Mock Browser Header */}
+              <div className="h-10 border-b border-white/5 bg-black/50 flex items-center px-4 gap-2">
+                <div className="flex gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-red-500/20" />
+                  <div className="w-3 h-3 rounded-full bg-amber-500/20" />
+                  <div className="w-3 h-3 rounded-full bg-emerald-500/20" />
+                </div>
+                <div className="flex-1 text-center text-[10px] text-muted-foreground font-mono">
+                  algorecall.com/dashboard
+                </div>
+              </div>
+              {/* Mock Content */}
+              <div className="p-8 grid gap-8 md:grid-cols-[250px_1fr]">
+                {/* Sidebar Mock */}
+                <div className="hidden md:flex flex-col gap-4 border-r border-white/5 pr-6">
+                  <div className="h-8 w-32 bg-white/5 rounded-md" />
+                  <div className="space-y-2 mt-4">
+                    <div className="h-4 w-full bg-muted/10 rounded-sm" />
+                    <div className="h-4 w-3/4 bg-muted/10 rounded-sm" />
+                    <div className="h-4 w-5/6 bg-muted/10 rounded-sm" />
+                  </div>
+                </div>
+                {/* Main Content Mock */}
+                <div className="space-y-6">
+                  <div className="flex gap-4">
+                    <div className="h-32 flex-1 bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl border border-primary/10" />
+                    <div className="h-32 flex-1 bg-muted/5 rounded-xl border border-white/5" />
+                    <div className="h-32 flex-1 bg-muted/5 rounded-xl border border-white/5" />
+                  </div>
+                  <div className="h-64 bg-muted/5 rounded-xl border border-white/5" />
+                </div>
+              </div>
+
+              {/* Overlay Gradient */}
+              <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent h-40 bottom-0 pointer-events-none" />
+            </div>
+          </div>
+        </section>
+
+        {/* How It Works Section */}
+        <section className="py-24 relative">
+          <div className="container mx-auto px-4 relative z-10">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl font-bold mb-4">How it works</h2>
+              <p className="text-muted-foreground">Three simple steps to mastery</p>
+            </div>
+            <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+              {[
+                { step: "01", title: "Solve Problems", desc: "Solve problems on LeetCode. We automatically sync your progress." },
+                { step: "02", title: "Smart Scheduling", desc: "We calculate the optimal time for you to review based on forgetting curves." },
+                { step: "03", title: "Review & Retain", desc: "Review problems with our guidance to lock patterns into long-term memory." }
+              ].map((s, i) => (
+                <div key={i} className="relative p-6 rounded-2xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-colors">
+                  <div className="text-4xl font-mono font-bold text-primary/20 mb-4">{s.step}</div>
+                  <h3 className="text-xl font-semibold mb-2">{s.title}</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">{s.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* Features Section - Tatva Style */}
         <section className="py-24 border-t border-border/50">
           <div className="container mx-auto px-4">

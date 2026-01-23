@@ -9,16 +9,16 @@ import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useUser, useUpdateLeetCodeUsername, useSync, useStats } from "@/hooks/use-problems"
 import { toast } from "sonner"
-import { RefreshCw, User, Link as LinkIcon, CheckCircle2, Lock, AtSign, Clock, Settings, Link2, Shield, Bell } from "lucide-react"
+import { RefreshCw, User, Link as LinkIcon, CheckCircle2, Lock, AtSign, Clock, Settings, Link2, Shield, Bell, Share2, Download } from "lucide-react"
 import { PlatformConnector } from "@/components/platform-connector"
 import { AvatarUpload } from "@/components/avatar-upload"
 import { cn } from "@/lib/utils"
 
-type SettingsSection = "profile" | "platforms" | "security" | "preferences"
+type SettingsSection = "profile" | "integrations" | "security" | "preferences"
 
 const sections = [
     { id: "profile" as const, label: "Profile", icon: User, description: "Manage your profile information" },
-    { id: "platforms" as const, label: "Platforms", icon: Link2, description: "Connect coding platforms" },
+    { id: "integrations" as const, label: "Integrations", icon: Share2, description: "Manage external integrations" },
     { id: "security" as const, label: "Security", icon: Shield, description: "Password and authentication" },
     { id: "preferences" as const, label: "Preferences", icon: Bell, description: "Notifications and display" },
 ]
@@ -212,6 +212,26 @@ export default function ProfilePage() {
         }
     }
 
+    const handleExportData = async () => {
+        try {
+            const res = await fetch("/api/me/export")
+            if (!res.ok) throw new Error("Failed to export data")
+
+            const blob = await res.blob()
+            const url = window.URL.createObjectURL(blob)
+            const a = document.createElement("a")
+            a.href = url
+            a.download = `algorecall-export-${new Date().toISOString().split('T')[0]}.json`
+            document.body.appendChild(a)
+            a.click()
+            window.URL.revokeObjectURL(url)
+            document.body.removeChild(a)
+            toast.success("Data exported successfully")
+        } catch (error) {
+            toast.error("Failed to export data")
+        }
+    }
+
     return (
         <div className="container mx-auto px-4 py-6 max-w-6xl">
             {/* Header */}
@@ -285,7 +305,7 @@ export default function ProfilePage() {
                                         />
                                         <div>
                                             <p className="font-semibold text-lg">{session?.user?.name}</p>
-                                            <p className="text-sm text-muted-foreground">{session?.user?.email}</p>
+                                            <p className="text-sm text-muted-foreground">{maskEmail(session?.user?.email)}</p>
                                             <p className="text-xs text-muted-foreground/70 mt-1">Click photo to change</p>
                                         </div>
                                     </div>
@@ -336,8 +356,8 @@ export default function ProfilePage() {
                         </div>
                     )}
 
-                    {/* Platforms Section */}
-                    {activeSection === "platforms" && (
+                    {/* Integrations Section */}
+                    {activeSection === "integrations" && (
                         <div className="space-y-6">
                             <PlatformConnector />
 
@@ -452,14 +472,31 @@ export default function ProfilePage() {
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <div className="flex flex-col items-center justify-center py-12 text-center">
-                                    <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-4">
-                                        <Settings className="h-6 w-6 text-muted-foreground" />
+                                <div className="space-y-6">
+                                    <div className="flex items-center justify-between">
+                                        <div className="space-y-0.5">
+                                            <Label className="text-base">Email Notifications</Label>
+                                            <p className="text-sm text-muted-foreground">Receive daily reminders for due reviews</p>
+                                        </div>
+                                        <div className="h-6 w-10 rounded-full bg-muted border cursor-not-allowed" />
                                     </div>
-                                    <h3 className="font-semibold text-lg">Coming Soon</h3>
-                                    <p className="text-muted-foreground text-sm max-w-sm mt-1">
-                                        Notification settings, theme preferences, and more will be available here.
-                                    </p>
+                                    <div className="flex items-center justify-between">
+                                        <div className="space-y-0.5">
+                                            <Label className="text-base">Dark Mode</Label>
+                                            <p className="text-sm text-muted-foreground">Toggle dark/light theme</p>
+                                        </div>
+                                        <div className="h-6 w-10 rounded-full bg-primary border cursor-not-allowed opacity-50" />
+                                    </div>
+                                    <div className="pt-6 border-t">
+                                        <h3 className="font-semibold mb-2">Data Management</h3>
+                                        <Button
+                                            variant="outline"
+                                            className="w-full sm:w-auto"
+                                            onClick={handleExportData}
+                                        >
+                                            Export Data (JSON)
+                                        </Button>
+                                    </div>
                                 </div>
                             </CardContent>
                         </Card>
@@ -468,4 +505,12 @@ export default function ProfilePage() {
             </div>
         </div>
     )
+}
+
+function maskEmail(email: string | null | undefined) {
+    if (!email) return ""
+    const [name, domain] = email.split("@")
+    if (!domain) return email
+    const maskedName = name.length > 2 ? `${name.substring(0, 2)}...` : name
+    return `${maskedName}@${domain}`
 }
