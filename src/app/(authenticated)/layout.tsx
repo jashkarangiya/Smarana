@@ -20,11 +20,16 @@ export default function AuthenticatedLayout({
 
     if (status === "loading") {
         return (
-            <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
+            <div className="flex h-screen items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         )
     }
 
-    return <>{children}</>
+    // Wrapper with top padding to account for fixed navbar
+    return (
+        <main className="pt-20 min-h-screen">
+            {children}
+        </main>
+    )
 }

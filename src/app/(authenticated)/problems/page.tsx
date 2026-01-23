@@ -5,9 +5,11 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 import { format } from "date-fns"
 import { ExternalLink, Search, Filter } from "lucide-react"
 import { useState } from "react"
+import Link from "next/link"
 import {
     Select,
     SelectContent,
@@ -37,7 +39,7 @@ export default function ProblemsPage() {
     })
 
     return (
-        <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <div className="container mx-auto px-4 py-6 max-w-6xl">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">All Problems</h1>
@@ -82,21 +84,16 @@ export default function ProblemsPage() {
                     ) : filteredProblems && filteredProblems.length > 0 ? (
                         <div className="divide-y divide-border">
                             {filteredProblems.map((problem: any) => (
-                                <div
+                                <Link
                                     key={problem.id}
-                                    className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-secondary/50 transition-all duration-200 group"
+                                    href={`/problems/${problem.id}`}
+                                    className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-secondary/50 transition-all duration-200 group cursor-pointer"
                                 >
                                     <div className="flex-1 min-w-0 pr-4">
                                         <div className="flex items-center gap-3 mb-1">
-                                            <a
-                                                href={problem.url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="font-semibold text-foreground hover:text-primary truncate flex items-center gap-1.5"
-                                            >
+                                            <span className="font-semibold text-foreground group-hover:text-primary truncate">
                                                 {problem.title}
-                                                <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground" />
-                                            </a>
+                                            </span>
                                             <Badge
                                                 variant="outline"
                                                 className={`font-mono text-[10px] uppercase tracking-wider h-5 ${getDifficultyColor(problem.difficulty)}`}
@@ -105,7 +102,7 @@ export default function ProblemsPage() {
                                             </Badge>
                                         </div>
                                         <p className="text-xs text-muted-foreground font-mono">
-                                            {problem.leetcodeSlug}
+                                            {problem.problemSlug || problem.leetcodeSlug}
                                         </p>
                                     </div>
 
@@ -118,8 +115,16 @@ export default function ProblemsPage() {
                                             <span className="text-lg font-bold text-foreground">{problem.reviewCount}</span>
                                             <span className="text-[10px] uppercase tracking-wide">Reviews</span>
                                         </div>
+                                        <ExternalLink
+                                            className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            onClick={(e) => {
+                                                e.preventDefault()
+                                                e.stopPropagation()
+                                                window.open(problem.url, '_blank')
+                                            }}
+                                        />
                                     </div>
-                                </div>
+                                </Link>
                             ))}
                         </div>
                     ) : (
@@ -128,9 +133,19 @@ export default function ProblemsPage() {
                                 <Search className="h-6 w-6 text-muted-foreground" />
                             </div>
                             <h3 className="font-semibold text-lg">No problems found</h3>
-                            <p className="text-muted-foreground mt-1">
-                                {search ? "Try adjusting your search or filters" : "Connect LeetCode to sync problems"}
+                            <p className="text-muted-foreground mt-1 mb-4">
+                                {search ? "Try adjusting your search or filters" : "Connect LeetCode or add problems manually"}
                             </p>
+                            {!search && (
+                                <div className="flex gap-2">
+                                    <Button asChild variant="outline">
+                                        <Link href="/add">Add Manually</Link>
+                                    </Button>
+                                    <Button asChild>
+                                        <Link href="/profile">Connect LeetCode</Link>
+                                    </Button>
+                                </div>
+                            )}
                         </div>
                     )}
                 </CardContent>

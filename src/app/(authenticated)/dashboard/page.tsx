@@ -79,7 +79,7 @@ export default function DashboardPage() {
     const totalDue = dueProblems?.length || 0
 
     return (
-        <div className="container mx-auto px-4 pt-24 pb-8 max-w-6xl">
+        <div className="container mx-auto px-4 py-6 max-w-6xl">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                 <div>
@@ -89,16 +89,18 @@ export default function DashboardPage() {
                     </p>
                 </div>
                 <div className="flex gap-2">
-                    {user?.leetcodeUsername ? (
-                        <Button onClick={() => sync()} disabled={syncing} variant="outline" className="gap-2">
-                            <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
-                            {syncing ? "Syncing..." : "Sync LeetCode"}
-                        </Button>
-                    ) : (
-                        <Button asChild variant="default">
-                            <Link href="/profile">Connect LeetCode</Link>
+                    {totalDue > 0 && (
+                        <Button asChild className="gap-2">
+                            <Link href="/review">
+                                <Brain className="h-4 w-4" />
+                                Start Review ({totalDue})
+                            </Link>
                         </Button>
                     )}
+                    <Button onClick={() => sync()} disabled={syncing} variant="outline" className="gap-2">
+                        <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
+                        {syncing ? "Syncing..." : "Sync All"}
+                    </Button>
                 </div>
             </div>
 
@@ -125,7 +127,7 @@ export default function DashboardPage() {
             </Card>
 
             {/* Stats Overview */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 <StatsCard
                     title="Total Problems"
                     value={statsLoading ? "-" : String(stats?.total || 0)}

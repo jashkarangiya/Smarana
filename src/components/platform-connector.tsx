@@ -234,34 +234,30 @@ export function PlatformConnector() {
                     return (
                         <div
                             key={config.id}
-                            className="flex items-center gap-3 p-3 rounded-xl border bg-card hover:bg-secondary/20 transition-colors"
+                            className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-xl border bg-card hover:bg-secondary/20 transition-colors"
                         >
                             {/* Platform Icon & Name */}
-                            <div className="flex items-center gap-3 min-w-[140px]">
-                                <div
-                                    className="w-9 h-9 rounded-lg flex items-center justify-center p-2"
-                                    style={{ backgroundColor: config.color + "20" }}
-                                >
+                            <div className="flex items-center gap-3 sm:min-w-[140px]">
+                                <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-secondary/60 border border-border/30">
                                     <Image
                                         src={config.icon}
                                         alt={config.name}
-                                        width={20}
-                                        height={20}
-                                        className="opacity-90"
-                                        style={{ filter: `drop-shadow(0 0 0 ${config.color})` }}
+                                        width={22}
+                                        height={22}
+                                        className="object-contain"
                                     />
                                 </div>
                                 <div className="flex items-center gap-1">
                                     <span className="font-medium text-sm">{config.name}</span>
-                                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                    <ChevronRight className="h-4 w-4 text-muted-foreground hidden sm:block" />
                                 </div>
                             </div>
 
                             {/* URL Input Area */}
-                            <div className="flex-1 flex items-center gap-2">
+                            <div className="flex-1 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                                 <div className="flex-1 flex items-center rounded-lg border bg-secondary/30 overflow-hidden">
-                                    <span className="px-3 py-2 text-xs text-muted-foreground bg-secondary/50 border-r whitespace-nowrap">
-                                        https://{config.urlPrefix}
+                                    <span className="px-2 sm:px-3 py-2 text-xs text-muted-foreground bg-secondary/50 border-r whitespace-nowrap">
+                                        {config.urlPrefix}
                                     </span>
                                     <Input
                                         value={state.username}

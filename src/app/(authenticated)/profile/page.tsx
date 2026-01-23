@@ -9,8 +9,19 @@ import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useUser, useUpdateLeetCodeUsername, useSync, useStats } from "@/hooks/use-problems"
 import { toast } from "sonner"
-import { RefreshCw, User, Link as LinkIcon, CheckCircle2, AlertCircle, Lock, AtSign, Camera, Clock } from "lucide-react"
+import { RefreshCw, User, Link as LinkIcon, CheckCircle2, Lock, AtSign, Clock, Settings, Link2, Shield, Bell } from "lucide-react"
 import { PlatformConnector } from "@/components/platform-connector"
+import { AvatarUpload } from "@/components/avatar-upload"
+import { cn } from "@/lib/utils"
+
+type SettingsSection = "profile" | "platforms" | "security" | "preferences"
+
+const sections = [
+    { id: "profile" as const, label: "Profile", icon: User, description: "Manage your profile information" },
+    { id: "platforms" as const, label: "Platforms", icon: Link2, description: "Connect coding platforms" },
+    { id: "security" as const, label: "Security", icon: Shield, description: "Password and authentication" },
+    { id: "preferences" as const, label: "Preferences", icon: Bell, description: "Notifications and display" },
+]
 
 export default function ProfilePage() {
     const { data: session, update: updateSession } = useSession()
@@ -19,6 +30,7 @@ export default function ProfilePage() {
     const { mutate: updateLeetcodeUsername, isPending: updatingLeetcode } = useUpdateLeetCodeUsername()
     const { mutate: sync, isPending: syncing } = useSync()
 
+    const [activeSection, setActiveSection] = useState<SettingsSection>("profile")
     const [leetcodeUsername, setLeetcodeUsername] = useState("")
 
     // Username state
@@ -43,7 +55,6 @@ export default function ProfilePage() {
         }
     }, [user])
 
-    // Fetch username info
     useEffect(() => {
         const fetchUsernameInfo = async () => {
             try {
@@ -60,7 +71,6 @@ export default function ProfilePage() {
         fetchUsernameInfo()
     }, [])
 
-    // Fetch password status
     useEffect(() => {
         const fetchPasswordStatus = async () => {
             try {
@@ -99,19 +109,26 @@ export default function ProfilePage() {
             toast.error("Please enter a username")
             return
         }
+        if (username.length < 3 || username.length > 20) {
+            toast.error("Username must be 3-20 characters")
+            return
+        }
+        if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+            toast.error("Username can only contain letters, numbers, and underscores")
+            return
+        }
 
         setSavingUsername(true)
         try {
             const res = await fetch("/api/me/username", {
-                method: "PUT",
+                method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ username }),
             })
             const data = await res.json()
-
             if (res.ok) {
-                toast.success("Username updated successfully!")
-                setUsernameInfo({ canChange: false, daysUntilChange: 90 })
+                toast.success("Username updated!")
+                setUsernameInfo({ canChange: false, daysUntilChange: 30 })
             } else {
                 toast.error(data.error || "Failed to update username")
             }
@@ -123,30 +140,29 @@ export default function ProfilePage() {
     }
 
     const handleSavePassword = async () => {
-        if (newPassword.length < 6) {
-            toast.error("Password must be at least 6 characters")
+        if (!newPassword || !confirmPassword) {
+            toast.error("Please fill in all fields")
+            return
+        }
+        if (newPassword.length < 8) {
+            toast.error("Password must be at least 8 characters")
             return
         }
         if (newPassword !== confirmPassword) {
-            toast.error("Passwords don't match")
-            return
-        }
-        if (hasPassword && !currentPassword) {
-            toast.error("Please enter your current password")
+            toast.error("Passwords do not match")
             return
         }
 
         setSavingPassword(true)
         try {
             const res = await fetch("/api/me/password", {
-                method: "PUT",
+                method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ currentPassword, newPassword }),
             })
             const data = await res.json()
-
             if (res.ok) {
-                toast.success(hasPassword ? "Password changed!" : "Password set successfully!")
+                toast.success(hasPassword ? "Password updated!" : "Password set!")
                 setCurrentPassword("")
                 setNewPassword("")
                 setConfirmPassword("")
@@ -166,16 +182,21 @@ export default function ProfilePage() {
             toast.error("Please enter an image URL")
             return
         }
+        try {
+            new URL(avatarUrl)
+        } catch {
+            toast.error("Please enter a valid URL")
+            return
+        }
 
         setSavingAvatar(true)
         try {
             const res = await fetch("/api/me/avatar", {
-                method: "PUT",
+                method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ imageUrl: avatarUrl }),
             })
             const data = await res.json()
-
             if (res.ok) {
                 toast.success("Profile picture updated!")
                 setAvatarUrl("")
@@ -192,252 +213,258 @@ export default function ProfilePage() {
     }
 
     return (
-        <div className="container mx-auto px-4 py-8 max-w-2xl">
-            <h1 className="text-3xl font-bold tracking-tight mb-8">Settings</h1>
+        <div className="container mx-auto px-4 py-6 max-w-6xl">
+            {/* Header */}
+            <div className="mb-8">
+                <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+                <p className="text-muted-foreground mt-1">Manage your account and preferences</p>
+            </div>
 
-            <div className="space-y-6">
-                {/* Profile */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-base flex items-center gap-2">
-                            <User className="h-4 w-4" />
-                            Profile
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="flex items-center gap-4">
-                            <Avatar className="h-16 w-16">
-                                <AvatarImage src={session?.user?.image || ""} />
-                                <AvatarFallback className="bg-primary text-primary-foreground text-xl">
-                                    {session?.user?.name?.[0]?.toUpperCase() || "U"}
-                                </AvatarFallback>
-                            </Avatar>
-                            <div>
-                                <p className="font-semibold text-lg">{session?.user?.name}</p>
-                                <p className="text-sm text-muted-foreground">{session?.user?.email}</p>
-                            </div>
-                        </div>
-
-                        {/* Change Avatar */}
-                        <div className="pt-4 border-t space-y-2">
-                            <Label htmlFor="avatar" className="flex items-center gap-2">
-                                <Camera className="h-3 w-3" />
-                                Change Profile Picture
-                            </Label>
-                            <div className="flex gap-2">
-                                <Input
-                                    id="avatar"
-                                    placeholder="https://example.com/your-image.jpg"
-                                    value={avatarUrl}
-                                    onChange={(e) => setAvatarUrl(e.target.value)}
-                                />
-                                <Button onClick={handleSaveAvatar} disabled={savingAvatar} size="sm">
-                                    {savingAvatar ? "Saving..." : "Update"}
-                                </Button>
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                                Enter a URL to an image (JPG, PNG, or GIF)
-                            </p>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* Username */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-base flex items-center gap-2">
-                            <AtSign className="h-4 w-4" />
-                            Username
-                        </CardTitle>
-                        <CardDescription>
-                            Your unique username for AlgoRecall. Friends can add you with this.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="username">Username</Label>
-                            <div className="flex gap-2">
-                                <Input
-                                    id="username"
-                                    placeholder="your_username"
-                                    value={username}
-                                    onChange={(e) => setUsername(e.target.value)}
-                                    disabled={!usernameInfo?.canChange}
-                                    className="font-mono"
-                                />
-                                <Button
-                                    onClick={handleSaveUsername}
-                                    disabled={savingUsername || !usernameInfo?.canChange}
-                                >
-                                    {savingUsername ? "Saving..." : "Save"}
-                                </Button>
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                                3-20 characters, letters, numbers, and underscores only.
-                            </p>
-                        </div>
-
-                        {!usernameInfo?.canChange && usernameInfo?.daysUntilChange && usernameInfo.daysUntilChange > 0 && (
-                            <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                                <Clock className="h-4 w-4 text-amber-500" />
-                                <span className="text-sm text-amber-500">
-                                    You can change your username in {usernameInfo.daysUntilChange} days
-                                </span>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-
-                {/* Password */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-base flex items-center gap-2">
-                            <Lock className="h-4 w-4" />
-                            {hasPassword ? "Change Password" : "Set Password"}
-                        </CardTitle>
-                        <CardDescription>
-                            {hasPassword
-                                ? "Update your account password"
-                                : "Set a password to login with your username or email"
-                            }
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        {hasPassword && (
-                            <div className="space-y-2">
-                                <Label htmlFor="currentPassword">Current Password</Label>
-                                <Input
-                                    id="currentPassword"
-                                    type="password"
-                                    value={currentPassword}
-                                    onChange={(e) => setCurrentPassword(e.target.value)}
-                                />
-                            </div>
-                        )}
-
-                        <div className="space-y-2">
-                            <Label htmlFor="newPassword">New Password</Label>
-                            <Input
-                                id="newPassword"
-                                type="password"
-                                value={newPassword}
-                                onChange={(e) => setNewPassword(e.target.value)}
-                                placeholder="At least 6 characters"
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                            <Input
-                                id="confirmPassword"
-                                type="password"
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
-                            />
-                        </div>
-
-                        <Button onClick={handleSavePassword} disabled={savingPassword}>
-                            {savingPassword ? "Saving..." : hasPassword ? "Change Password" : "Set Password"}
-                        </Button>
-                    </CardContent>
-                </Card>
-
-                {/* Connected Platforms */}
-                <PlatformConnector />
-
-                {/* LeetCode Integration */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-base flex items-center gap-2">
-                            <LinkIcon className="h-4 w-4" />
-                            LeetCode Integration
-                        </CardTitle>
-                        <CardDescription>
-                            Connect your LeetCode account to sync solved problems
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="leetcode">LeetCode Username</Label>
-                            <div className="flex gap-2">
-                                <Input
-                                    id="leetcode"
-                                    placeholder="your-leetcode-username"
-                                    value={leetcodeUsername}
-                                    onChange={(e) => setLeetcodeUsername(e.target.value)}
-                                    className="font-mono"
-                                />
-                                <Button onClick={handleSaveLeetcodeUsername} disabled={updatingLeetcode}>
-                                    {updatingLeetcode ? "Saving..." : "Save"}
-                                </Button>
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                                This is the username from your LeetCode profile URL (leetcode.com/u/username)
-                            </p>
-                        </div>
-
-                        {user?.leetcodeUsername && (
-                            <div className="pt-4 border-t space-y-4">
-                                {/* Connection Status */}
-                                <div className="flex items-center gap-2 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                                    <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                                    <span className="text-sm font-medium text-emerald-500">
-                                        Connected as @{user.leetcodeUsername}
-                                    </span>
+            <div className="flex flex-col lg:flex-row gap-8">
+                {/* Sidebar Navigation */}
+                <aside className="lg:w-64 flex-shrink-0">
+                    <nav className="space-y-1 lg:sticky lg:top-24">
+                        {sections.map((section) => (
+                            <button
+                                key={section.id}
+                                onClick={() => setActiveSection(section.id)}
+                                className={cn(
+                                    "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all",
+                                    activeSection === section.id
+                                        ? "bg-primary/10 text-primary border border-primary/20"
+                                        : "hover:bg-muted/50 text-muted-foreground hover:text-foreground"
+                                )}
+                            >
+                                <section.icon className="h-5 w-5" />
+                                <div>
+                                    <p className="font-medium text-sm">{section.label}</p>
+                                    <p className="text-xs opacity-70 hidden sm:block">{section.description}</p>
                                 </div>
+                            </button>
+                        ))}
+                    </nav>
+                </aside>
 
-                                {/* Stats Summary */}
-                                {stats && stats.total > 0 && (
-                                    <div className="grid grid-cols-3 gap-3 text-center">
-                                        <div className="p-3 rounded-lg bg-secondary">
-                                            <p className="text-lg font-bold text-emerald-500">{stats.easy}</p>
-                                            <p className="text-xs text-muted-foreground">Easy</p>
+                {/* Main Content */}
+                <div className="flex-1 min-w-0">
+                    {/* Profile Section */}
+                    {activeSection === "profile" && (
+                        <div className="space-y-6">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <User className="h-5 w-5" />
+                                        Profile Information
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Update your profile picture and display name
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-6">
+                                    {/* Avatar Display - Clickable to change */}
+                                    <div className="flex items-center gap-4">
+                                        <AvatarUpload
+                                            currentImage={session?.user?.image}
+                                            name={session?.user?.name}
+                                            onSave={async (imageData) => {
+                                                const res = await fetch("/api/me/avatar", {
+                                                    method: "POST",
+                                                    headers: { "Content-Type": "application/json" },
+                                                    body: JSON.stringify({ imageUrl: imageData }),
+                                                })
+                                                const data = await res.json()
+                                                if (res.ok) {
+                                                    toast.success("Profile picture updated!")
+                                                    await updateSession()
+                                                    refetchUser()
+                                                } else {
+                                                    toast.error(data.error || "Failed to update avatar")
+                                                    throw new Error(data.error)
+                                                }
+                                            }}
+                                        />
+                                        <div>
+                                            <p className="font-semibold text-lg">{session?.user?.name}</p>
+                                            <p className="text-sm text-muted-foreground">{session?.user?.email}</p>
+                                            <p className="text-xs text-muted-foreground/70 mt-1">Click photo to change</p>
                                         </div>
-                                        <div className="p-3 rounded-lg bg-secondary">
-                                            <p className="text-lg font-bold text-amber-500">{stats.medium}</p>
-                                            <p className="text-xs text-muted-foreground">Medium</p>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <AtSign className="h-5 w-5" />
+                                        Username
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Your unique username for AlgoRecall
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="flex flex-col sm:flex-row gap-2">
+                                        <Input
+                                            placeholder="your_username"
+                                            value={username}
+                                            onChange={(e) => setUsername(e.target.value)}
+                                            disabled={!usernameInfo?.canChange}
+                                            className="font-mono flex-1"
+                                        />
+                                        <Button
+                                            onClick={handleSaveUsername}
+                                            disabled={savingUsername || !usernameInfo?.canChange}
+                                            className="w-full sm:w-auto"
+                                        >
+                                            {savingUsername ? "Saving..." : "Save"}
+                                        </Button>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">
+                                        3-20 characters, letters, numbers, and underscores only.
+                                    </p>
+
+                                    {!usernameInfo?.canChange && usernameInfo?.daysUntilChange && usernameInfo.daysUntilChange > 0 && (
+                                        <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                                            <Clock className="h-4 w-4 text-amber-500" />
+                                            <span className="text-sm text-amber-500">
+                                                You can change your username in {usernameInfo.daysUntilChange} days
+                                            </span>
                                         </div>
-                                        <div className="p-3 rounded-lg bg-secondary">
-                                            <p className="text-lg font-bold text-rose-500">{stats.hard}</p>
-                                            <p className="text-xs text-muted-foreground">Hard</p>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </div>
+                    )}
+
+                    {/* Platforms Section */}
+                    {activeSection === "platforms" && (
+                        <div className="space-y-6">
+                            <PlatformConnector />
+
+                            {/* Sync All Platforms Card */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <RefreshCw className="h-5 w-5" />
+                                        Sync Problems
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Fetch your latest solved problems from all connected platforms
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    {stats && stats.total > 0 && (
+                                        <div className="grid grid-cols-3 gap-3 text-center mb-4">
+                                            <div className="p-3 rounded-lg bg-secondary">
+                                                <p className="text-lg font-bold text-emerald-500">{stats.easy}</p>
+                                                <p className="text-xs text-muted-foreground">Easy</p>
+                                            </div>
+                                            <div className="p-3 rounded-lg bg-secondary">
+                                                <p className="text-lg font-bold text-amber-500">{stats.medium}</p>
+                                                <p className="text-xs text-muted-foreground">Medium</p>
+                                            </div>
+                                            <div className="p-3 rounded-lg bg-secondary">
+                                                <p className="text-lg font-bold text-rose-500">{stats.hard}</p>
+                                                <p className="text-xs text-muted-foreground">Hard</p>
+                                            </div>
                                         </div>
+                                    )}
+
+                                    <Button onClick={handleSync} disabled={syncing} className="w-full">
+                                        <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? "animate-spin" : ""}`} />
+                                        {syncing ? "Syncing All Platforms..." : "Sync All Platforms"}
+                                    </Button>
+                                    <p className="text-xs text-muted-foreground text-center mt-2">
+                                        Syncs problems from LeetCode, Codeforces, AtCoder, and more
+                                    </p>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    )}
+
+                    {/* Security Section */}
+                    {activeSection === "security" && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <Lock className="h-5 w-5" />
+                                    {hasPassword ? "Change Password" : "Set Password"}
+                                </CardTitle>
+                                <CardDescription>
+                                    {hasPassword
+                                        ? "Update your account password"
+                                        : "Add a password to sign in with email"}
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                {hasPassword && (
+                                    <div className="space-y-2">
+                                        <Label htmlFor="current-password">Current Password</Label>
+                                        <Input
+                                            id="current-password"
+                                            type="password"
+                                            placeholder="••••••••"
+                                            value={currentPassword}
+                                            onChange={(e) => setCurrentPassword(e.target.value)}
+                                        />
                                     </div>
                                 )}
-
-                                {/* Sync Button */}
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="font-medium text-sm">Sync Problems</p>
-                                        <p className="text-xs text-muted-foreground">
-                                            Fetch latest solved problems from LeetCode
-                                        </p>
-                                    </div>
-                                    <Button onClick={handleSync} disabled={syncing} variant="outline" size="sm">
-                                        <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? "animate-spin" : ""}`} />
-                                        {syncing ? "Syncing..." : "Sync Now"}
-                                    </Button>
+                                <div className="space-y-2">
+                                    <Label htmlFor="new-password">New Password</Label>
+                                    <Input
+                                        id="new-password"
+                                        type="password"
+                                        placeholder="••••••••"
+                                        value={newPassword}
+                                        onChange={(e) => setNewPassword(e.target.value)}
+                                    />
                                 </div>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-
-                {/* Info */}
-                <Card className="border-muted bg-secondary/30">
-                    <CardContent className="p-4">
-                        <div className="flex items-start gap-3">
-                            <AlertCircle className="h-4 w-4 text-muted-foreground mt-0.5" />
-                            <div className="text-sm text-muted-foreground">
-                                <p className="font-medium text-foreground mb-1">How it works</p>
-                                <p>
-                                    AlgoRecall uses spaced repetition to help you remember algorithms.
-                                    After syncing, problems are scheduled for review at optimal intervals:
-                                    1 day, 3 days, 7 days, 14 days, and 30 days.
+                                <div className="space-y-2">
+                                    <Label htmlFor="confirm-password">Confirm Password</Label>
+                                    <Input
+                                        id="confirm-password"
+                                        type="password"
+                                        placeholder="••••••••"
+                                        value={confirmPassword}
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                    />
+                                </div>
+                                <Button onClick={handleSavePassword} disabled={savingPassword}>
+                                    {savingPassword ? "Saving..." : hasPassword ? "Update Password" : "Set Password"}
+                                </Button>
+                                <p className="text-xs text-muted-foreground">
+                                    Password must be at least 8 characters long.
                                 </p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {/* Preferences Section */}
+                    {activeSection === "preferences" && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <Bell className="h-5 w-5" />
+                                    Preferences
+                                </CardTitle>
+                                <CardDescription>
+                                    Customize your experience
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="flex flex-col items-center justify-center py-12 text-center">
+                                    <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-4">
+                                        <Settings className="h-6 w-6 text-muted-foreground" />
+                                    </div>
+                                    <h3 className="font-semibold text-lg">Coming Soon</h3>
+                                    <p className="text-muted-foreground text-sm max-w-sm mt-1">
+                                        Notification settings, theme preferences, and more will be available here.
+                                    </p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
+                </div>
             </div>
         </div>
     )
