@@ -135,7 +135,7 @@ function AuthPageContent() {
                     <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
                         <div className="w-full max-w-sm">
                             <div className="text-center mb-6">
-                                <div className="flex justify-center mb-4"><Logo size="lg" /></div>
+                                <Link href="/" className="flex justify-center mb-4"><Logo size="lg" /></Link>
                                 <h1 className="text-2xl font-bold">Sign in</h1>
                                 <p className="text-sm text-muted-foreground mt-1">
                                     New to AlgoRecall?{" "}
@@ -178,7 +178,7 @@ function AuthPageContent() {
                     <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
                         <div className="w-full max-w-sm">
                             <div className="text-center mb-6">
-                                <div className="flex justify-center mb-4"><Logo size="lg" /></div>
+                                <Link href="/" className="flex justify-center mb-4"><Logo size="lg" /></Link>
                                 <h1 className="text-2xl font-bold">Create an account</h1>
                                 <p className="text-sm text-muted-foreground mt-1">
                                     Already have an account?{" "}
