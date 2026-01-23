@@ -5,35 +5,89 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Check, X, Loader2, Link2, Unlink, ExternalLink } from "lucide-react"
+import { Check, Loader2, Link2, Trash2, ChevronRight } from "lucide-react"
 import { toast } from "sonner"
 
-interface Platform {
-    id: string
-    name: string
-    icon: string
-    color: string
-    available: boolean
-    username: string | null
-    connected: boolean
+// Platform configurations with URL patterns
+const PLATFORM_CONFIG = [
+    {
+        id: "leetcode",
+        name: "LeetCode",
+        icon: "⚡",
+        color: "#FFA116",
+        urlPrefix: "leetcode.com/u/",
+        available: true,
+    },
+    {
+        id: "codeforces",
+        name: "CodeForces",
+        icon: "🔵",
+        color: "#1F8ACB",
+        urlPrefix: "codeforces.com/profile/",
+        available: true,
+    },
+    {
+        id: "codechef",
+        name: "CodeChef",
+        icon: "👨‍🍳",
+        color: "#5B4638",
+        urlPrefix: "codechef.com/users/",
+        available: true,
+    },
+    {
+        id: "atcoder",
+        name: "AtCoder",
+        icon: "🔴",
+        color: "#222222",
+        urlPrefix: "atcoder.jp/users/",
+        available: true,
+    },
+    {
+        id: "hackerrank",
+        name: "HackerRank",
+        icon: "🟢",
+        color: "#00EA64",
+        urlPrefix: "hackerrank.com/profile/",
+        available: false,
+    },
+    {
+        id: "geeksforgeeks",
+        name: "GeeksForGeeks",
+        icon: "🌿",
+        color: "#2F8D46",
+        urlPrefix: "geeksforgeeks.org/user/",
+        available: false,
+    },
+    {
+        id: "interviewbit",
+        name: "InterviewBit",
+        icon: "💼",
+        color: "#5B9BD5",
+        urlPrefix: "interviewbit.com/profile/",
+        available: false,
+    },
+    {
+        id: "codestudio",
+        name: "CodeStudio",
+        icon: "🟠",
+        color: "#FF6B35",
+        urlPrefix: "naukri.com/code360/profile/",
+        available: false,
+    },
+]
+
+interface PlatformState {
+    [key: string]: {
+        username: string
+        connected: boolean
+        editing: boolean
+        saving: boolean
+    }
 }
 
-// Platform logos as simple colored blocks with emojis
-const PlatformIcon = ({ platform }: { platform: Platform }) => (
-    <div
-        className="w-10 h-10 rounded-lg flex items-center justify-center text-lg"
-        style={{ backgroundColor: platform.color + "20" }}
-    >
-        {platform.icon}
-    </div>
-)
-
 export function PlatformConnector() {
-    const [platforms, setPlatforms] = useState<Platform[]>([])
+    const [platforms, setPlatforms] = useState<PlatformState>({})
     const [loading, setLoading] = useState(true)
-    const [editingPlatform, setEditingPlatform] = useState<string | null>(null)
-    const [usernameInput, setUsernameInput] = useState("")
-    const [saving, setSaving] = useState(false)
 
     useEffect(() => {
         fetchPlatforms()
@@ -44,46 +98,89 @@ export function PlatformConnector() {
             const res = await fetch("/api/me/platforms")
             if (res.ok) {
                 const data = await res.json()
-                setPlatforms(data)
+                const state: PlatformState = {}
+
+                // Initialize all platforms from config
+                PLATFORM_CONFIG.forEach(p => {
+                    const serverData = data.find((d: any) => d.id === p.id)
+                    state[p.id] = {
+                        username: serverData?.username || "",
+                        connected: serverData?.connected || false,
+                        editing: false,
+                        saving: false,
+                    }
+                })
+
+                setPlatforms(state)
+            } else {
+                // Initialize empty state
+                const state: PlatformState = {}
+                PLATFORM_CONFIG.forEach(p => {
+                    state[p.id] = { username: "", connected: false, editing: false, saving: false }
+                })
+                setPlatforms(state)
             }
         } catch (error) {
             console.error("Failed to fetch platforms:", error)
+            // Initialize empty state on error
+            const state: PlatformState = {}
+            PLATFORM_CONFIG.forEach(p => {
+                state[p.id] = { username: "", connected: false, editing: false, saving: false }
+            })
+            setPlatforms(state)
         } finally {
             setLoading(false)
         }
     }
 
-    const handleConnect = async (platformId: string) => {
-        if (!usernameInput.trim()) {
+    const handleSubmit = async (platformId: string) => {
+        const username = platforms[platformId]?.username?.trim()
+        if (!username) {
             toast.error("Please enter a username")
             return
         }
 
-        setSaving(true)
+        setPlatforms(prev => ({
+            ...prev,
+            [platformId]: { ...prev[platformId], saving: true }
+        }))
+
         try {
             const res = await fetch("/api/me/platforms", {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ platform: platformId, username: usernameInput.trim() }),
+                body: JSON.stringify({ platform: platformId, username }),
             })
 
             if (res.ok) {
-                toast.success(`Connected to ${platforms.find(p => p.id === platformId)?.name}!`)
-                setEditingPlatform(null)
-                setUsernameInput("")
-                fetchPlatforms()
+                const platform = PLATFORM_CONFIG.find(p => p.id === platformId)
+                toast.success(`Connected to ${platform?.name}!`)
+                setPlatforms(prev => ({
+                    ...prev,
+                    [platformId]: { ...prev[platformId], connected: true, saving: false }
+                }))
             } else {
                 toast.error("Failed to connect")
+                setPlatforms(prev => ({
+                    ...prev,
+                    [platformId]: { ...prev[platformId], saving: false }
+                }))
             }
         } catch {
             toast.error("Failed to connect")
-        } finally {
-            setSaving(false)
+            setPlatforms(prev => ({
+                ...prev,
+                [platformId]: { ...prev[platformId], saving: false }
+            }))
         }
     }
 
-    const handleDisconnect = async (platformId: string) => {
-        setSaving(true)
+    const handleDelete = async (platformId: string) => {
+        setPlatforms(prev => ({
+            ...prev,
+            [platformId]: { ...prev[platformId], saving: true }
+        }))
+
         try {
             const res = await fetch("/api/me/platforms", {
                 method: "PUT",
@@ -93,13 +190,19 @@ export function PlatformConnector() {
 
             if (res.ok) {
                 toast.success("Disconnected")
-                fetchPlatforms()
+                setPlatforms(prev => ({
+                    ...prev,
+                    [platformId]: { username: "", connected: false, editing: false, saving: false }
+                }))
             }
         } catch {
             toast.error("Failed to disconnect")
-        } finally {
-            setSaving(false)
         }
+
+        setPlatforms(prev => ({
+            ...prev,
+            [platformId]: { ...prev[platformId], saving: false }
+        }))
     }
 
     if (loading) {
@@ -123,98 +226,91 @@ export function PlatformConnector() {
                     Link your coding profiles to sync solved problems automatically
                 </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-                {platforms.map((platform) => (
-                    <div
-                        key={platform.id}
-                        className="flex items-center justify-between p-4 rounded-xl border bg-card hover:bg-secondary/30 transition-colors"
-                    >
-                        <div className="flex items-center gap-4">
-                            <PlatformIcon platform={platform} />
-                            <div>
-                                <div className="flex items-center gap-2">
-                                    <span className="font-semibold">{platform.name}</span>
-                                    {!platform.available && (
-                                        <Badge variant="secondary" className="text-xs">Coming Soon</Badge>
-                                    )}
-                                    {platform.connected && (
-                                        <Badge variant="default" className="text-xs bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
-                                            <Check className="h-3 w-3 mr-1" />
-                                            Connected
-                                        </Badge>
-                                    )}
-                                </div>
-                                {platform.connected && platform.username && (
-                                    <p className="text-sm text-muted-foreground">@{platform.username}</p>
-                                )}
-                            </div>
-                        </div>
+            <CardContent className="space-y-3">
+                {PLATFORM_CONFIG.map((config) => {
+                    const state = platforms[config.id] || { username: "", connected: false, editing: false, saving: false }
 
-                        <div className="flex items-center gap-2">
-                            {editingPlatform === platform.id ? (
-                                <>
+                    return (
+                        <div
+                            key={config.id}
+                            className="flex items-center gap-3 p-3 rounded-xl border bg-card hover:bg-secondary/20 transition-colors"
+                        >
+                            {/* Platform Icon & Name */}
+                            <div className="flex items-center gap-3 min-w-[140px]">
+                                <div
+                                    className="w-9 h-9 rounded-lg flex items-center justify-center text-base"
+                                    style={{ backgroundColor: config.color + "20" }}
+                                >
+                                    {config.icon}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <span className="font-medium text-sm">{config.name}</span>
+                                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                </div>
+                            </div>
+
+                            {/* URL Input Area */}
+                            <div className="flex-1 flex items-center gap-2">
+                                <div className="flex-1 flex items-center rounded-lg border bg-secondary/30 overflow-hidden">
+                                    <span className="px-3 py-2 text-xs text-muted-foreground bg-secondary/50 border-r whitespace-nowrap">
+                                        https://{config.urlPrefix}
+                                    </span>
                                     <Input
-                                        value={usernameInput}
-                                        onChange={(e) => setUsernameInput(e.target.value)}
-                                        placeholder="Username"
-                                        className="w-40"
-                                        onKeyDown={(e) => e.key === "Enter" && handleConnect(platform.id)}
+                                        value={state.username}
+                                        onChange={(e) => setPlatforms(prev => ({
+                                            ...prev,
+                                            [config.id]: { ...prev[config.id], username: e.target.value }
+                                        }))}
+                                        placeholder={config.available ? "username" : "coming soon"}
+                                        disabled={!config.available || state.saving}
+                                        className="border-0 bg-transparent h-9 text-sm focus-visible:ring-0"
+                                        onKeyDown={(e) => e.key === "Enter" && config.available && handleSubmit(config.id)}
                                     />
-                                    <Button
-                                        size="sm"
-                                        onClick={() => handleConnect(platform.id)}
-                                        disabled={saving}
-                                    >
-                                        {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                                    </Button>
-                                    <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        onClick={() => {
-                                            setEditingPlatform(null)
-                                            setUsernameInput("")
-                                        }}
-                                    >
-                                        <X className="h-4 w-4" />
-                                    </Button>
-                                </>
-                            ) : platform.connected ? (
-                                <>
+                                </div>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex items-center gap-2">
+                                {state.connected ? (
+                                    <>
+                                        <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                                            <Check className="h-4 w-4 text-emerald-500" />
+                                        </div>
+                                        <Button
+                                            size="icon"
+                                            variant="ghost"
+                                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                            onClick={() => handleDelete(config.id)}
+                                            disabled={state.saving}
+                                        >
+                                            {state.saving ? (
+                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                            ) : (
+                                                <Trash2 className="h-4 w-4" />
+                                            )}
+                                        </Button>
+                                    </>
+                                ) : config.available ? (
                                     <Button
                                         size="sm"
                                         variant="outline"
-                                        onClick={() => {
-                                            setEditingPlatform(platform.id)
-                                            setUsernameInput(platform.username || "")
-                                        }}
+                                        onClick={() => handleSubmit(config.id)}
+                                        disabled={state.saving || !state.username.trim()}
+                                        className="h-8"
                                     >
-                                        Edit
+                                        {state.saving ? (
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                        ) : (
+                                            "Submit"
+                                        )}
                                     </Button>
-                                    <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        className="text-destructive hover:text-destructive"
-                                        onClick={() => handleDisconnect(platform.id)}
-                                        disabled={saving}
-                                    >
-                                        <Unlink className="h-4 w-4" />
-                                    </Button>
-                                </>
-                            ) : platform.available ? (
-                                <Button
-                                    size="sm"
-                                    onClick={() => setEditingPlatform(platform.id)}
-                                >
-                                    Connect
-                                </Button>
-                            ) : (
-                                <Button size="sm" variant="secondary" disabled>
-                                    Soon
-                                </Button>
-                            )}
+                                ) : (
+                                    <Badge variant="secondary" className="text-xs">Soon</Badge>
+                                )}
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    )
+                })}
             </CardContent>
         </Card>
     )
