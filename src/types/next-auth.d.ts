@@ -8,6 +8,7 @@ declare module "next-auth" {
         user: {
             /** The user's postal address. */
             id: string
+            username?: string | null
             leetcodeUsername?: string | null
         } & DefaultSession["user"]
     }

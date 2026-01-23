@@ -65,9 +65,19 @@ export const authOptions: NextAuthOptions = {
         })
     ],
     callbacks: {
+        async jwt({ token, user }) {
+            if (user) {
+                const u = user as any
+                token.username = u.username
+                token.leetcodeUsername = u.leetcodeUsername
+            }
+            return token
+        },
         async session({ session, token }) {
             if (token && session.user) {
                 session.user.id = token.sub as string
+                session.user.username = token.username as string
+                session.user.leetcodeUsername = token.leetcodeUsername as string
             }
             return session
         },

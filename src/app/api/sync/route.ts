@@ -3,7 +3,7 @@ import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { NextResponse } from "next/server"
 import { getNextReviewDate } from "@/lib/repetition"
-import { fetchLeetCodeSolvedProblems } from "@/lib/platforms/leetcode"
+import { fetchLeetCodeSolvedProblems, fetchLeetCodeStats } from "@/lib/platforms/leetcode"
 import { fetchCodeforcesSolvedProblems } from "@/lib/platforms/codeforces"
 import { fetchAtCoderSolvedProblems } from "@/lib/platforms/atcoder"
 import { PlatformProblem } from "@/lib/platforms"
@@ -35,8 +35,27 @@ export async function POST() {
 
         // Sync LeetCode
         if (user.leetcodeUsername) {
-            const problems = await fetchLeetCodeSolvedProblems(user.leetcodeUsername)
+            const [problems, stats] = await Promise.all([
+                fetchLeetCodeSolvedProblems(user.leetcodeUsername),
+                fetchLeetCodeStats(user.leetcodeUsername)
+            ])
+
             const added = await syncProblems(user.id, "leetcode", problems)
+
+            if (stats?.submissionCalendar) {
+                // Update stats
+                await prisma.userStats.upsert({
+                    where: { userId: user.id },
+                    create: {
+                        userId: user.id,
+                        leetcodeActivity: stats.submissionCalendar
+                    },
+                    update: {
+                        leetcodeActivity: stats.submissionCalendar
+                    }
+                })
+            }
+
             results.leetcode = added
             totalAdded += added
         }

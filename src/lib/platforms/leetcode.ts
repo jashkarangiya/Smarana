@@ -143,3 +143,37 @@ export async function validateLeetCodeUsername(username: string): Promise<boolea
         return false
     }
 }
+
+export async function fetchLeetCodeStats(username: string): Promise<{ submissionCalendar: string } | null> {
+    if (!username) return null
+
+    try {
+        const query = `
+            query userProfileCalendar($username: String!, $year: Int) {
+                matchedUser(username: $username) {
+                    submissionCalendar
+                }
+            }
+        `
+
+        const response = await fetch(LEETCODE_GRAPHQL_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Referer": "https://leetcode.com",
+            },
+            body: JSON.stringify({
+                query,
+                variables: { username },
+            }),
+        })
+
+        if (!response.ok) return null
+
+        const data = await response.json()
+        return data.data?.matchedUser || null
+    } catch (error) {
+        console.error("Error fetching LeetCode stats:", error)
+        return null
+    }
+}

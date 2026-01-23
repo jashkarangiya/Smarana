@@ -19,7 +19,7 @@ import {
     SheetTrigger,
 } from "@/components/ui/sheet"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { LayoutDashboard, ListTodo, Settings, LogOut, Sparkles, Menu, Plus, Calendar, Activity, Brain } from "lucide-react"
+import { LayoutDashboard, ListTodo, Settings, LogOut, Sparkles, Menu, Plus, Calendar, Activity, Brain, Trophy } from "lucide-react"
 import { useStats, useProblems } from "@/hooks/use-problems"
 import { motion } from "framer-motion"
 import { useState } from "react"
@@ -256,6 +256,13 @@ export function NavBar() {
                                         </DropdownMenuItem>
 
                                         <DropdownMenuItem asChild className="rounded-lg cursor-pointer text-white/80 focus:text-white focus:bg-white/10 py-2.5">
+                                            <Link href={`/u/${session.user?.username}`} className="flex items-center gap-2">
+                                                <Trophy className="h-4 w-4 text-yellow-500" />
+                                                <span className="flex-1">Public Profile</span>
+                                            </Link>
+                                        </DropdownMenuItem>
+
+                                        <DropdownMenuItem asChild className="rounded-lg cursor-pointer text-white/80 focus:text-white focus:bg-white/10 py-2.5">
                                             <Link href="/profile" className="flex items-center gap-2">
                                                 <Settings className="h-4 w-4" />
                                                 <span className="flex-1">Settings</span>
@@ -294,7 +301,7 @@ export function NavBar() {
                     </div>
                 </div>
             </div>
-        </nav>
+        </nav >
     )
 }
 

@@ -24,7 +24,14 @@ export async function GET(req: Request) {
                             image: true,
                             level: true,
                             xp: true,
-                            leetcodeUsername: true
+                            leetcodeUsername: true,
+                            stats: {
+                                select: {
+                                    currentStreak: true,
+                                    reviewsThisWeek: true,
+                                    totalReviews: true
+                                }
+                            }
                         }
                     }
                 }

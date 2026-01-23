@@ -1,30 +1,193 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Play, Pause, RotateCcw, Coffee, Brain, Timer, X, Minimize2, Maximize2, GripHorizontal } from "lucide-react"
+import { Play, Pause, RotateCcw, Timer, Settings, Volume2, VolumeX, Maximize2, Minimize2, GripHorizontal, X } from "lucide-react"
+import { Progress } from "@/components/ui/progress"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { Switch } from "@/components/ui/switch"
+import { toast } from "sonner"
 
-type TimerMode = "work" | "shortBreak" | "longBreak"
+type TimerPhase = "FOCUS" | "SHORT_BREAK" | "LONG_BREAK"
 
-const TIMER_CONFIG = {
-    work: { duration: 25 * 60, label: "Focus", icon: Brain, color: "text-primary" },
-    shortBreak: { duration: 5 * 60, label: "Short Break", icon: Coffee, color: "text-emerald-500" },
-    longBreak: { duration: 15 * 60, label: "Long Break", icon: Coffee, color: "text-blue-500" },
+interface TimerSettings {
+    focusDuration: number
+    shortBreakDuration: number
+    longBreakDuration: number
+    longBreakInterval: number
+    autoStartBreaks: boolean
+    autoStartPomodoros: boolean
+}
+
+// Default settings if API fails
+const DEFAULT_SETTINGS: TimerSettings = {
+    focusDuration: 25,
+    shortBreakDuration: 5,
+    longBreakDuration: 15,
+    longBreakInterval: 4,
+    autoStartBreaks: false,
+    autoStartPomodoros: false
 }
 
 export function PomodoroTimer() {
-    const [mode, setMode] = useState<TimerMode>("work")
-    const [timeLeft, setTimeLeft] = useState(TIMER_CONFIG.work.duration)
-    const [isRunning, setIsRunning] = useState(false)
-    const [sessions, setSessions] = useState(0)
+    // Timer State
+    const [timeLeft, setTimeLeft] = useState(25 * 60)
+    const [isActive, setIsActive] = useState(false)
+    const [phase, setPhase] = useState<TimerPhase>("FOCUS")
+    const [cycles, setCycles] = useState(0)
+
+    // Engine State (Timestamp based)
+    const endTimeRef = useRef<number | null>(null)
+    const rafRef = useRef<number | null>(null)
+
+    // Settings State
+    const [settings, setSettings] = useState<TimerSettings>(DEFAULT_SETTINGS)
+    const [soundEnabled, setSoundEnabled] = useState(true)
+    const [settingsOpen, setSettingsOpen] = useState(false)
+    const [loadingSettings, setLoadingSettings] = useState(false)
+
+    // Floating State
     const [isFloating, setIsFloating] = useState(false)
     const [position, setPosition] = useState({ x: 20, y: 100 })
     const [isDragging, setIsDragging] = useState(false)
     const dragRef = useRef<{ offsetX: number; offsetY: number }>({ offsetX: 0, offsetY: 0 })
 
-    const config = TIMER_CONFIG[mode]
-    const Icon = config.icon
+    // Load Settings
+    useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const res = await fetch("/api/me/pomodoro-settings")
+                if (res.ok) {
+                    const data = await res.json()
+                    setSettings(data)
+                    // Only update time if timer is not running
+                    if (!isActive) {
+                        setTimeLeft(data.focusDuration * 60)
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to load settings", error)
+            }
+        }
+        fetchSettings()
+    }, [])
+
+    // Timer Engine
+    useEffect(() => {
+        if (isActive && endTimeRef.current) {
+            const tick = () => {
+                const now = Date.now()
+                const remaining = Math.max(0, Math.ceil((endTimeRef.current! - now) / 1000))
+
+                setTimeLeft(remaining)
+
+                if (remaining <= 0) {
+                    handleTimerComplete()
+                } else {
+                    rafRef.current = requestAnimationFrame(tick)
+                }
+            }
+            rafRef.current = requestAnimationFrame(tick)
+        }
+
+        return () => {
+            if (rafRef.current) cancelAnimationFrame(rafRef.current)
+        }
+    }, [isActive])
+
+    const handleTimerComplete = () => {
+        setIsActive(false)
+        endTimeRef.current = null
+        playNotificationSound()
+
+        if (phase === "FOCUS") {
+            const newCycles = cycles + 1
+            setCycles(newCycles)
+
+            const isLongBreak = newCycles % settings.longBreakInterval === 0
+            if (isLongBreak) {
+                setPhase("LONG_BREAK")
+                setTimeLeft(settings.longBreakDuration * 60)
+                toast.success("Focus complete! Enjoy a long break.")
+                if (settings.autoStartBreaks) startTimer(settings.longBreakDuration * 60)
+            } else {
+                setPhase("SHORT_BREAK")
+                setTimeLeft(settings.shortBreakDuration * 60)
+                toast.success("Focus complete! Time for a short break.")
+                if (settings.autoStartBreaks) startTimer(settings.shortBreakDuration * 60)
+            }
+        } else {
+            // Break is over
+            setPhase("FOCUS")
+            setTimeLeft(settings.focusDuration * 60)
+            toast.info("Break over. Ready to focus?")
+            if (settings.autoStartPomodoros) startTimer(settings.focusDuration * 60)
+        }
+    }
+
+    const startTimer = (durationSeconds?: number) => {
+        const duration = durationSeconds || timeLeft
+        const now = Date.now()
+        endTimeRef.current = now + (duration * 1000)
+        setIsActive(true)
+
+        // Auto float on start
+        if (!isFloating) setIsFloating(true)
+    }
+
+    const pauseTimer = () => {
+        setIsActive(false)
+        endTimeRef.current = null
+    }
+
+    const resetTimer = () => {
+        setIsActive(false)
+        endTimeRef.current = null
+        setPhase("FOCUS")
+        setCycles(0)
+        setTimeLeft(settings.focusDuration * 60)
+    }
+
+    const playNotificationSound = () => {
+        if (!soundEnabled) return
+        try {
+            // Simple beep using AudioContext if file missing, or just a log for now
+            // const audio = new Audio("/sounds/bell.mp3") 
+            // audio.play().catch(e => console.log("Audio play failed", e))
+            console.log("DING!")
+        } catch (e) { }
+    }
+
+    const saveSettings = async (newSettings: TimerSettings) => {
+        setLoadingSettings(true)
+        try {
+            const res = await fetch("/api/me/pomodoro-settings", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(newSettings)
+            })
+            if (!res.ok) throw new Error("Failed to save")
+
+            setSettings(newSettings)
+
+            // If timer not running, apply immediately
+            if (!isActive) {
+                if (phase === "FOCUS") setTimeLeft(newSettings.focusDuration * 60)
+                if (phase === "SHORT_BREAK") setTimeLeft(newSettings.shortBreakDuration * 60)
+                if (phase === "LONG_BREAK") setTimeLeft(newSettings.longBreakDuration * 60)
+            }
+
+            setSettingsOpen(false)
+            toast.success("Settings saved")
+        } catch (e) {
+            toast.error("Failed to save settings")
+        } finally {
+            setLoadingSettings(false)
+        }
+    }
 
     const formatTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60)
@@ -32,68 +195,22 @@ export function PomodoroTimer() {
         return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`
     }
 
-    const progress = ((TIMER_CONFIG[mode].duration - timeLeft) / TIMER_CONFIG[mode].duration) * 100
+    const getProgress = () => {
+        let total = 0
+        if (phase === "FOCUS") total = settings.focusDuration * 60
+        else if (phase === "SHORT_BREAK") total = settings.shortBreakDuration * 60
+        else total = settings.longBreakDuration * 60
 
-    const switchMode = useCallback((newMode: TimerMode) => {
-        setMode(newMode)
-        setTimeLeft(TIMER_CONFIG[newMode].duration)
-        setIsRunning(false)
-    }, [])
-
-    const handleComplete = useCallback(() => {
-        if (typeof window !== "undefined" && "Notification" in window) {
-            if (Notification.permission === "granted") {
-                new Notification("Pomodoro Timer", {
-                    body: mode === "work" ? "Time for a break!" : "Ready to focus?",
-                    icon: "/favicon.ico",
-                })
-            }
-        }
-
-        if (mode === "work") {
-            const newSessions = sessions + 1
-            setSessions(newSessions)
-            if (newSessions % 4 === 0) {
-                switchMode("longBreak")
-            } else {
-                switchMode("shortBreak")
-            }
-        } else {
-            switchMode("work")
-        }
-    }, [mode, sessions, switchMode])
-
-    useEffect(() => {
-        let interval: NodeJS.Timeout | null = null
-
-        if (isRunning && timeLeft > 0) {
-            interval = setInterval(() => {
-                setTimeLeft((prev) => prev - 1)
-            }, 1000)
-        } else if (timeLeft === 0) {
-            handleComplete()
-        }
-
-        return () => {
-            if (interval) clearInterval(interval)
-        }
-    }, [isRunning, timeLeft, handleComplete])
-
-    const toggleTimer = () => setIsRunning(!isRunning)
-    const resetTimer = () => {
-        setTimeLeft(TIMER_CONFIG[mode].duration)
-        setIsRunning(false)
+        return ((total - timeLeft) / total) * 100
     }
 
-    useEffect(() => {
-        if (typeof window !== "undefined" && "Notification" in window) {
-            if (Notification.permission === "default") {
-                Notification.requestPermission()
-            }
-        }
-    }, [])
+    const getPhaseLabel = () => {
+        if (phase === "FOCUS") return "Focus Time"
+        if (phase === "SHORT_BREAK") return "Short Break"
+        return "Long Break"
+    }
 
-    // Dragging logic
+    // Drag Logic
     const handleMouseDown = (e: React.MouseEvent) => {
         setIsDragging(true)
         dragRef.current = {
@@ -106,42 +223,34 @@ export function PomodoroTimer() {
         const handleMouseMove = (e: MouseEvent) => {
             if (isDragging) {
                 setPosition({
-                    x: Math.max(0, Math.min(window.innerWidth - 200, e.clientX - dragRef.current.offsetX)),
-                    y: Math.max(0, Math.min(window.innerHeight - 100, e.clientY - dragRef.current.offsetY)),
+                    x: Math.max(0, Math.min(window.innerWidth - 220, e.clientX - dragRef.current.offsetX)),
+                    y: Math.max(0, Math.min(window.innerHeight - 300, e.clientY - dragRef.current.offsetY)),
                 })
             }
         }
-
         const handleMouseUp = () => setIsDragging(false)
 
         if (isDragging) {
             document.addEventListener("mousemove", handleMouseMove)
             document.addEventListener("mouseup", handleMouseUp)
         }
-
         return () => {
             document.removeEventListener("mousemove", handleMouseMove)
             document.removeEventListener("mouseup", handleMouseUp)
         }
     }, [isDragging])
 
-    // Pop out when timer starts
-    useEffect(() => {
-        if (isRunning && !isFloating) {
-            setIsFloating(true)
-        }
-    }, [isRunning, isFloating])
 
-    // Floating mini widget
+    // Floating Widget
     if (isFloating) {
         return (
             <>
                 {/* Placeholder in sidebar */}
-                <Card className="opacity-50">
+                <Card className="opacity-50 border-dashed">
                     <CardHeader className="pb-3">
                         <CardTitle className="text-base flex items-center gap-2">
                             <Timer className="h-4 w-4 text-primary" />
-                            Pomodoro Timer
+                            Pomodoro
                             <span className="ml-auto text-xs font-normal text-muted-foreground">Floating</span>
                         </CardTitle>
                     </CardHeader>
@@ -153,117 +262,60 @@ export function PomodoroTimer() {
                             onClick={() => setIsFloating(false)}
                         >
                             <Maximize2 className="h-4 w-4 mr-2" />
-                            Show Here
+                            Dock to Sidebar
                         </Button>
                     </CardContent>
                 </Card>
 
-                {/* Floating Widget */}
                 <div
-                    className="fixed z-[100] select-none"
+                    className="fixed z-[100] select-none shadow-2xl rounded-2xl overflow-hidden bg-card/95 backdrop-blur-xl border border-border/50 min-w-[240px]"
                     style={{ left: position.x, top: position.y }}
                 >
-                    <div className="bg-card/95 backdrop-blur-xl border border-border/50 rounded-2xl shadow-2xl shadow-black/20 overflow-hidden min-w-[220px]">
-                        {/* Drag Handle */}
-                        <div
-                            className="flex items-center justify-between px-3 py-2 bg-muted/50 cursor-move border-b border-border/30"
-                            onMouseDown={handleMouseDown}
-                        >
-                            <div className="flex items-center gap-2">
-                                <GripHorizontal className="h-4 w-4 text-muted-foreground" />
-                                <span className="text-xs font-medium">{config.label}</span>
+                    {/* Drag Handle */}
+                    <div
+                        className="flex items-center justify-between px-3 py-2 bg-muted/50 cursor-move border-b border-border/30"
+                        onMouseDown={handleMouseDown}
+                    >
+                        <div className="flex items-center gap-2 text-xs font-medium">
+                            <GripHorizontal className="h-4 w-4 text-muted-foreground" />
+                            {getPhaseLabel()}
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full" onClick={() => setIsFloating(false)}>
+                                <Minimize2 className="h-3 w-3" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:text-destructive" onClick={() => { setIsFloating(false); setIsActive(false); }}>
+                                <X className="h-3 w-3" />
+                            </Button>
+                        </div>
+                    </div>
+
+                    {/* Floating Content */}
+                    <div className="p-5 flex flex-col items-center gap-3">
+                        <div className="relative">
+                            <div className="text-4xl font-bold tabular-nums tracking-wider text-center">
+                                {formatTime(timeLeft)}
                             </div>
-                            <div className="flex items-center gap-1">
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-6 w-6 rounded-full"
-                                    onClick={() => setIsFloating(false)}
-                                >
-                                    <Minimize2 className="h-3 w-3" />
-                                </Button>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-6 w-6 rounded-full text-destructive hover:text-destructive"
-                                    onClick={() => {
-                                        setIsFloating(false)
-                                        setIsRunning(false)
-                                    }}
-                                >
-                                    <X className="h-3 w-3" />
-                                </Button>
-                            </div>
+                            <Progress value={getProgress()} className={`h-1.5 w-32 mt-2 ${phase !== "FOCUS" ? "bg-emerald-500/20 [&>div]:bg-emerald-500" : ""}`} />
                         </div>
 
-                        {/* Timer Content */}
-                        <div className="p-4 flex items-center gap-4">
-                            {/* Progress Ring */}
-                            <div className="relative">
-                                <svg className="w-16 h-16 -rotate-90" viewBox="0 0 64 64">
-                                    <circle
-                                        cx="32"
-                                        cy="32"
-                                        r="28"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="4"
-                                        className="text-muted/30"
-                                    />
-                                    <circle
-                                        cx="32"
-                                        cy="32"
-                                        r="28"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="4"
-                                        strokeLinecap="round"
-                                        strokeDasharray={`${2 * Math.PI * 28}`}
-                                        strokeDashoffset={`${2 * Math.PI * 28 * (1 - progress / 100)}`}
-                                        className={`${config.color} transition-all duration-1000`}
-                                    />
-                                </svg>
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                    <Icon className={`h-5 w-5 ${config.color}`} />
-                                </div>
-                            </div>
-
-                            {/* Time and Controls */}
-                            <div className="flex-1">
-                                <div className="text-2xl font-bold tabular-nums">
-                                    {formatTime(timeLeft)}
-                                </div>
-                                <div className="flex gap-2 mt-2">
-                                    <Button
-                                        variant="outline"
-                                        size="icon"
-                                        className="h-8 w-8 rounded-full"
-                                        onClick={resetTimer}
-                                    >
-                                        <RotateCcw className="h-3 w-3" />
-                                    </Button>
-                                    <Button
-                                        size="sm"
-                                        className={`h-8 px-4 rounded-full ${isRunning ? "bg-muted hover:bg-muted/80 text-foreground" : ""}`}
-                                        onClick={toggleTimer}
-                                    >
-                                        {isRunning ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
-                                    </Button>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Session dots */}
-                        <div className="flex justify-center gap-1 pb-3">
-                            {[1, 2, 3, 4].map((i) => (
-                                <div
-                                    key={i}
-                                    className={`h-1.5 w-1.5 rounded-full ${i <= (sessions % 4 || (sessions > 0 ? 4 : 0))
-                                            ? "bg-primary"
-                                            : "bg-muted"
-                                        }`}
-                                />
-                            ))}
+                        <div className="flex gap-2">
+                            <Button
+                                variant={isActive ? "outline" : "default"}
+                                size="sm"
+                                className="h-9 px-4 rounded-full"
+                                onClick={() => isActive ? pauseTimer() : startTimer()}
+                            >
+                                {isActive ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 ml-1" />}
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-9 w-9 rounded-full px-0"
+                                onClick={resetTimer}
+                            >
+                                <RotateCcw className="h-4 w-4" />
+                            </Button>
                         </div>
                     </div>
                 </div>
@@ -271,125 +323,142 @@ export function PomodoroTimer() {
         )
     }
 
-    // Normal embedded view
+    // Default View
     return (
-        <Card className="overflow-hidden">
-            <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
+        <Card className="border-primary/20 bg-gradient-to-br from-card to-primary/5">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
                     <Timer className="h-4 w-4 text-primary" />
-                    Pomodoro Timer
-                    {sessions > 0 && (
-                        <span className="ml-auto text-xs font-normal text-muted-foreground">
-                            {sessions} session{sessions !== 1 ? "s" : ""}
-                        </span>
-                    )}
+                    Pomodoro
                 </CardTitle>
+                <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSoundEnabled(!soundEnabled)}>
+                        {soundEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4 text-muted-foreground" />}
+                    </Button>
+                    <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+                        <DialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <Settings className="h-4 w-4" />
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Timer Settings</DialogTitle>
+                            </DialogHeader>
+                            <div className="grid gap-4 py-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label>Focus (min)</Label>
+                                        <Input
+                                            type="number"
+                                            value={settings.focusDuration}
+                                            onChange={(e) => setSettings({ ...settings, focusDuration: Number(e.target.value) })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Short Break (min)</Label>
+                                        <Input
+                                            type="number"
+                                            value={settings.shortBreakDuration}
+                                            onChange={(e) => setSettings({ ...settings, shortBreakDuration: Number(e.target.value) })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Long Break (min)</Label>
+                                        <Input
+                                            type="number"
+                                            value={settings.longBreakDuration}
+                                            onChange={(e) => setSettings({ ...settings, longBreakDuration: Number(e.target.value) })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Long Break Interval</Label>
+                                        <Input
+                                            type="number"
+                                            value={settings.longBreakInterval}
+                                            onChange={(e) => setSettings({ ...settings, longBreakInterval: Number(e.target.value) })}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-4 pt-2">
+                                    <div className="flex items-center justify-between">
+                                        <Label>Auto-start Breaks</Label>
+                                        <Switch
+                                            checked={settings.autoStartBreaks}
+                                            onCheckedChange={(c) => setSettings({ ...settings, autoStartBreaks: c })}
+                                        />
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <Label>Auto-start Pomodoros</Label>
+                                        <Switch
+                                            checked={settings.autoStartPomodoros}
+                                            onCheckedChange={(c) => setSettings({ ...settings, autoStartPomodoros: c })}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="flex gap-2 pt-2">
+                                    <Button variant="outline" size="sm" onClick={() => setSettings({ ...settings, focusDuration: 25, shortBreakDuration: 5, longBreakDuration: 15 })} className="flex-1">
+                                        Classic (25/5)
+                                    </Button>
+                                    <Button variant="outline" size="sm" onClick={() => setSettings({ ...settings, focusDuration: 50, shortBreakDuration: 10, longBreakDuration: 20 })} className="flex-1">
+                                        Deep Work (50/10)
+                                    </Button>
+                                </div>
+                                <Button onClick={() => saveSettings(settings)} disabled={loadingSettings}>
+                                    {loadingSettings ? "Saving..." : "Save Settings"}
+                                </Button>
+                            </div>
+                        </DialogContent>
+                    </Dialog>
+                </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-                {/* Mode Selector */}
-                <div className="flex gap-1 p-1 bg-muted/50 rounded-full">
-                    {(Object.keys(TIMER_CONFIG) as TimerMode[]).map((m) => (
-                        <button
-                            key={m}
-                            onClick={() => switchMode(m)}
-                            className={`flex-1 py-1.5 px-2 text-xs font-medium rounded-full transition-all ${mode === m
-                                    ? "bg-background text-foreground shadow-sm"
-                                    : "text-muted-foreground hover:text-foreground"
-                                }`}
-                        >
-                            {TIMER_CONFIG[m].label}
-                        </button>
-                    ))}
-                </div>
-
-                {/* Timer Display */}
-                <div className="relative flex flex-col items-center py-6">
-                    <div className="relative">
-                        <svg className="w-36 h-36 -rotate-90" viewBox="0 0 144 144">
-                            <circle
-                                cx="72"
-                                cy="72"
-                                r="64"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="6"
-                                className="text-muted/30"
+            <CardContent>
+                <div className="text-center py-4">
+                    <div className="mb-2 flex justify-center gap-2">
+                        {Array.from({ length: settings.longBreakInterval }).map((_, i) => (
+                            <div
+                                key={i}
+                                className={`h-1.5 w-6 rounded-full transition-colors ${i < (cycles % settings.longBreakInterval) ? "bg-primary" : "bg-secondary"
+                                    }`}
                             />
-                            <circle
-                                cx="72"
-                                cy="72"
-                                r="64"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="6"
-                                strokeLinecap="round"
-                                strokeDasharray={`${2 * Math.PI * 64}`}
-                                strokeDashoffset={`${2 * Math.PI * 64 * (1 - progress / 100)}`}
-                                className={`${config.color} transition-all duration-1000`}
-                            />
-                        </svg>
-                        <div className="absolute inset-0 flex flex-col items-center justify-center">
-                            <Icon className={`h-5 w-5 mb-1 ${config.color}`} />
-                            <span className="text-3xl font-bold tabular-nums">
-                                {formatTime(timeLeft)}
-                            </span>
-                            <span className="text-xs text-muted-foreground mt-0.5">
-                                {config.label}
-                            </span>
-                        </div>
+                        ))}
                     </div>
+                    <div className="text-5xl font-bold font-mono tracking-wider tabular-nums">
+                        {formatTime(timeLeft)}
+                    </div>
+                    <p className={`text-sm font-medium mt-2 ${phase !== "FOCUS" ? "text-emerald-500" : "text-muted-foreground"}`}>
+                        {getPhaseLabel()}
+                    </p>
                 </div>
 
-                {/* Controls */}
-                <div className="flex items-center justify-center gap-3">
+                <Progress value={getProgress()} className={`h-2 mb-6 ${phase !== "FOCUS" ? "bg-emerald-500/20 [&>div]:bg-emerald-500" : ""}`} />
+
+                <div className="flex justify-center gap-3">
                     <Button
-                        variant="outline"
+                        variant={isActive ? "outline" : "default"}
                         size="icon"
-                        className="h-10 w-10 rounded-full"
+                        className={`h-12 w-12 rounded-full ${isActive ? "" : "shadow-[0_0_15px_rgba(234,179,8,0.3)]"}`}
+                        onClick={() => isActive ? pauseTimer() : startTimer()}
+                    >
+                        {isActive ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-1" />}
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-12 w-12 rounded-full text-muted-foreground hover:text-foreground"
                         onClick={resetTimer}
                     >
-                        <RotateCcw className="h-4 w-4" />
+                        <RotateCcw className="h-5 w-5" />
                     </Button>
                     <Button
-                        size="lg"
-                        className={`h-12 w-24 rounded-full font-semibold ${isRunning ? "bg-muted hover:bg-muted/80 text-foreground" : ""
-                            }`}
-                        onClick={toggleTimer}
-                    >
-                        {isRunning ? (
-                            <>
-                                <Pause className="h-4 w-4 mr-1" />
-                                Pause
-                            </>
-                        ) : (
-                            <>
-                                <Play className="h-4 w-4 mr-1" />
-                                Start
-                            </>
-                        )}
-                    </Button>
-                    <Button
-                        variant="outline"
+                        variant="ghost"
                         size="icon"
-                        className="h-10 w-10 rounded-full"
+                        className="h-12 w-12 rounded-full text-muted-foreground hover:text-foreground"
                         onClick={() => setIsFloating(true)}
                         title="Pop out"
                     >
-                        <Maximize2 className="h-4 w-4" />
+                        <Maximize2 className="h-5 w-5" />
                     </Button>
-                </div>
-
-                {/* Session indicators */}
-                <div className="flex items-center justify-center gap-1.5 pt-2">
-                    {[1, 2, 3, 4].map((i) => (
-                        <div
-                            key={i}
-                            className={`h-2 w-2 rounded-full transition-colors ${i <= (sessions % 4 || (sessions > 0 ? 4 : 0))
-                                    ? "bg-primary"
-                                    : "bg-muted"
-                                }`}
-                        />
-                    ))}
                 </div>
             </CardContent>
         </Card>

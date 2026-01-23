@@ -10,6 +10,7 @@ import { DailyChallenge } from "@/components/daily-challenge"
 import { PomodoroTimer } from "@/components/pomodoro-timer"
 import { FriendsList } from "@/components/friends-list"
 import { ProblemNotesModal } from "@/components/problem-notes-modal"
+import { LeaderboardWidget } from "@/components/leaderboard-widget"
 import { formatDistanceToNow } from "date-fns"
 import { Brain, CheckCircle2, Calendar, RefreshCw, ArrowUpRight, Flame, TrendingUp, Trophy, Star, Zap, Lightbulb, FileText, Share2, Timer, ArrowRight } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -361,8 +362,11 @@ export default function DashboardPage() {
                             <PomodoroTimer />
                         </TabsContent>
 
-                        <TabsContent value="social" className="mt-0">
+
+
+                        <TabsContent value="social" className="mt-0 space-y-6">
                             <FriendsList />
+                            <LeaderboardWidget />
                         </TabsContent>
                     </Tabs>
 
