@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useUser, useUpdateLeetCodeUsername, useSync, useStats } from "@/hooks/use-problems"
 import { toast } from "sonner"
-import { RefreshCw, User, Link as LinkIcon, CheckCircle2, Lock, AtSign, Clock, Settings, Link2, Shield, Bell, Share2, Download } from "lucide-react"
+import { RefreshCw, User, Link as LinkIcon, CheckCircle2, Lock, AtSign, Clock, Settings, Link2, Shield, Bell, Share2, Download, Check, X, Eye, EyeOff } from "lucide-react"
 import { PlatformConnector } from "@/components/platform-connector"
 import { AvatarUpload } from "@/components/avatar-upload"
 import { cn } from "@/lib/utils"
@@ -44,6 +44,9 @@ export default function ProfilePage() {
     const [newPassword, setNewPassword] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
     const [savingPassword, setSavingPassword] = useState(false)
+    const [showCurrentPassword, setShowCurrentPassword] = useState(false)
+    const [showNewPassword, setShowNewPassword] = useState(false)
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
     // Avatar state
     const [avatarUrl, setAvatarUrl] = useState("")
@@ -144,8 +147,24 @@ export default function ProfilePage() {
             toast.error("Please fill in all fields")
             return
         }
-        if (newPassword.length < 8) {
-            toast.error("Password must be at least 8 characters")
+        if (newPassword.length < 12) {
+            toast.error("Password must be at least 12 characters")
+            return
+        }
+        if (!/[A-Z]/.test(newPassword)) {
+            toast.error("Password must contain an uppercase letter")
+            return
+        }
+        if (!/[a-z]/.test(newPassword)) {
+            toast.error("Password must contain a lowercase letter")
+            return
+        }
+        if (!/[0-9]/.test(newPassword)) {
+            toast.error("Password must contain a number")
+            return
+        }
+        if (!/[^A-Za-z0-9]/.test(newPassword)) {
+            toast.error("Password must contain a special character")
             return
         }
         if (newPassword !== confirmPassword) {
@@ -156,7 +175,7 @@ export default function ProfilePage() {
         setSavingPassword(true)
         try {
             const res = await fetch("/api/me/password", {
-                method: "POST",
+                method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ currentPassword, newPassword }),
             })
@@ -421,48 +440,119 @@ export default function ProfilePage() {
                                 <CardDescription>
                                     {hasPassword
                                         ? "Update your account password"
-                                        : "Add a password to sign in with email"}
+                                        : "Add a password to sign in with email and password"}
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 {hasPassword && (
                                     <div className="space-y-2">
                                         <Label htmlFor="current-password">Current Password</Label>
-                                        <Input
-                                            id="current-password"
-                                            type="password"
-                                            placeholder="••••••••"
-                                            value={currentPassword}
-                                            onChange={(e) => setCurrentPassword(e.target.value)}
-                                        />
+                                        <div className="relative">
+                                            <Input
+                                                id="current-password"
+                                                type={showCurrentPassword ? "text" : "password"}
+                                                placeholder="••••••••"
+                                                value={currentPassword}
+                                                onChange={(e) => setCurrentPassword(e.target.value)}
+                                            />
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                                                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                                            >
+                                                {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                            </Button>
+                                        </div>
                                     </div>
                                 )}
                                 <div className="space-y-2">
                                     <Label htmlFor="new-password">New Password</Label>
-                                    <Input
-                                        id="new-password"
-                                        type="password"
-                                        placeholder="••••••••"
-                                        value={newPassword}
-                                        onChange={(e) => setNewPassword(e.target.value)}
-                                    />
+                                    <div className="relative">
+                                        <Input
+                                            id="new-password"
+                                            type={showNewPassword ? "text" : "password"}
+                                            placeholder="••••••••"
+                                            value={newPassword}
+                                            onChange={(e) => setNewPassword(e.target.value)}
+                                        />
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                                            onClick={() => setShowNewPassword(!showNewPassword)}
+                                        >
+                                            {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                        </Button>
+                                    </div>
                                 </div>
+
+                                {newPassword && (
+                                    <div className="space-y-2 p-3 rounded-lg bg-secondary/50">
+                                        <p className="text-sm font-medium">Password Requirements:</p>
+                                        <div className="space-y-1">
+                                            {[
+                                                { label: "At least 12 characters", test: newPassword.length >= 12 },
+                                                { label: "Contains uppercase letter", test: /[A-Z]/.test(newPassword) },
+                                                { label: "Contains lowercase letter", test: /[a-z]/.test(newPassword) },
+                                                { label: "Contains number", test: /[0-9]/.test(newPassword) },
+                                                { label: "Contains special character", test: /[^A-Za-z0-9]/.test(newPassword) },
+                                            ].map((rule, i) => (
+                                                <div key={i} className="flex items-center gap-2 text-sm">
+                                                    {rule.test ? (
+                                                        <Check className="h-4 w-4 text-emerald-500" />
+                                                    ) : (
+                                                        <X className="h-4 w-4 text-muted-foreground" />
+                                                    )}
+                                                    <span className={cn(
+                                                        rule.test ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"
+                                                    )}>
+                                                        {rule.label}
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
                                 <div className="space-y-2">
                                     <Label htmlFor="confirm-password">Confirm Password</Label>
-                                    <Input
-                                        id="confirm-password"
-                                        type="password"
-                                        placeholder="••••••••"
-                                        value={confirmPassword}
-                                        onChange={(e) => setConfirmPassword(e.target.value)}
-                                    />
+                                    <div className="relative">
+                                        <Input
+                                            id="confirm-password"
+                                            type={showConfirmPassword ? "text" : "password"}
+                                            placeholder="••••••••"
+                                            value={confirmPassword}
+                                            onChange={(e) => setConfirmPassword(e.target.value)}
+                                        />
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                        >
+                                            {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                        </Button>
+                                    </div>
+                                    {confirmPassword && (
+                                        <p className={cn(
+                                            "text-sm flex items-center gap-1",
+                                            newPassword === confirmPassword ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"
+                                        )}>
+                                            {newPassword === confirmPassword ? (
+                                                <><Check className="h-3 w-3" /> Passwords match</>
+                                            ) : (
+                                                <><X className="h-3 w-3" /> Passwords do not match</>
+                                            )}
+                                        </p>
+                                    )}
                                 </div>
                                 <Button onClick={handleSavePassword} disabled={savingPassword}>
                                     {savingPassword ? "Saving..." : hasPassword ? "Update Password" : "Set Password"}
                                 </Button>
-                                <p className="text-xs text-muted-foreground">
-                                    Password must be at least 8 characters long.
-                                </p>
                             </CardContent>
                         </Card>
                     )}

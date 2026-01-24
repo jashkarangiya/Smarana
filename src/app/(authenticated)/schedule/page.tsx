@@ -120,7 +120,11 @@ export default function SchedulePage() {
                                 <Button variant="outline" size="icon" onClick={() => setViewDate(d => addDays(d, -30))}>
                                     <ChevronLeft className="h-4 w-4" />
                                 </Button>
-                                <Button variant="outline" size="icon" onClick={() => setViewDate(new Date())}>
+                                <Button variant="outline" onClick={() => {
+                                    const today = new Date()
+                                    setViewDate(today)
+                                    setSelectedDate(today)
+                                }}>
                                     Today
                                 </Button>
                                 <Button variant="outline" size="icon" onClick={() => setViewDate(d => addDays(d, 30))}>
@@ -194,7 +198,7 @@ export default function SchedulePage() {
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <Clock className="h-5 w-5" />
-                                {isToday(selectedDate) ? "Duet Today" : format(selectedDate, "EEEE, MMMM do")}
+                                {isToday(selectedDate) ? "Due Today" : format(selectedDate, "EEEE, MMMM do")}
                             </CardTitle>
                             <CardDescription>
                                 {problemsForDate.length} problems scheduled for review
