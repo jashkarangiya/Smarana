@@ -31,12 +31,14 @@ interface UserProfile {
             totalReviews: number
             problemsTracked: number
             reviewsThisWeek: number
-            currentStreak: number | null // null if hidden
+            currentStreak: number | null
             longestStreak: number | null
             leetcodeActivity: string | null
         }
         leetcodeUsername: string | null
-        showLeetCodePublicly: boolean
+        codeforcesUsername: string | null
+        codechefUsername: string | null
+        atcoderUsername: string | null
     }
     activityHeatmap: Record<string, number>
 }
@@ -200,10 +202,10 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
                 <div className="space-y-6">
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-base">Identity</CardTitle>
+                            <CardTitle className="text-base">Platforms</CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-4">
-                            {user.leetcodeUsername ? (
+                        <CardContent className="space-y-3">
+                            {user.leetcodeUsername && (
                                 <div className="flex items-center justify-between text-sm">
                                     <span className="text-muted-foreground">LeetCode</span>
                                     <a
@@ -215,15 +217,55 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
                                         {user.leetcodeUsername}
                                     </a>
                                 </div>
-                            ) : (
-                                <div className="text-sm text-muted-foreground italic">No Linked Accounts publicly visible</div>
+                            )}
+                            {user.codeforcesUsername && (
+                                <div className="flex items-center justify-between text-sm">
+                                    <span className="text-muted-foreground">Codeforces</span>
+                                    <a
+                                        href={`https://codeforces.com/profile/${user.codeforcesUsername}`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="font-medium hover:underline"
+                                    >
+                                        {user.codeforcesUsername}
+                                    </a>
+                                </div>
+                            )}
+                            {user.codechefUsername && (
+                                <div className="flex items-center justify-between text-sm">
+                                    <span className="text-muted-foreground">CodeChef</span>
+                                    <a
+                                        href={`https://www.codechef.com/users/${user.codechefUsername}`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="font-medium hover:underline"
+                                    >
+                                        {user.codechefUsername}
+                                    </a>
+                                </div>
+                            )}
+                            {user.atcoderUsername && (
+                                <div className="flex items-center justify-between text-sm">
+                                    <span className="text-muted-foreground">AtCoder</span>
+                                    <a
+                                        href={`https://atcoder.jp/users/${user.atcoderUsername}`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="font-medium hover:underline"
+                                    >
+                                        {user.atcoderUsername}
+                                    </a>
+                                </div>
+                            )}
+                            {!user.leetcodeUsername && !user.codeforcesUsername && !user.codechefUsername && !user.atcoderUsername && (
+                                <div className="text-sm text-muted-foreground italic">No platforms visible</div>
                             )}
                         </CardContent>
                     </Card>
                 </div>
 
                 {/* LeetCode History */}
-                {user.showLeetCodePublicly && user.stats?.leetcodeActivity && (
+                {user.stats?.leetcodeActivity && (
                     <div className="md:col-span-3 space-y-4">
                         <h2 className="text-xl font-bold flex items-center gap-2">
                             <Code2 className="w-5 h-5 text-green-500" />

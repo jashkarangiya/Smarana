@@ -13,6 +13,7 @@ import { RefreshCw, User, Link as LinkIcon, CheckCircle2, Lock, AtSign, Clock, S
 import { PlatformConnector } from "@/components/platform-connector"
 import { AvatarUpload } from "@/components/avatar-upload"
 import { cn } from "@/lib/utils"
+import { Switch } from "@/components/ui/switch"
 
 type SettingsSection = "profile" | "integrations" | "security" | "preferences"
 
@@ -52,6 +53,14 @@ export default function ProfilePage() {
     const [avatarUrl, setAvatarUrl] = useState("")
     const [savingAvatar, setSavingAvatar] = useState(false)
 
+    // Privacy settings state
+    const [profileVisibility, setProfileVisibility] = useState<"PUBLIC" | "FRIENDS_ONLY" | "PRIVATE">("PUBLIC")
+    const [showStreakToPublic, setShowStreakToPublic] = useState(true)
+    const [showStreakToFriends, setShowStreakToFriends] = useState(true)
+    const [showPlatformsToPublic, setShowPlatformsToPublic] = useState(true)
+    const [showPlatformsToFriends, setShowPlatformsToFriends] = useState(true)
+    const [savingPrivacy, setSavingPrivacy] = useState(false)
+
     useEffect(() => {
         if (user?.leetcodeUsername) {
             setLeetcodeUsername(user.leetcodeUsername)
@@ -87,6 +96,25 @@ export default function ProfilePage() {
             }
         }
         fetchPasswordStatus()
+    }, [])
+
+    useEffect(() => {
+        const fetchPrivacySettings = async () => {
+            try {
+                const res = await fetch("/api/me/privacy")
+                if (res.ok) {
+                    const data = await res.json()
+                    setProfileVisibility(data.profileVisibility || "PUBLIC")
+                    setShowStreakToPublic(data.showStreakToPublic ?? true)
+                    setShowStreakToFriends(data.showStreakToFriends ?? true)
+                    setShowPlatformsToPublic(data.showPlatformsToPublic ?? true)
+                    setShowPlatformsToFriends(data.showPlatformsToFriends ?? true)
+                }
+            } catch (e) {
+                console.error("Failed to fetch privacy settings", e)
+            }
+        }
+        fetchPrivacySettings()
     }, [])
 
     const handleSaveLeetcodeUsername = () => {
@@ -228,6 +256,33 @@ export default function ProfilePage() {
             toast.error("Failed to update avatar")
         } finally {
             setSavingAvatar(false)
+        }
+    }
+
+    const handleSavePrivacy = async () => {
+        setSavingPrivacy(true)
+        try {
+            const res = await fetch("/api/me/privacy", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    profileVisibility,
+                    showStreakToPublic,
+                    showStreakToFriends,
+                    showPlatformsToPublic,
+                    showPlatformsToFriends
+                })
+            })
+            if (res.ok) {
+                toast.success("Privacy settings updated!")
+            } else {
+                const data = await res.json()
+                toast.error(data.error || "Failed to update settings")
+            }
+        } catch (e) {
+            toast.error("Failed to update privacy settings")
+        } finally {
+            setSavingPrivacy(false)
         }
     }
 
@@ -559,45 +614,147 @@ export default function ProfilePage() {
 
                     {/* Preferences Section */}
                     {activeSection === "preferences" && (
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Bell className="h-5 w-5" />
-                                    Preferences
-                                </CardTitle>
-                                <CardDescription>
-                                    Customize your experience
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="space-y-6">
-                                    <div className="flex items-center justify-between">
-                                        <div className="space-y-0.5">
-                                            <Label className="text-base">Email Notifications</Label>
-                                            <p className="text-sm text-muted-foreground">Receive daily reminders for due reviews</p>
+                        <div className="space-y-6">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <Shield className="h-5 w-5" />
+                                        Privacy Settings
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Control who can see your profile and activity
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-6">
+                                    {/* Profile Visibility */}
+                                    <div className="space-y-3">
+                                        <Label className="text-base">Profile Visibility</Label>
+                                        <div className="space-y-2">
+                                            <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+                                                <input
+                                                    type="radio"
+                                                    name="profileVisibility"
+                                                    checked={profileVisibility === "PUBLIC"}
+                                                    onChange={() => setProfileVisibility("PUBLIC")}
+                                                    className="w-4 h-4"
+                                                />
+                                                <div>
+                                                    <p className="font-medium">Public</p>
+                                                    <p className="text-sm text-muted-foreground">Anyone can view your profile</p>
+                                                </div>
+                                            </label>
+                                            <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+                                                <input
+                                                    type="radio"
+                                                    name="profileVisibility"
+                                                    checked={profileVisibility === "FRIENDS_ONLY"}
+                                                    onChange={() => setProfileVisibility("FRIENDS_ONLY")}
+                                                    className="w-4 h-4"
+                                                />
+                                                <div>
+                                                    <p className="font-medium">Friends Only</p>
+                                                    <p className="text-sm text-muted-foreground">Only friends can view your profile</p>
+                                                </div>
+                                            </label>
+                                            <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+                                                <input
+                                                    type="radio"
+                                                    name="profileVisibility"
+                                                    checked={profileVisibility === "PRIVATE"}
+                                                    onChange={() => setProfileVisibility("PRIVATE")}
+                                                    className="w-4 h-4"
+                                                />
+                                                <div>
+                                                    <p className="font-medium">Private</p>
+                                                    <p className="text-sm text-muted-foreground">Only you can view your profile</p>
+                                                </div>
+                                            </label>
                                         </div>
-                                        <div className="h-6 w-10 rounded-full bg-muted border cursor-not-allowed" />
                                     </div>
-                                    <div className="flex items-center justify-between">
-                                        <div className="space-y-0.5">
-                                            <Label className="text-base">Dark Mode</Label>
-                                            <p className="text-sm text-muted-foreground">Toggle dark/light theme</p>
+
+                                    {/* Streak Visibility */}
+                                    <div className="space-y-3 pt-4 border-t">
+                                        <Label className="text-base">Streak Visibility</Label>
+                                        <div className="space-y-3">
+                                            <div className="flex items-center justify-between">
+                                                <div className="space-y-0.5">
+                                                    <Label>Show streak to public</Label>
+                                                    <p className="text-sm text-muted-foreground">Anyone can see your streak stats</p>
+                                                </div>
+                                                <Switch
+                                                    checked={showStreakToPublic}
+                                                    onCheckedChange={setShowStreakToPublic}
+                                                />
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <div className="space-y-0.5">
+                                                    <Label>Show streak to friends</Label>
+                                                    <p className="text-sm text-muted-foreground">Friends can see your streak stats</p>
+                                                </div>
+                                                <Switch
+                                                    checked={showStreakToFriends}
+                                                    onCheckedChange={setShowStreakToFriends}
+                                                />
+                                            </div>
                                         </div>
-                                        <div className="h-6 w-10 rounded-full bg-primary border cursor-not-allowed opacity-50" />
                                     </div>
-                                    <div className="pt-6 border-t">
-                                        <h3 className="font-semibold mb-2">Data Management</h3>
-                                        <Button
-                                            variant="outline"
-                                            className="w-full sm:w-auto"
-                                            onClick={handleExportData}
-                                        >
-                                            Export Data (JSON)
-                                        </Button>
+
+                                    {/* Platform Visibility */}
+                                    <div className="space-y-3 pt-4 border-t">
+                                        <Label className="text-base">Platform Visibility</Label>
+                                        <div className="space-y-3">
+                                            <div className="flex items-center justify-between">
+                                                <div className="space-y-0.5">
+                                                    <Label>Show platforms to public</Label>
+                                                    <p className="text-sm text-muted-foreground">Anyone can see your linked accounts</p>
+                                                </div>
+                                                <Switch
+                                                    checked={showPlatformsToPublic}
+                                                    onCheckedChange={setShowPlatformsToPublic}
+                                                />
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <div className="space-y-0.5">
+                                                    <Label>Show platforms to friends</Label>
+                                                    <p className="text-sm text-muted-foreground">Friends can see your linked accounts</p>
+                                                </div>
+                                                <Switch
+                                                    checked={showPlatformsToFriends}
+                                                    onCheckedChange={setShowPlatformsToFriends}
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            </CardContent>
-                        </Card>
+
+                                    <Button
+                                        onClick={handleSavePrivacy}
+                                        disabled={savingPrivacy}
+                                        className="w-full sm:w-auto"
+                                    >
+                                        {savingPrivacy ? "Saving..." : "Save Privacy Settings"}
+                                    </Button>
+                                </CardContent>
+                            </Card>
+
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <Download className="h-5 w-5" />
+                                        Data Management
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <Button
+                                        variant="outline"
+                                        className="w-full sm:w-auto"
+                                        onClick={handleExportData}
+                                    >
+                                        <Download className="h-4 w-4 mr-2" />
+                                        Export Data (JSON)
+                                    </Button>
+                                </CardContent>
+                            </Card>
+                        </div>
                     )}
                 </div>
             </div>

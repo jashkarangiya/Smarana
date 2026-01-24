@@ -24,6 +24,7 @@ import { useStats, useProblems } from "@/hooks/use-problems"
 import { motion } from "framer-motion"
 import { useState } from "react"
 import { CommandMenu } from "./command-menu"
+import { NotificationsBell } from "./notifications-bell"
 
 export function NavBar() {
     const { data: session } = useSession()
@@ -126,6 +127,9 @@ export function NavBar() {
                                 <div className="ml-1">
                                     <CommandMenu />
                                 </div>
+
+                                {/* Notifications Bell */}
+                                <NotificationsBell />
 
                                 {/* Mobile Menu Button */}
                                 <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>

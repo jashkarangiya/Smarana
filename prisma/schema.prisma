@@ -7,6 +7,10 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Note: SQLite doesn't support enums, using String with validation in code
+// ProfileVisibility: "PUBLIC" | "FRIENDS_ONLY" | "PRIVATE"
+// NotificationType: "FRIEND_REQUEST_RECEIVED" | "FRIEND_REQUEST_ACCEPTED" | "SYSTEM"
+
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -61,6 +65,13 @@ model User {
   reviewLogs  ReviewLog[]
 
   // Privacy Settings
+  profileVisibility       String  @default("PUBLIC") // "PUBLIC" | "FRIENDS_ONLY" | "PRIVATE"
+  showStreakToPublic      Boolean @default(true)
+  showStreakToFriends     Boolean @default(true)
+  showPlatformsToPublic   Boolean @default(true)
+  showPlatformsToFriends  Boolean @default(true)
+
+  // Deprecated - migrate to profileVisibility
   isProfilePublic      Boolean   @default(true)
   showStreakPublicly   Boolean   @default(true)
   showLeetCodePublicly Boolean   @default(true)
@@ -78,6 +89,9 @@ model User {
   leetcodeAccount      LeetCodeAccount?
   leetcodeSubmissions  LeetCodeSubmission[]
   passwordResetTokens  PasswordResetToken[]
+
+  notifications        Notification[]
+  actorNotifications   Notification[] @relation("NotificationActor")
 
   @@index([usernameLower])
 }
@@ -250,4 +264,22 @@ model PasswordResetToken {
   createdAt DateTime @default(now())
 
   @@index([userId, expiresAt])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type      String   // "FRIEND_REQUEST_RECEIVED" | "FRIEND_REQUEST_ACCEPTED" | "SYSTEM"
+  actorId   String?
+  actor     User?    @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  title     String
+  body      String?
+  href      String?   // where to send the user when they click
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, readAt, createdAt])
 }

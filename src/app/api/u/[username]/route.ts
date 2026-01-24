@@ -24,10 +24,12 @@ export async function GET(
                 image: true,
                 level: true,
                 xp: true,
-                isProfilePublic: true,
-                showStreakPublicly: true,
-                showLeetCodePublicly: true,
-                createdAt: true, // "Joined Jan 2025"
+                profileVisibility: true,
+                showStreakToPublic: true,
+                showStreakToFriends: true,
+                showPlatformsToPublic: true,
+                showPlatformsToFriends: true,
+                createdAt: true,
                 stats: {
                     select: {
                         currentStreak: true,
@@ -38,9 +40,12 @@ export async function GET(
                         leetcodeActivity: true,
                     }
                 },
-                leetcodeUsername: true, // Checked later based on privacy
-                friendsAsUser: { where: { friendId: viewerId || "" }, select: { id: true } }, // Check friendship A->B
-                friendsAsFriend: { where: { userId: viewerId || "" }, select: { id: true } }, // Check friendship B->A
+                leetcodeUsername: true,
+                codeforcesUsername: true,
+                codechefUsername: true,
+                atcoderUsername: true,
+                friendsAsUser: { where: { friendId: viewerId || "" }, select: { id: true } },
+                friendsAsFriend: { where: { userId: viewerId || "" }, select: { id: true } },
                 reviewLogs: {
                     where: {
                         date: {
@@ -62,28 +67,41 @@ export async function GET(
         // 2. Privacy Logic
         const isSelf = viewerId === user.id
         const isFriend = user.friendsAsUser.length > 0 || user.friendsAsFriend.length > 0
-        const isPublic = user.isProfilePublic
+        const visibility = user.profileVisibility
 
-        // If private and not self/friend -> 403 or limited view
-        // Requirement: "If Friends only: require auth + friendship"
-        // We'll interpret !isProfilePublic as "Friends Only" mostly, or "Private".
-        // Let's assume isProfilePublic=false means "Friends Only".
-        // True "Private" (hidden from everyone) isn't in requirements yet, but let's be safe.
-
-        const canViewProfile = isPublic || isFriend || isSelf
+        // Determine access based on profileVisibility
+        let canViewProfile = false
+        if (visibility === "PUBLIC") {
+            canViewProfile = true
+        } else if (visibility === "FRIENDS_ONLY") {
+            canViewProfile = isSelf || isFriend
+        } else if (visibility === "PRIVATE") {
+            canViewProfile = isSelf
+        }
 
         if (!canViewProfile) {
             return NextResponse.json({
                 isPrivate: true,
+                isFriend,
+                isSelf,
                 user: {
                     name: user.name,
                     username: user.username,
-                    image: user.image, // Basic info allowed
+                    image: user.image,
                 }
             })
         }
 
-        // 3. Assemble Response
+        // 3. Determine visibility for streak and platforms
+        const canViewStreak = isSelf ||
+            (isFriend && user.showStreakToFriends) ||
+            (!isFriend && user.showStreakToPublic)
+
+        const canViewPlatforms = isSelf ||
+            (isFriend && user.showPlatformsToFriends) ||
+            (!isFriend && user.showPlatformsToPublic)
+
+        // 4. Assemble Response
         const responseData = {
             isPrivate: false,
             isFriend,
@@ -100,12 +118,14 @@ export async function GET(
                     totalReviews: user.stats?.totalReviews || 0,
                     problemsTracked: user.stats?.problemsTracked || 0,
                     reviewsThisWeek: user.stats?.reviewsThisWeek || 0,
-                    // Streak privacy
-                    currentStreak: (isSelf || user.showStreakPublicly) ? (user.stats?.currentStreak || 0) : null,
-                    longestStreak: (isSelf || user.showStreakPublicly) ? (user.stats?.longestStreak || 0) : null,
-                    leetcodeActivity: (isSelf || user.showLeetCodePublicly) ? (user.stats?.leetcodeActivity || null) : null,
+                    currentStreak: canViewStreak ? (user.stats?.currentStreak || 0) : null,
+                    longestStreak: canViewStreak ? (user.stats?.longestStreak || 0) : null,
+                    leetcodeActivity: canViewPlatforms ? (user.stats?.leetcodeActivity || null) : null,
                 },
-                leetcodeUsername: (isSelf || user.showLeetCodePublicly) ? user.leetcodeUsername : null,
+                leetcodeUsername: canViewPlatforms ? user.leetcodeUsername : null,
+                codeforcesUsername: canViewPlatforms ? user.codeforcesUsername : null,
+                codechefUsername: canViewPlatforms ? user.codechefUsername : null,
+                atcoderUsername: canViewPlatforms ? user.atcoderUsername : null,
             },
             activityHeatmap: user.reviewLogs.reduce((acc, log) => {
                 const dateStr = log.date.toISOString().split("T")[0]

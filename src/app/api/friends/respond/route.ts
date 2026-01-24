@@ -37,7 +37,7 @@ export async function POST(req: Request) {
         }
 
         if (action === "ACCEPT") {
-            // Transaction to create bidirectional friendship and delete request
+            // Transaction to create bidirectional friendship, notification, and delete request
             await prisma.$transaction([
                 // Create A -> B
                 prisma.friendship.create({
@@ -51,6 +51,16 @@ export async function POST(req: Request) {
                     data: {
                         userId: request.receiverId,
                         friendId: request.senderId
+                    }
+                }),
+                // Notify sender that request was accepted
+                prisma.notification.create({
+                    data: {
+                        userId: request.senderId,
+                        type: "FRIEND_REQUEST_ACCEPTED",
+                        actorId: session.user.id,
+                        title: `${session.user.name || session.user.username} accepted your friend request`,
+                        href: `/u/${session.user.username}`
                     }
                 }),
                 // Delete request
