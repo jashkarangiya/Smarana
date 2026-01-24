@@ -136,8 +136,7 @@ async function main() {
         data: [
             { userId: demoUser.id, friendId: friendUser.id },
             { userId: friendUser.id, friendId: demoUser.id }
-        ],
-        skipDuplicates: true
+        ]
     })
 
     console.log(`✅ Created friend and friendship`)
