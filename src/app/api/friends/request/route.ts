@@ -13,19 +13,32 @@ export async function POST(req: Request) {
         const { recipientUsername } = await req.json()
 
         if (!recipientUsername) {
-            return new NextResponse("Missing recipient username", { status: 400 })
+            return new NextResponse("Missing recipient identifier", { status: 400 })
         }
 
-        if (recipientUsername === session.user.username) {
+        const searchTerm = recipientUsername.trim()
+
+        if (searchTerm.toLowerCase() === session.user.username?.toLowerCase()) {
             return new NextResponse("Cannot add yourself", { status: 400 })
         }
 
-        const recipient = await prisma.user.findUnique({
-            where: { username: recipientUsername }
+        // Search by username (case-insensitive) OR exact name match
+        const recipient = await prisma.user.findFirst({
+            where: {
+                OR: [
+                    { usernameLower: searchTerm.toLowerCase() },
+                    { name: { equals: searchTerm, mode: 'insensitive' } }
+                ]
+            }
         })
 
         if (!recipient) {
             return new NextResponse("User not found", { status: 404 })
+        }
+
+        // Prevent adding yourself (check again after finding user)
+        if (recipient.id === session.user.id) {
+            return new NextResponse("Cannot add yourself", { status: 400 })
         }
 
         // Check if request already exists
@@ -56,14 +69,25 @@ export async function POST(req: Request) {
             return new NextResponse("Already friends", { status: 400 })
         }
 
-        // Create request
-        await prisma.friendRequest.create({
-            data: {
-                senderId: session.user.id,
-                receiverId: recipient.id,
-                status: "PENDING"
-            }
-        })
+        // Create request and notification in a transaction
+        await prisma.$transaction([
+            prisma.friendRequest.create({
+                data: {
+                    senderId: session.user.id,
+                    receiverId: recipient.id,
+                    status: "PENDING"
+                }
+            }),
+            prisma.notification.create({
+                data: {
+                    userId: recipient.id,
+                    type: "FRIEND_REQUEST_RECEIVED",
+                    actorId: session.user.id,
+                    title: `${session.user.name || session.user.username} sent you a friend request`,
+                    href: "/friends"
+                }
+            })
+        ])
 
         return NextResponse.json({ success: true })
 

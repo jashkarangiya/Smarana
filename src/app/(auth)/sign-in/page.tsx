@@ -181,7 +181,7 @@ function AuthPageContent() {
     const features = isSignIn ? SIGNIN_FEATURES : SIGNUP_FEATURES
 
     return (
-        <div className="min-h-screen w-full overflow-hidden bg-background">
+        <div className="min-h-screen w-full overflow-x-hidden overflow-y-auto bg-background">
             {/* Container that slides - width is 200vw */}
             <div
                 className="flex min-h-screen transition-transform duration-500 ease-in-out"

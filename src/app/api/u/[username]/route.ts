@@ -25,9 +25,11 @@ export async function GET(
                 level: true,
                 xp: true,
                 profileVisibility: true,
-                showStreak: true,
-                showPlatforms: true,
-                createdAt: true, // "Joined Jan 2025"
+                showStreakToPublic: true,
+                showStreakToFriends: true,
+                showPlatformsToPublic: true,
+                showPlatformsToFriends: true,
+                createdAt: true,
                 stats: {
                     select: {
                         currentStreak: true,
@@ -38,20 +40,20 @@ export async function GET(
                         leetcodeActivity: true,
                     }
                 },
-                leetcodeUsername: true, // Checked later based on privacy
-                friendsAsUser: { where: { friendId: viewerId || "" }, select: { id: true } }, // Check friendship A->B
-                friendsAsFriend: { where: { userId: viewerId || "" }, select: { id: true } }, // Check friendship B->A
+                leetcodeUsername: true,
+                codeforcesUsername: true,
+                codechefUsername: true,
+                atcoderUsername: true,
+                friendsAsUser: { where: { friendId: viewerId || "" }, select: { id: true } },
+                friendsAsFriend: { where: { userId: viewerId || "" }, select: { id: true } },
                 reviewLogs: {
-                    // Fetch logs for roughly last 370 days (to be safe)
-                    // Since day is YYYYMMDD int, we can estimate range or just fetch "last 400 entries"
-                    // Or precise math: 20250123.
-                    // Let's just fetch last 400 for MVP since indexing by day is efficient.
-                    orderBy: {
-                        day: 'desc'
+                    where: {
+                        date: {
+                            gte: new Date(new Date().setFullYear(new Date().getFullYear() - 1))
+                        }
                     },
-                    take: 400,
                     select: {
-                        day: true,
+                        date: true,
                         count: true
                     }
                 }
@@ -65,25 +67,41 @@ export async function GET(
         // 2. Privacy Logic
         const isSelf = viewerId === user.id
         const isFriend = user.friendsAsUser.length > 0 || user.friendsAsFriend.length > 0
-        // Visibility: PUBLIC (everyone), FRIENDS (friends only), PRIVATE (only self)
+        const visibility = user.profileVisibility
 
+        // Determine access based on profileVisibility
         let canViewProfile = false
-        if (isSelf) canViewProfile = true
-        else if (user.profileVisibility === "PUBLIC") canViewProfile = true
-        else if (user.profileVisibility === "FRIENDS" && isFriend) canViewProfile = true
+        if (visibility === "PUBLIC") {
+            canViewProfile = true
+        } else if (visibility === "FRIENDS_ONLY") {
+            canViewProfile = isSelf || isFriend
+        } else if (visibility === "PRIVATE") {
+            canViewProfile = isSelf
+        }
 
         if (!canViewProfile) {
             return NextResponse.json({
                 isPrivate: true,
+                isFriend,
+                isSelf,
                 user: {
                     name: user.name,
                     username: user.username,
-                    image: user.image, // Basic info allowed
+                    image: user.image,
                 }
             })
         }
 
-        // 3. Assemble Response
+        // 3. Determine visibility for streak and platforms
+        const canViewStreak = isSelf ||
+            (isFriend && user.showStreakToFriends) ||
+            (!isFriend && user.showStreakToPublic)
+
+        const canViewPlatforms = isSelf ||
+            (isFriend && user.showPlatformsToFriends) ||
+            (!isFriend && user.showPlatformsToPublic)
+
+        // 4. Assemble Response
         const responseData = {
             isPrivate: false,
             isFriend,
@@ -100,19 +118,17 @@ export async function GET(
                     totalReviews: user.stats?.totalReviews || 0,
                     problemsTracked: user.stats?.problemsTracked || 0,
                     reviewsThisWeek: user.stats?.reviewsThisWeek || 0,
-                    // Streak privacy
-                    currentStreak: (isSelf || user.showStreak) ? (user.stats?.currentStreak || 0) : null,
-                    longestStreak: (isSelf || user.showStreak) ? (user.stats?.longestStreak || 0) : null,
-                    leetcodeActivity: (isSelf || user.showPlatforms) ? (user.stats?.leetcodeActivity || null) : null,
+                    currentStreak: canViewStreak ? (user.stats?.currentStreak || 0) : null,
+                    longestStreak: canViewStreak ? (user.stats?.longestStreak || 0) : null,
+                    leetcodeActivity: canViewPlatforms ? (user.stats?.leetcodeActivity || null) : null,
                 },
-                leetcodeUsername: (isSelf || user.showPlatforms) ? user.leetcodeUsername : null,
-                showStreakPublicly: user.showStreak, // Mapping old to new for frontend compat
-                showLeetCodePublicly: user.showPlatforms,
+                leetcodeUsername: canViewPlatforms ? user.leetcodeUsername : null,
+                codeforcesUsername: canViewPlatforms ? user.codeforcesUsername : null,
+                codechefUsername: canViewPlatforms ? user.codechefUsername : null,
+                atcoderUsername: canViewPlatforms ? user.atcoderUsername : null,
             },
             activityHeatmap: user.reviewLogs.reduce((acc, log) => {
-                // Convert YYYYMMDD -> YYYY-MM-DD
-                const d = String(log.day)
-                const dateStr = `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`
+                const dateStr = log.date.toISOString().split("T")[0]
                 acc[dateStr] = log.count
                 return acc
             }, {} as Record<string, number>)

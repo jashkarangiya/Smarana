@@ -7,6 +7,10 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Note: SQLite doesn't support enums, using String with validation in code
+// ProfileVisibility: "PUBLIC" | "FRIENDS_ONLY" | "PRIVATE"
+// NotificationType: "FRIEND_REQUEST_RECEIVED" | "FRIEND_REQUEST_ACCEPTED" | "SYSTEM"
+
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -39,7 +43,8 @@ model User {
   name               String?
   email              String?   @unique
   emailVerified      DateTime?
-  password           String?
+  passwordHash       String?
+  passwordUpdatedAt  DateTime?
   image              String?
   username           String?   @unique
   usernameLower      String?   @unique
@@ -58,32 +63,38 @@ model User {
   sessions    Session[]
   problems    RevisionProblem[]
   reviewLogs  ReviewLog[]
-  
-  // Privacy Settings
-  profileVisibility    String            @default("PUBLIC") // PUBLIC, FRIENDS, PRIVATE
-  showStreak           Boolean           @default(true)
-  showPlatforms        Boolean           @default(true)
 
-  // Old flags deprecated/removed in favor of above
-  // isProfilePublic      Boolean   @default(true)
-  // showStreakPublicly   Boolean   @default(true)
-  // showLeetCodePublicly Boolean   @default(true)
+  // Privacy Settings
+  profileVisibility       String  @default("PUBLIC") // "PUBLIC" | "FRIENDS_ONLY" | "PRIVATE"
+  showStreakToPublic      Boolean @default(true)
+  showStreakToFriends     Boolean @default(true)
+  showPlatformsToPublic   Boolean @default(true)
+  showPlatformsToFriends  Boolean @default(true)
+
+  // Deprecated - migrate to profileVisibility
+  isProfilePublic      Boolean   @default(true)
+  showStreakPublicly   Boolean   @default(true)
+  showLeetCodePublicly Boolean   @default(true)
 
   stats       UserStats?
 
   sentFriendRequests     FriendRequest[] @relation("Sender")
   receivedFriendRequests FriendRequest[] @relation("Receiver")
-  
+
   friendsAsUser   Friendship[] @relation("UserAsUser")
   friendsAsFriend Friendship[] @relation("UserAsFriend")
 
   pomodoroSettings PomodoroSettings?
 
-  reviews     ReviewEvent[]
+  leetcodeAccount      LeetCodeAccount?
+  leetcodeSubmissions  LeetCodeSubmission[]
+  passwordResetTokens  PasswordResetToken[]
+
+  notifications        Notification[]
+  actorNotifications   Notification[] @relation("NotificationActor")
 
   @@index([usernameLower])
 }
-
 
 model PomodoroSettings {
   id        String   @id @default(cuid())
@@ -113,8 +124,6 @@ model FriendRequest {
 
   @@unique([senderId, receiverId])
   @@index([receiverId])
-  @@index([senderId, status])
-  @@index([receiverId, status])
 }
 
 model Friendship {
@@ -149,72 +158,128 @@ model RevisionProblem {
   title            String
   difficulty       String
   url              String
-  firstSolvedAt    DateTime?
-  lastSolvedAt     DateTime?
+  firstSolvedAt    DateTime
+  lastSolvedAt     DateTime
   nextReviewAt     DateTime
   interval         Int      @default(0)
   reviewCount      Int      @default(0)
   lastReviewedAt   DateTime?
   notes            String?  @default("")
   solution         String?  @default("")
+
+  // Latest solution metadata (for quick access)
+  latestAcceptedSubmissionId String?
+  latestSolutionLang         String?
+  latestSolutionFetchedAt    DateTime?
+
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
-  
-  reviewEvents     ReviewEvent[]
 
   @@unique([userId, platform, problemSlug])
-  @@index([userId, nextReviewAt])
-  @@index([userId, difficulty])
-  @@index([userId, updatedAt])
-}
-
-model ReviewEvent {
-  id          String   @id @default(cuid())
-  userId      String
-  problemId   String
-  rating      Int      // 1=forgot, 2=hard, 3=easy
-  reviewedAt  DateTime @default(now())
-  interval    Int
-  xpEarned    Int      @default(0)
-
-  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  problem RevisionProblem @relation(fields: [problemId], references: [id], onDelete: Cascade)
-
-  @@index([userId, reviewedAt])
-  @@index([problemId, reviewedAt])
 }
 
 model ReviewLog {
   id        String   @id @default(cuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  // Changed from DateTime to Int (YYYYMMDD) for uniqueness
-  day       Int      
-  
+  date      DateTime @default(now())
   count     Int      @default(1)
   xpEarned  Int      @default(0)
 
-  @@unique([userId, day])
+  @@unique([userId, date])
 }
 
 model UserStats {
   id              String   @id @default(cuid())
   userId          String   @unique
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
   currentStreak   Int      @default(0)
   longestStreak   Int      @default(0)
   totalReviews    Int      @default(0)
   problemsTracked Int      @default(0)
   lastReviewedAt  DateTime?
-  
+
   // Weekly stats (reset via job or computed)
   reviewsThisWeek Int      @default(0)
 
   // External Platform Activity (JSON)
   // Stores raw submission calendar: { "timestamp_seconds": count }
   leetcodeActivity String?
-  
+
   updatedAt       DateTime @updatedAt
+}
+
+model LeetCodeAccount {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  username      String
+  authType      String   @default("PUBLIC") // "PUBLIC" | "COOKIE" | "EXTENSION" | "UPLOAD"
+  lastSyncedAt  DateTime?
+  syncStatus    String?  @default("OK") // "OK" | "ERROR" | "SYNCING"
+  syncError     String?
+
+  // For future cookie-based sync (encrypted):
+  // encryptedSessionCookie String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model LeetCodeSubmission {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  submissionId  String   // LeetCode submission id
+  problemSlug   String
+  problemTitle  String?
+  status        String   // ACCEPTED, WRONG_ANSWER, etc
+  lang          String?
+  code          String?  // store if user enabled "store solutions"
+  runtime       String?
+  memory        String?
+  submittedAt   DateTime
+
+  createdAt     DateTime @default(now())
+
+  @@unique([userId, submissionId])
+  @@index([userId, submittedAt])
+  @@index([userId, problemSlug, submittedAt])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, expiresAt])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type      String   // "FRIEND_REQUEST_RECEIVED" | "FRIEND_REQUEST_ACCEPTED" | "SYSTEM"
+  actorId   String?
+  actor     User?    @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  title     String
+  body      String?
+  href      String?   // where to send the user when they click
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, readAt, createdAt])
 }
