@@ -24,9 +24,9 @@ export async function GET(
                 image: true,
                 level: true,
                 xp: true,
-                isProfilePublic: true,
-                showStreakPublicly: true,
-                showLeetCodePublicly: true,
+                profileVisibility: true,
+                showStreak: true,
+                showPlatforms: true,
                 createdAt: true, // "Joined Jan 2025"
                 stats: {
                     select: {
@@ -42,13 +42,16 @@ export async function GET(
                 friendsAsUser: { where: { friendId: viewerId || "" }, select: { id: true } }, // Check friendship A->B
                 friendsAsFriend: { where: { userId: viewerId || "" }, select: { id: true } }, // Check friendship B->A
                 reviewLogs: {
-                    where: {
-                        date: {
-                            gte: new Date(new Date().setFullYear(new Date().getFullYear() - 1))
-                        }
+                    // Fetch logs for roughly last 370 days (to be safe)
+                    // Since day is YYYYMMDD int, we can estimate range or just fetch "last 400 entries"
+                    // Or precise math: 20250123.
+                    // Let's just fetch last 400 for MVP since indexing by day is efficient.
+                    orderBy: {
+                        day: 'desc'
                     },
+                    take: 400,
                     select: {
-                        date: true,
+                        day: true,
                         count: true
                     }
                 }
@@ -62,15 +65,12 @@ export async function GET(
         // 2. Privacy Logic
         const isSelf = viewerId === user.id
         const isFriend = user.friendsAsUser.length > 0 || user.friendsAsFriend.length > 0
-        const isPublic = user.isProfilePublic
+        // Visibility: PUBLIC (everyone), FRIENDS (friends only), PRIVATE (only self)
 
-        // If private and not self/friend -> 403 or limited view
-        // Requirement: "If Friends only: require auth + friendship"
-        // We'll interpret !isProfilePublic as "Friends Only" mostly, or "Private".
-        // Let's assume isProfilePublic=false means "Friends Only".
-        // True "Private" (hidden from everyone) isn't in requirements yet, but let's be safe.
-
-        const canViewProfile = isPublic || isFriend || isSelf
+        let canViewProfile = false
+        if (isSelf) canViewProfile = true
+        else if (user.profileVisibility === "PUBLIC") canViewProfile = true
+        else if (user.profileVisibility === "FRIENDS" && isFriend) canViewProfile = true
 
         if (!canViewProfile) {
             return NextResponse.json({
@@ -101,14 +101,18 @@ export async function GET(
                     problemsTracked: user.stats?.problemsTracked || 0,
                     reviewsThisWeek: user.stats?.reviewsThisWeek || 0,
                     // Streak privacy
-                    currentStreak: (isSelf || user.showStreakPublicly) ? (user.stats?.currentStreak || 0) : null,
-                    longestStreak: (isSelf || user.showStreakPublicly) ? (user.stats?.longestStreak || 0) : null,
-                    leetcodeActivity: (isSelf || user.showLeetCodePublicly) ? (user.stats?.leetcodeActivity || null) : null,
+                    currentStreak: (isSelf || user.showStreak) ? (user.stats?.currentStreak || 0) : null,
+                    longestStreak: (isSelf || user.showStreak) ? (user.stats?.longestStreak || 0) : null,
+                    leetcodeActivity: (isSelf || user.showPlatforms) ? (user.stats?.leetcodeActivity || null) : null,
                 },
-                leetcodeUsername: (isSelf || user.showLeetCodePublicly) ? user.leetcodeUsername : null,
+                leetcodeUsername: (isSelf || user.showPlatforms) ? user.leetcodeUsername : null,
+                showStreakPublicly: user.showStreak, // Mapping old to new for frontend compat
+                showLeetCodePublicly: user.showPlatforms,
             },
             activityHeatmap: user.reviewLogs.reduce((acc, log) => {
-                const dateStr = log.date.toISOString().split("T")[0]
+                // Convert YYYYMMDD -> YYYY-MM-DD
+                const d = String(log.day)
+                const dateStr = `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`
                 acc[dateStr] = log.count
                 return acc
             }, {} as Record<string, number>)

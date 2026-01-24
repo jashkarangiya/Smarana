@@ -183,9 +183,9 @@ export function NavBar() {
                                                 <span className="font-medium">Insights</span>
                                             </Link>
                                             <Link
-                                                href="/profile"
+                                                href="/settings"
                                                 onClick={() => setMobileMenuOpen(false)}
-                                                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive("/profile")
+                                                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive("/settings")
                                                     ? 'bg-white/10 text-white'
                                                     : 'text-white/60 hover:bg-white/5 hover:text-white'
                                                     }`}
@@ -263,7 +263,7 @@ export function NavBar() {
                                         </DropdownMenuItem>
 
                                         <DropdownMenuItem asChild className="rounded-lg cursor-pointer text-white/80 focus:text-white focus:bg-white/10 py-2.5">
-                                            <Link href="/profile" className="flex items-center gap-2">
+                                            <Link href="/settings" className="flex items-center gap-2">
                                                 <Settings className="h-4 w-4" />
                                                 <span className="flex-1">Settings</span>
                                             </Link>
