@@ -27,7 +27,7 @@ export async function POST(req: Request) {
             where: {
                 OR: [
                     { usernameLower: searchTerm.toLowerCase() },
-                    { name: { equals: searchTerm, mode: 'insensitive' } }
+                    { name: searchTerm }
                 ]
             }
         })

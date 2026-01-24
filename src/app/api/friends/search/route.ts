@@ -20,14 +20,15 @@ export async function GET(req: NextRequest) {
         const searchTerm = query.trim()
 
         // Search for users by username or name
+        const searchLower = searchTerm.toLowerCase()
         const users = await prisma.user.findMany({
             where: {
                 AND: [
                     { id: { not: session.user.id } }, // Exclude current user
                     {
                         OR: [
-                            { username: { contains: searchTerm, mode: 'insensitive' } },
-                            { name: { contains: searchTerm, mode: 'insensitive' } }
+                            { usernameLower: { contains: searchLower } },
+                            { name: { contains: searchTerm } }
                         ]
                     }
                 ]
