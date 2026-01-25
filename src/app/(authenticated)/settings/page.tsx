@@ -221,7 +221,7 @@ export default function ProfilePage() {
             const url = window.URL.createObjectURL(blob)
             const a = document.createElement("a")
             a.href = url
-            a.download = `algorecall-export-${new Date().toISOString().split('T')[0]}.json`
+            a.download = `smarana-export-${new Date().toISOString().split('T')[0]}.json`
             document.body.appendChild(a)
             a.click()
             window.URL.revokeObjectURL(url)
@@ -320,7 +320,7 @@ export default function ProfilePage() {
                                     </CardTitle>
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                         <CardDescription>
-                                            Your unique username for AlgoRecall
+                                            Your unique username for Smarana
                                         </CardDescription>
                                         <Button variant="outline" size="sm" asChild className="shrink-0 gap-2">
                                             <a href={`/u/${username}`} target="_blank" rel="noopener noreferrer">

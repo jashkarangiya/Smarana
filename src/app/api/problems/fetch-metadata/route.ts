@@ -27,7 +27,7 @@ export async function POST(request: Request) {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "User-Agent": "Mozilla/5.0 (compatible; AlgoRecall/1.0)"
+                    "User-Agent": "Mozilla/5.0 (compatible; Smarana/1.0)"
                 },
                 body: JSON.stringify({
                     query: `

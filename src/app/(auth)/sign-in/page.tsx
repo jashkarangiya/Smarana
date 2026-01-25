@@ -227,7 +227,7 @@ function AuthPageContent() {
                                 <Link href="/" className="flex justify-center mb-4"><Logo size="lg" /></Link>
                                 <h1 className="text-2xl font-bold">Sign in</h1>
                                 <p className="text-sm text-muted-foreground mt-1">
-                                    New to AlgoRecall?{" "}
+                                    New to Smarana?{" "}
                                     <button onClick={() => handleModeChange("register")} className="text-primary hover:underline font-medium">
                                         Create an account
                                     </button>
@@ -394,7 +394,7 @@ function AuthPageContent() {
                         <div className="absolute top-20 right-20 w-64 h-64 rounded-full border border-primary-foreground/10" />
                         <div className="absolute bottom-20 left-20 w-48 h-48 rounded-full border border-primary-foreground/10" />
                         <div className="relative z-10 max-w-sm">
-                            <h2 className="text-3xl font-bold mb-2">Welcome to AlgoRecall</h2>
+                            <h2 className="text-3xl font-bold mb-2">Welcome to Smarana</h2>
                             <p className="text-primary-foreground/80 mb-8">Master algorithms through spaced repetition and never forget.</p>
                             <div className="space-y-5">
                                 {SIGNUP_FEATURES.map((f, i) => (

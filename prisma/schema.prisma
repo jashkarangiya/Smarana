@@ -63,6 +63,7 @@ model User {
   sessions    Session[]
   problems    RevisionProblem[]
   reviewLogs  ReviewLog[]
+  reviewEvents ReviewEvent[]
 
   // Privacy Settings
   profileVisibility       String  @default("PUBLIC") // "PUBLIC" | "FRIENDS_ONLY" | "PRIVATE"
@@ -95,6 +96,25 @@ model User {
 
   @@index([usernameLower])
 }
+
+model ReviewEvent {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  problemId String
+  problem   RevisionProblem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  rating    Int      // 1-5
+  interval  Int      // New interval in days
+  xpEarned  Int      @default(0)
+  
+  reviewedAt DateTime @default(now())
+
+  @@index([userId, reviewedAt])
+}
+
+
 
 model PomodoroSettings {
   id        String   @id @default(cuid())
@@ -173,6 +193,7 @@ model RevisionProblem {
   latestSolutionFetchedAt    DateTime?
 
   createdAt        DateTime @default(now())
+  reviewEvents     ReviewEvent[]
   updatedAt        DateTime @updatedAt
 
   @@unique([userId, platform, problemSlug])

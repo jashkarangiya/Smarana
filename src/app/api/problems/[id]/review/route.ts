@@ -41,11 +41,9 @@ export async function POST(
     }
 
     const now = new Date()
-    // Calculate YYYYMMDD integer
-    const year = now.getUTCFullYear()
-    const month = now.getUTCMonth() + 1
-    const day = now.getUTCDate()
-    const dayKey = year * 10000 + month * 100 + day // 20260123
+    // Normalize to midnight for daily logging
+    const today = new Date(now)
+    today.setHours(0, 0, 0, 0)
 
     const newReviewCount = problem.reviewCount + 1
 
@@ -97,9 +95,9 @@ export async function POST(
             // 4. Update Daily Log (Aggregated)
             await tx.reviewLog.upsert({
                 where: {
-                    userId_day: {
+                    userId_date: {
                         userId: user.id,
-                        day: dayKey,
+                        date: today,
                     },
                 },
                 update: {
@@ -108,7 +106,7 @@ export async function POST(
                 },
                 create: {
                     userId: user.id,
-                    day: dayKey,
+                    date: today,
                     count: 1,
                     xpEarned: xpEarned,
                 },
