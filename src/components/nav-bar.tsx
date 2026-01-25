@@ -19,12 +19,14 @@ import {
     SheetTrigger,
 } from "@/components/ui/sheet"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { LayoutDashboard, ListTodo, Settings, LogOut, Sparkles, Menu, Plus, Calendar, Activity, Brain, Trophy } from "lucide-react"
+import { LayoutDashboard, ListTodo, Settings, LogOut, Sparkles, Menu, Calendar, Activity, Brain, Trophy, Timer } from "lucide-react"
 import { useStats, useProblems } from "@/hooks/use-problems"
 import { motion } from "framer-motion"
 import { useState } from "react"
 import { CommandMenu } from "./command-menu"
 import { NotificationsBell } from "./notifications-bell"
+import { PomodoroSheet } from "./pomodoro-sheet"
+import { usePomodoro } from "@/hooks/use-pomodoro"
 
 export function NavBar() {
     const { data: session } = useSession()
@@ -32,6 +34,10 @@ export function NavBar() {
     const { data: dueProblems } = useProblems("due")
     const pathname = usePathname()
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+    const [pomodoroOpen, setPomodoroOpen] = useState(false)
+
+    // Use shared Pomodoro context for consistent state
+    const { isActive: pomodoroActive, timeLeft: pomodoroTimeLeft, formatTime } = usePomodoro()
 
     const isActive = (path: string) => pathname === path
 
@@ -70,7 +76,7 @@ export function NavBar() {
                                 <Sparkles className="h-4 w-4 text-[#d6a24b]" />
                             </div>
                             <span className="font-bold text-lg tracking-tight text-white/95 hidden md:block">
-                                AlgoRecall
+                                Smarana
                             </span>
                         </Link>
                     </div>
@@ -125,8 +131,28 @@ export function NavBar() {
 
                                 {/* Compact Search Trigger */}
                                 <div className="ml-1">
-                                    <CommandMenu />
+                                    <CommandMenu onOpenPomodoro={() => setPomodoroOpen(true)} />
                                 </div>
+
+                                {/* Pomodoro Timer */}
+                                <Button
+                                    variant="ghost"
+                                    className={`relative h-9 rounded-lg hover:bg-white/10 transition-colors hidden sm:flex items-center gap-1.5 px-2 ${
+                                        pomodoroActive ? "text-amber-400" : "text-white/50 hover:text-white"
+                                    }`}
+                                    onClick={() => setPomodoroOpen(true)}
+                                    title="Pomodoro Timer"
+                                >
+                                    <Timer className="h-4 w-4" />
+                                    {pomodoroActive && (
+                                        <span className="text-xs font-mono tabular-nums">
+                                            {formatTime(pomodoroTimeLeft)}
+                                        </span>
+                                    )}
+                                </Button>
+
+                                {/* Pomodoro Sheet */}
+                                <PomodoroSheet open={pomodoroOpen} onOpenChange={setPomodoroOpen} />
 
                                 {/* Notifications Bell */}
                                 <NotificationsBell />
@@ -321,21 +347,22 @@ function AvatarWithProgress({
     name?: string | null
     size?: number
 }) {
+    const progressDeg = Math.max(0, Math.min(1, progress)) * 360
+
     return (
         <div
-            className="rounded-full p-[2px] border border-white/10 relative"
+            className="rounded-full p-[2px] relative"
             style={{
                 width: size,
                 height: size,
-                background: `conic-gradient(#d6a24b ${progress * 360}deg, rgba(255,255,255,0.10) 0deg)`
+                background: `conic-gradient(from 0deg, #d6a24b ${progressDeg}deg, rgba(255,255,255,0.10) ${progressDeg}deg 360deg)`
             }}
         >
-            <Avatar className="w-full h-full border-2 border-[#121212]">
+            <Avatar className="w-full h-full border-2 border-[#0a0a0a]">
                 <AvatarImage src={image || ""} />
                 <AvatarFallback
-                    className="text-white font-bold"
+                    className="text-white font-bold bg-[#1c1c1c]"
                     style={{
-                        background: 'rgba(28,28,28,0.95)',
                         fontSize: size * 0.35
                     }}
                 >

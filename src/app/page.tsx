@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, Brain, BookOpen, Sparkles } from "lucide-react"
+import { ArrowRight, Brain, BookOpen, Sparkles, Github, Linkedin, Twitter, Coffee } from "lucide-react"
 
 export default function LandingPage() {
   const { data: session, status } = useSession()
@@ -96,7 +96,7 @@ export default function LandingPage() {
                   <div className="w-3 h-3 rounded-full bg-emerald-500/20" />
                 </div>
                 <div className="flex-1 text-center text-[10px] text-muted-foreground font-mono">
-                  algorecall.com/dashboard
+                  smarana.app/dashboard
                 </div>
               </div>
               {/* Mock Content */}
@@ -158,7 +158,7 @@ export default function LandingPage() {
                 Your Gateway to <span className="text-primary">Algorithm Mastery</span>
               </h2>
               <p className="text-muted-foreground text-center mb-16 max-w-xl mx-auto">
-                AlgoRecall helps you remember what you learn through scientifically-proven
+                Smarana helps you remember what you learn through scientifically-proven
                 spaced repetition techniques.
               </p>
 
@@ -201,20 +201,101 @@ export default function LandingPage() {
       </main>
 
       {/* Footer - Tatva Style */}
-      <footer className="py-8 border-t border-border/50">
+      <footer className="py-16 border-t border-border/50">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <div className="h-7 w-7 rounded-full bg-gradient-to-br from-primary to-amber-600 flex items-center justify-center">
-                <Brain className="h-4 w-4 text-white" />
+          {/* Sanskrit Quote */}
+          <div className="text-center mb-12">
+            <p className="text-2xl sm:text-3xl font-serif text-primary/80 mb-2">स्मरणं ज्ञानस्य मूलम्</p>
+            <p className="text-sm text-muted-foreground italic">Remembrance is the root of knowledge</p>
+          </div>
+
+          <div className="border-t border-border/30 pt-12" />
+
+          {/* Footer Content */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
+            {/* Brand Column */}
+            <div className="col-span-2 md:col-span-1">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary to-amber-600 flex items-center justify-center">
+                  <Brain className="h-4 w-4 text-white" />
+                </div>
+                <span className="font-semibold text-lg">Smarana</span>
               </div>
-              <span className="font-medium text-sm">AlgoRecall</span>
+              <p className="text-sm text-muted-foreground mb-4">
+                Your spaced repetition companion for mastering algorithms
+              </p>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span>Developed by</span>
+                <div className="h-6 w-6 rounded-full bg-muted overflow-hidden">
+                  <div className="h-full w-full bg-gradient-to-br from-primary/20 to-amber-600/20" />
+                </div>
+              </div>
             </div>
+
+            {/* Socials Column */}
+            <div>
+              <h4 className="font-medium mb-4 text-sm">Socials</h4>
+              <ul className="space-y-3">
+                <li>
+                  <a href="https://twitter.com" target="_blank" rel="noopener noreferrer"
+                     className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                    <Twitter className="h-4 w-4" />
+                    <span>X</span>
+                  </a>
+                </li>
+                <li>
+                  <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer"
+                     className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                    <Linkedin className="h-4 w-4" />
+                    <span>LinkedIn</span>
+                  </a>
+                </li>
+                <li>
+                  <a href="https://github.com" target="_blank" rel="noopener noreferrer"
+                     className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                    <Github className="h-4 w-4" />
+                    <span>GitHub</span>
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            {/* Resources Column */}
+            <div>
+              <h4 className="font-medium mb-4 text-sm">Resources</h4>
+              <ul className="space-y-3">
+                <li>
+                  <Link href="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                    About
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/how-it-works" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                    How It Works
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            {/* Support Column */}
+            <div>
+              <h4 className="font-medium mb-4 text-sm">Support</h4>
+              <ul className="space-y-3">
+                <li>
+                  <a href="https://buymeacoffee.com" target="_blank" rel="noopener noreferrer"
+                     className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                    <Coffee className="h-4 w-4" />
+                    <span>Buy me a coffee</span>
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Copyright */}
+          <div className="mt-12 pt-6 border-t border-border/30 text-center">
             <p className="text-xs text-muted-foreground">
-              Your spaced repetition companion for algorithms
-            </p>
-            <p className="text-xs text-muted-foreground">
-              © {new Date().getFullYear()} AlgoRecall
+              © {new Date().getFullYear()} Smarana
             </p>
           </div>
         </div>
