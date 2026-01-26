@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
@@ -19,7 +20,7 @@ import {
     SheetTrigger,
 } from "@/components/ui/sheet"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { LayoutDashboard, ListTodo, Settings, LogOut, Sparkles, Menu, Calendar, Activity, Brain, Trophy, Timer } from "lucide-react"
+import { LayoutDashboard, ListTodo, Settings, LogOut, Menu, Calendar, Activity, Brain, Trophy, Timer } from "lucide-react"
 import { useStats, useProblems } from "@/hooks/use-problems"
 import { motion } from "framer-motion"
 import { useState } from "react"
@@ -65,17 +66,17 @@ export function NavBar() {
                 >
                     {/* Brand */}
                     <div className="flex items-center gap-4">
-                        <Link href={session ? "/dashboard" : "/"} className="flex items-center gap-3 group">
-                            <div
-                                className="w-8 h-8 rounded-xl flex items-center justify-center border transition-all duration-300 group-hover:scale-105 group-hover:shadow-[0_0_20px_rgba(214,162,75,0.3)]"
-                                style={{
-                                    background: 'linear-gradient(135deg, rgba(214,162,75,0.1), rgba(214,162,75,0.05))',
-                                    borderColor: 'rgba(214,162,75,0.2)'
-                                }}
-                            >
-                                <Sparkles className="h-4 w-4 text-[#d6a24b]" />
+                        <Link href={session ? "/dashboard" : "/"} className="flex items-center gap-2.5 group">
+                            <div className="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0 transition-all duration-300 group-hover:scale-105 group-hover:shadow-[0_0_20px_rgba(214,162,75,0.3)]">
+                                <Image
+                                    src="/logo.png"
+                                    alt="Smarana"
+                                    width={36}
+                                    height={36}
+                                    className="w-full h-full object-cover"
+                                />
                             </div>
-                            <span className="font-bold text-lg tracking-tight text-white/95 hidden md:block">
+                            <span className="font-bold text-lg tracking-tight text-white/95 hidden md:block leading-none">
                                 Smarana
                             </span>
                         </Link>
@@ -164,17 +165,17 @@ export function NavBar() {
                                             <Menu className="h-5 w-5 text-white/80" />
                                         </Button>
                                     </SheetTrigger>
-                                    <SheetContent side="right" className="w-[300px] p-0 bg-[#0c0c0c]/95 backdrop-blur-xl border-white/10">
-                                        <SheetHeader className="p-6 pb-4 border-b border-white/10">
+                                    <SheetContent side="right" className="w-[280px] sm:w-[320px] p-0 bg-[#0c0c0c]/95 backdrop-blur-xl border-white/10">
+                                        <SheetHeader className="p-4 sm:p-6 pb-4 border-b border-white/10">
                                             <SheetTitle className="flex items-center gap-3">
                                                 <AvatarWithProgress
                                                     progress={xpProgress}
                                                     image={session.user?.image}
                                                     name={session.user?.name}
-                                                    size={48}
+                                                    size={44}
                                                 />
-                                                <div className="text-left">
-                                                    <p className="font-semibold text-white">{session.user?.name}</p>
+                                                <div className="text-left min-w-0 flex-1">
+                                                    <p className="font-semibold text-white truncate">{session.user?.name}</p>
                                                     <div className="flex items-center gap-2 mt-1">
                                                         <span className="text-xs font-bold text-[#d6a24b] bg-[#d6a24b]/10 px-1.5 py-0.5 rounded">
                                                             LVL {stats?.level || 1}
@@ -185,8 +186,24 @@ export function NavBar() {
                                             </SheetTitle>
                                         </SheetHeader>
 
+                                        {/* Review CTA for Mobile */}
+                                        {totalDue > 0 && (
+                                            <div className="p-4 pb-2">
+                                                <Button
+                                                    asChild
+                                                    className="w-full rounded-xl bg-[#d6a24b] text-black hover:bg-[#b8862f] h-11 font-semibold shadow-[0_0_15px_rgba(214,162,75,0.25)]"
+                                                    onClick={() => setMobileMenuOpen(false)}
+                                                >
+                                                    <Link href="/review">
+                                                        <Brain className="mr-2 h-4 w-4" />
+                                                        Review {totalDue} Problems
+                                                    </Link>
+                                                </Button>
+                                            </div>
+                                        )}
+
                                         {/* Navigation Links */}
-                                        <div className="p-4 space-y-1">
+                                        <div className="p-4 pt-2 space-y-1">
                                             {navLinks.map((link) => (
                                                 <Link
                                                     key={link.href}
@@ -223,6 +240,27 @@ export function NavBar() {
                                                 <Settings className="h-5 w-5" />
                                                 <span className="font-medium">Settings</span>
                                             </Link>
+
+                                            {/* Pomodoro Timer for Mobile */}
+                                            <button
+                                                onClick={() => {
+                                                    setMobileMenuOpen(false)
+                                                    setPomodoroOpen(true)
+                                                }}
+                                                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all w-full text-left ${
+                                                    pomodoroActive
+                                                        ? 'bg-amber-500/10 text-amber-400'
+                                                        : 'text-white/60 hover:bg-white/5 hover:text-white'
+                                                }`}
+                                            >
+                                                <Timer className="h-5 w-5" />
+                                                <span className="font-medium">Pomodoro Timer</span>
+                                                {pomodoroActive && (
+                                                    <span className="ml-auto text-sm font-mono tabular-nums">
+                                                        {formatTime(pomodoroTimeLeft)}
+                                                    </span>
+                                                )}
+                                            </button>
                                         </div>
 
                                         {/* Sign Out */}

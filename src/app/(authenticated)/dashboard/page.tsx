@@ -81,41 +81,41 @@ export default function DashboardPage() {
     const totalDue = dueProblems?.length || 0
 
     return (
-        <div className="container mx-auto px-4 py-6 max-w-6xl">
+        <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-6xl">
             {/* Hero Section */}
-            <div className="card-glow mb-8 p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="card-glow mb-6 sm:mb-8 p-5 sm:p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6">
                 {/* Background Decor handled by card-glow */}
-                <div className="relative z-10 space-y-4 max-w-xl">
-                    <div className="space-y-2">
-                        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-white/95">
+                <div className="relative z-10 space-y-3 sm:space-y-4 max-w-xl">
+                    <div className="space-y-1.5 sm:space-y-2">
+                        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-white/95">
                             Ready to recall, {user?.name?.split(' ')[0] || 'Developer'}?
                         </h1>
-                        <p className="text-lg text-white/70">
+                        <p className="text-base sm:text-lg text-white/70">
                             You have <span className="font-semibold text-[#d6a24b]">{totalDue} problems</span> due for review today.
-                            {totalDue > 0 ? " Keep that streak alive!" : " You're all caught up!"}
+                            <span className="hidden sm:inline">{totalDue > 0 ? " Keep that streak alive!" : " You're all caught up!"}</span>
                         </p>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-3 pt-2">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 pt-1 sm:pt-2">
                         {totalDue > 0 ? (
                             <>
-                                <Button asChild size="lg" className="rounded-full px-8 py-6 text-base bg-[#d6a24b] text-black hover:bg-[#b8862f] shadow-[0_0_20px_rgba(214,162,75,0.3)] hover:shadow-[0_0_30px_rgba(214,162,75,0.5)] transition-all">
+                                <Button asChild size="lg" className="w-full sm:w-auto rounded-full px-6 sm:px-8 py-5 sm:py-6 text-sm sm:text-base bg-[#d6a24b] text-black hover:bg-[#b8862f] shadow-[0_0_20px_rgba(214,162,75,0.3)] hover:shadow-[0_0_30px_rgba(214,162,75,0.5)] transition-all">
                                     <Link href="/review">
-                                        <Brain className="mr-2 h-5 w-5" />
+                                        <Brain className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                                         Start Review Session
                                     </Link>
                                 </Button>
-                                <Button asChild variant="outline" size="lg" className="rounded-full px-6 py-6 text-base border-white/20 bg-white/5 hover:bg-white/10 text-white">
+                                <Button asChild variant="outline" size="lg" className="w-full sm:w-auto rounded-full px-5 sm:px-6 py-5 sm:py-6 text-sm sm:text-base border-white/20 bg-white/5 hover:bg-white/10 text-white">
                                     <Link href="/review?limit=5">
-                                        <Zap className="mr-2 h-5 w-5 text-[#d6a24b]" />
+                                        <Zap className="mr-2 h-4 w-4 sm:h-5 sm:w-5 text-[#d6a24b]" />
                                         Quick 5
                                     </Link>
                                 </Button>
                             </>
                         ) : (
-                            <Button asChild size="lg" className="rounded-full px-8 py-6 text-base bg-white/10 text-white hover:bg-white/20 border border-white/10">
+                            <Button asChild size="lg" className="rounded-full px-6 sm:px-8 py-5 sm:py-6 text-sm sm:text-base bg-white/10 text-white hover:bg-white/20 border border-white/10">
                                 <Link href="/problems">
-                                    <Brain className="mr-2 h-5 w-5" />
+                                    <Brain className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                                     Browse Problems
                                 </Link>
                             </Button>
@@ -137,7 +137,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Quick Actions Bar */}
-            <div className="flex justify-end mb-6">
+            <div className="flex justify-end mb-4 sm:mb-6">
                 <Button onClick={() => sync()} disabled={syncing} variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground">
                     <RefreshCw className={`h-3.5 w-3.5 ${syncing ? "animate-spin" : ""}`} />
                     {syncing ? "Syncing..." : "Sync Platforms"}
@@ -145,20 +145,20 @@ export default function DashboardPage() {
             </div>
 
             {/* Level & XP Card */}
-            <Card className="mb-6 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-primary/20 interactive-card">
-                <CardContent className="p-6">
-                    <div className="flex items-center justify-between mb-4">
+            <Card className="mb-4 sm:mb-6 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-primary/20 interactive-card">
+                <CardContent className="p-4 sm:p-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 mb-3 sm:mb-4">
                         <div className="flex items-center gap-3">
-                            <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center">
-                                <Star className="h-6 w-6 text-primary" />
+                            <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                                <Star className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                             </div>
                             <div>
-                                <p className="text-2xl font-bold">Level {stats?.level || 1}</p>
-                                <p className="text-sm text-muted-foreground">{stats?.xp || 0} XP total</p>
+                                <p className="text-xl sm:text-2xl font-bold">Level {stats?.level || 1}</p>
+                                <p className="text-xs sm:text-sm text-muted-foreground">{stats?.xp || 0} XP total</p>
                             </div>
                         </div>
-                        <div className="text-right">
-                            <p className="text-sm font-medium">{Math.round(stats?.xpProgress || 0)}% to Level {(stats?.level || 1) + 1}</p>
+                        <div className="text-left sm:text-right ml-13 sm:ml-0">
+                            <p className="text-xs sm:text-sm font-medium">{Math.round(stats?.xpProgress || 0)}% to Level {(stats?.level || 1) + 1}</p>
                             <p className="text-xs text-muted-foreground">{stats?.xpForNextLevel ? stats.xpForNextLevel - (stats.xp || 0) : 500} XP needed</p>
                         </div>
                     </div>
@@ -168,7 +168,7 @@ export default function DashboardPage() {
 
 
             {/* Stats Overview */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 mb-6 sm:mb-8">
                 <StatsCard
                     title="Total Problems"
                     value={statsLoading ? "-" : String(stats?.total || 0)}
@@ -193,7 +193,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Main Content Area */}
-            <div className="grid lg:grid-cols-3 gap-8">
+            <div className="grid lg:grid-cols-3 gap-4 sm:gap-8">
 
                 {/* Main List: Due Problems */}
                 <div className="lg:col-span-2 space-y-6">
@@ -387,12 +387,12 @@ export default function DashboardPage() {
 function StatsCard({ title, value, icon, highlight }: { title: string, value: string, icon: React.ReactNode, highlight?: boolean }) {
     return (
         <Card className={highlight ? "border-orange-500/50 bg-orange-500/5" : ""}>
-            <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{title}</p>
+            <CardContent className="p-3 sm:p-4">
+                <div className="flex items-center justify-between mb-1 sm:mb-2">
+                    <p className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wide">{title}</p>
                     {icon}
                 </div>
-                <span className="text-2xl font-bold tracking-tight">{value}</span>
+                <span className="text-xl sm:text-2xl font-bold tracking-tight">{value}</span>
             </CardContent>
         </Card>
     )

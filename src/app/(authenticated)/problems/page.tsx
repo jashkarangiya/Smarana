@@ -85,17 +85,23 @@ export default function ProblemsPage() {
     }, [problems, search, difficultyFilter, sortConfig])
 
     return (
-        <div className="container mx-auto px-4 py-6 max-w-6xl">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-6xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">All Problems</h1>
-                    <p className="text-muted-foreground mt-1">
+                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">All Problems</h1>
+                    <p className="text-sm sm:text-base text-muted-foreground mt-1">
                         {isLoading ? "Loading..." : `Tracking ${problems?.length || 0} questions`}
                     </p>
                 </div>
+                <Button asChild size="default" className="gap-2 w-full sm:w-auto">
+                    <Link href="/add">
+                        <Plus className="h-4 w-4" />
+                        Add Problem
+                    </Link>
+                </Button>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 mb-6">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-4 sm:mb-6">
                 <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -105,113 +111,153 @@ export default function ProblemsPage() {
                         onChange={(e) => setSearch(e.target.value)}
                     />
                 </div>
-                <div className="flex items-center gap-3 w-full sm:w-auto">
-                    <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
-                        <SelectTrigger className="w-full sm:w-[150px] bg-card">
-                            <Filter className="h-4 w-4 mr-2 text-muted-foreground" />
-                            <SelectValue placeholder="Difficulty" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Difficulties</SelectItem>
-                            <SelectItem value="easy">Easy</SelectItem>
-                            <SelectItem value="medium">Medium</SelectItem>
-                            <SelectItem value="hard">Hard</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <Button asChild size="default" className="gap-2 shrink-0">
-                        <Link href="/add">
-                            <Plus className="h-4 w-4" />
-                            <span className="hidden sm:inline">Add Problem</span>
-                        </Link>
-                    </Button>
-                </div>
+                <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
+                    <SelectTrigger className="w-full sm:w-[150px] bg-card">
+                        <Filter className="h-4 w-4 mr-2 text-muted-foreground" />
+                        <SelectValue placeholder="Difficulty" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Difficulties</SelectItem>
+                        <SelectItem value="easy">Easy</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="hard">Hard</SelectItem>
+                    </SelectContent>
+                </Select>
             </div>
 
-            <Card className="border-muted bg-card overflow-hidden">
+            {/* Mobile Card View */}
+            <div className="md:hidden space-y-4">
+                {isLoading ? (
+                    [...Array(5)].map((_, i) => (
+                        <Card key={i} className="p-4">
+                            <Skeleton className="h-5 w-3/4 mb-2" />
+                            <Skeleton className="h-4 w-1/2 mb-3" />
+                            <div className="flex gap-2">
+                                <Skeleton className="h-6 w-16" />
+                                <Skeleton className="h-6 w-24" />
+                            </div>
+                        </Card>
+                    ))
+                ) : filteredProblems && filteredProblems.length > 0 ? (
+                    filteredProblems.map((problem: any) => (
+                        <Link key={problem.id} href={`/problems/${problem.id}`}>
+                            <Card className="p-4 hover:bg-muted/50 transition-colors active:scale-[0.99]">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="font-medium truncate">{problem.title}</h3>
+                                        <p className="text-xs text-muted-foreground font-mono mt-0.5 truncate">
+                                            {problem.problemSlug || problem.leetcodeSlug}
+                                        </p>
+                                    </div>
+                                    <Badge
+                                        variant="outline"
+                                        className={`font-mono text-[10px] uppercase tracking-wider shrink-0 ${getDifficultyColor(problem.difficulty)}`}
+                                    >
+                                        {problem.difficulty}
+                                    </Badge>
+                                </div>
+                                <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
+                                    <span>Review: {format(new Date(problem.nextReviewAt), "MMM d")}</span>
+                                    <span>{problem.reviewCount} reviews</span>
+                                </div>
+                            </Card>
+                        </Link>
+                    ))
+                ) : (
+                    <Card className="p-8 text-center text-muted-foreground">
+                        No problems found.
+                    </Card>
+                )}
+            </div>
+
+            {/* Desktop Table View */}
+            <Card className="border-muted bg-card overflow-hidden hidden md:block">
                 <CardContent className="p-0">
-                    <Table>
-                        <TableHeader>
-                            <TableRow className="bg-muted/50 hover:bg-muted/50 sticky top-0 z-10 shadow-sm">
-                                <TableHead className="w-[40%] cursor-pointer select-none" onClick={() => handleSort("title")}>
-                                    Problem
-                                    {sortConfig.key === "title" && <span className="ml-1">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>}
-                                </TableHead>
-                                <TableHead className="cursor-pointer select-none" onClick={() => handleSort("difficulty")}>
-                                    Difficulty
-                                    {sortConfig.key === "difficulty" && <span className="ml-1">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>}
-                                </TableHead>
-                                <TableHead className="cursor-pointer select-none" onClick={() => handleSort("nextReviewAt")}>
-                                    Next Review
-                                    {sortConfig.key === "nextReviewAt" && <span className="ml-1">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>}
-                                </TableHead>
-                                <TableHead className="cursor-pointer select-none text-right" onClick={() => handleSort("reviewCount")}>
-                                    Reviews
-                                    {sortConfig.key === "reviewCount" && <span className="ml-1">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>}
-                                </TableHead>
-                                <TableHead className="w-[100px] text-right">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {isLoading ? (
-                                [...Array(5)].map((_, i) => (
-                                    <TableRow key={i}>
-                                        <TableCell><Skeleton className="h-4 w-48" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-8 float-right" /></TableCell>
-                                        <TableCell><Skeleton className="h-8 w-8 float-right" /></TableCell>
-                                    </TableRow>
-                                ))
-                            ) : filteredProblems && filteredProblems.length > 0 ? (
-                                filteredProblems.map((problem: any) => (
-                                    <TableRow key={problem.id} className="group hover:bg-muted/50">
-                                        <TableCell>
-                                            <div className="flex flex-col">
-                                                <Link href={`/problems/${problem.id}`} className="font-medium hover:underline hover:text-primary transition-colors truncate">
-                                                    {problem.title}
-                                                </Link>
-                                                <span className="text-xs text-muted-foreground font-mono">{problem.problemSlug || problem.leetcodeSlug}</span>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge
-                                                variant="outline"
-                                                className={`font-mono text-[10px] uppercase tracking-wider ${getDifficultyColor(problem.difficulty)}`}
-                                            >
-                                                {problem.difficulty}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell className="text-muted-foreground font-mono text-xs">
-                                            {format(new Date(problem.nextReviewAt), "MMM d, yyyy")}
-                                        </TableCell>
-                                        <TableCell className="text-right font-mono text-muted-foreground">
-                                            {problem.reviewCount}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                                                    <a href={problem.url} target="_blank" rel="noreferrer" title="Open in LeetCode">
-                                                        <ExternalLink className="h-4 w-4" />
-                                                    </a>
-                                                </Button>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                                                    <Link href={`/problems/${problem.id}`} title="View Details">
-                                                        <Search className="h-4 w-4" />
-                                                    </Link>
-                                                </Button>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            ) : (
-                                <TableRow>
-                                    <TableCell colSpan={5} className="h-24 text-center">
-                                        No problems found.
-                                    </TableCell>
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="bg-muted/50 hover:bg-muted/50 sticky top-0 z-10 shadow-sm">
+                                    <TableHead className="min-w-[200px] cursor-pointer select-none" onClick={() => handleSort("title")}>
+                                        Problem
+                                        {sortConfig.key === "title" && <span className="ml-1">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>}
+                                    </TableHead>
+                                    <TableHead className="w-[100px] cursor-pointer select-none" onClick={() => handleSort("difficulty")}>
+                                        Difficulty
+                                        {sortConfig.key === "difficulty" && <span className="ml-1">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>}
+                                    </TableHead>
+                                    <TableHead className="w-[120px] cursor-pointer select-none" onClick={() => handleSort("nextReviewAt")}>
+                                        Next Review
+                                        {sortConfig.key === "nextReviewAt" && <span className="ml-1">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>}
+                                    </TableHead>
+                                    <TableHead className="w-[80px] cursor-pointer select-none text-right" onClick={() => handleSort("reviewCount")}>
+                                        Reviews
+                                        {sortConfig.key === "reviewCount" && <span className="ml-1">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>}
+                                    </TableHead>
+                                    <TableHead className="w-[80px] text-right">Actions</TableHead>
                                 </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
+                            </TableHeader>
+                            <TableBody>
+                                {isLoading ? (
+                                    [...Array(5)].map((_, i) => (
+                                        <TableRow key={i}>
+                                            <TableCell><Skeleton className="h-4 w-48" /></TableCell>
+                                            <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                                            <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                                            <TableCell><Skeleton className="h-4 w-8 float-right" /></TableCell>
+                                            <TableCell><Skeleton className="h-8 w-8 float-right" /></TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : filteredProblems && filteredProblems.length > 0 ? (
+                                    filteredProblems.map((problem: any) => (
+                                        <TableRow key={problem.id} className="group hover:bg-muted/50">
+                                            <TableCell>
+                                                <div className="flex flex-col">
+                                                    <Link href={`/problems/${problem.id}`} className="font-medium hover:underline hover:text-primary transition-colors truncate max-w-[300px]">
+                                                        {problem.title}
+                                                    </Link>
+                                                    <span className="text-xs text-muted-foreground font-mono">{problem.problemSlug || problem.leetcodeSlug}</span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge
+                                                    variant="outline"
+                                                    className={`font-mono text-[10px] uppercase tracking-wider ${getDifficultyColor(problem.difficulty)}`}
+                                                >
+                                                    {problem.difficulty}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-muted-foreground font-mono text-xs">
+                                                {format(new Date(problem.nextReviewAt), "MMM d, yyyy")}
+                                            </TableCell>
+                                            <TableCell className="text-right font-mono text-muted-foreground">
+                                                {problem.reviewCount}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <div className="flex items-center justify-end gap-1">
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                                                        <a href={problem.url} target="_blank" rel="noreferrer" title="Open in LeetCode">
+                                                            <ExternalLink className="h-4 w-4" />
+                                                        </a>
+                                                    </Button>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                                                        <Link href={`/problems/${problem.id}`} title="View Details">
+                                                            <Search className="h-4 w-4" />
+                                                        </Link>
+                                                    </Button>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={5} className="h-24 text-center">
+                                            No problems found.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
                 </CardContent>
             </Card>
         </div>

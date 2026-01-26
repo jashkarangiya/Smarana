@@ -197,8 +197,8 @@ function AuthPageContent() {
                         <div className="absolute top-20 left-20 w-64 h-64 rounded-full border border-primary-foreground/10" />
                         <div className="absolute bottom-20 right-20 w-48 h-48 rounded-full border border-primary-foreground/10" />
                         <div className="relative z-10 max-w-sm">
-                            <h2 className="text-3xl font-bold mb-2">Welcome Back!</h2>
-                            <p className="text-primary-foreground/80 mb-8">Your algorithms are waiting. Pick up right where you left off.</p>
+                            <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight mb-4 text-white">Welcome Back!</h2>
+                            <p className="text-lg text-primary-foreground/90 mb-10 leading-relaxed">Your algorithms are waiting. Pick up right where you left off.</p>
                             <div className="space-y-5">
                                 {SIGNIN_FEATURES.map((f, i) => (
                                     <div key={i} className="flex gap-3">
@@ -221,20 +221,20 @@ function AuthPageContent() {
                     </div>
 
                     {/* Sign In Form */}
-                    <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
+                    <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-8">
                         <div className="w-full max-w-sm">
-                            <div className="text-center mb-6">
-                                <Link href="/" className="flex justify-center mb-4"><Logo size="lg" /></Link>
-                                <h1 className="text-2xl font-bold">Sign in</h1>
-                                <p className="text-sm text-muted-foreground mt-1">
+                            <div className="text-center mb-4 sm:mb-6">
+                                <Link href="/" className="flex justify-center mb-3 sm:mb-4"><Logo size="lg" /></Link>
+                                <h1 className="text-xl sm:text-2xl font-bold">Sign in</h1>
+                                <p className="text-xs sm:text-sm text-muted-foreground mt-1">
                                     New to Smarana?{" "}
                                     <button onClick={() => handleModeChange("register")} className="text-primary hover:underline font-medium">
                                         Create an account
                                     </button>
                                 </p>
                             </div>
-                            <div className="space-y-4">
-                                <Button type="button" variant="outline" className="w-full h-11" onClick={handleGoogleSignIn}>
+                            <div className="space-y-3 sm:space-y-4">
+                                <Button type="button" variant="outline" className="w-full h-10 sm:h-11 text-sm" onClick={handleGoogleSignIn}>
                                     <GoogleIcon />Continue with Google
                                 </Button>
                                 <div className="relative">
@@ -244,19 +244,19 @@ function AuthPageContent() {
                                     </div>
                                 </div>
                             </div>
-                            <form onSubmit={handleCredentialsSignIn} className="mt-4 space-y-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="signin-id">Email or Username</Label>
-                                    <Input id="signin-id" placeholder="you@example.com" required value={identifier} onChange={(e) => setIdentifier(e.target.value)} className="h-11" />
+                            <form onSubmit={handleCredentialsSignIn} className="mt-3 sm:mt-4 space-y-3 sm:space-y-4">
+                                <div className="space-y-1.5 sm:space-y-2">
+                                    <Label htmlFor="signin-id" className="text-sm">Email or Username</Label>
+                                    <Input id="signin-id" placeholder="you@example.com" required value={identifier} onChange={(e) => setIdentifier(e.target.value)} className="h-10 sm:h-11" />
                                 </div>
-                                <div className="space-y-2">
+                                <div className="space-y-1.5 sm:space-y-2">
                                     <Button asChild variant="link" className="px-0 font-normal h-auto float-right text-xs">
                                         <Link href="/forgot-password">Forgot password?</Link>
                                     </Button>
-                                    <Label htmlFor="signin-pw">Password</Label>
-                                    <Input id="signin-pw" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="h-11" />
+                                    <Label htmlFor="signin-pw" className="text-sm">Password</Label>
+                                    <Input id="signin-pw" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="h-10 sm:h-11" />
                                 </div>
-                                <Button type="submit" className="w-full h-11" disabled={signingIn}>
+                                <Button type="submit" className="w-full h-10 sm:h-11" disabled={signingIn}>
                                     {signingIn ? "Signing in..." : "Sign In"}
                                 </Button>
                             </form>
@@ -267,20 +267,20 @@ function AuthPageContent() {
                 {/* Register Layout: Form Left, Orange Right */}
                 <div className="flex min-h-screen" style={{ width: "100vw" }}>
                     {/* Register Form */}
-                    <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
+                    <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-8">
                         <div className="w-full max-w-sm">
-                            <div className="text-center mb-6">
-                                <Link href="/" className="flex justify-center mb-4"><Logo size="lg" /></Link>
-                                <h1 className="text-2xl font-bold">Create an account</h1>
-                                <p className="text-sm text-muted-foreground mt-1">
+                            <div className="text-center mb-4 sm:mb-6">
+                                <Link href="/" className="flex justify-center mb-3 sm:mb-4"><Logo size="lg" /></Link>
+                                <h1 className="text-xl sm:text-2xl font-bold">Create an account</h1>
+                                <p className="text-xs sm:text-sm text-muted-foreground mt-1">
                                     Already have an account?{" "}
                                     <button onClick={() => handleModeChange("signin")} className="text-primary hover:underline font-medium">
                                         Sign in
                                     </button>
                                 </p>
                             </div>
-                            <div className="space-y-4">
-                                <Button type="button" variant="outline" className="w-full h-11" onClick={handleGoogleSignIn}>
+                            <div className="space-y-3 sm:space-y-4">
+                                <Button type="button" variant="outline" className="w-full h-10 sm:h-11 text-sm" onClick={handleGoogleSignIn}>
                                     <GoogleIcon />Continue with Google
                                 </Button>
                                 <div className="relative">
@@ -290,22 +290,22 @@ function AuthPageContent() {
                                     </div>
                                 </div>
                             </div>
-                            <form onSubmit={handleRegister} className="mt-4 space-y-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="reg-name">Name</Label>
+                            <form onSubmit={handleRegister} className="mt-3 sm:mt-4 space-y-3 sm:space-y-4">
+                                <div className="space-y-1.5 sm:space-y-2">
+                                    <Label htmlFor="reg-name" className="text-sm">Name</Label>
                                     <Input
                                         id="reg-name"
                                         placeholder="Your name"
                                         required
                                         value={formData.name}
                                         onChange={(e) => setFormData(p => ({ ...p, name: e.target.value }))}
-                                        className="h-11"
+                                        className="h-10 sm:h-11"
                                     />
                                     {validationErrors.name && <p className="text-destructive text-xs">{validationErrors.name}</p>}
                                 </div>
 
-                                <div className="space-y-2">
-                                    <Label htmlFor="reg-username">Username</Label>
+                                <div className="space-y-1.5 sm:space-y-2">
+                                    <Label htmlFor="reg-username" className="text-sm">Username</Label>
                                     <div className="relative">
                                         <Input
                                             id="reg-username"
@@ -313,7 +313,7 @@ function AuthPageContent() {
                                             required
                                             value={formData.username}
                                             onChange={(e) => setFormData(p => ({ ...p, username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') }))}
-                                            className={`h-11 ${usernameAvailable === false ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                                            className={`h-10 sm:h-11 ${usernameAvailable === false ? "border-destructive focus-visible:ring-destructive" : ""}`}
                                         />
                                         <div className="absolute right-3 top-1/2 -translate-y-1/2">
                                             {checkingUsername ? (
@@ -336,8 +336,8 @@ function AuthPageContent() {
                                     )}
                                 </div>
 
-                                <div className="space-y-2">
-                                    <Label htmlFor="reg-email">Email</Label>
+                                <div className="space-y-1.5 sm:space-y-2">
+                                    <Label htmlFor="reg-email" className="text-sm">Email</Label>
                                     <Input
                                         id="reg-email"
                                         type="email"
@@ -345,13 +345,13 @@ function AuthPageContent() {
                                         required
                                         value={formData.email}
                                         onChange={(e) => setFormData(p => ({ ...p, email: e.target.value }))}
-                                        className="h-11"
+                                        className="h-10 sm:h-11"
                                     />
                                     {validationErrors.email && <p className="text-destructive text-xs">{validationErrors.email}</p>}
                                 </div>
 
-                                <div className="space-y-2">
-                                    <Label htmlFor="reg-pw">Password</Label>
+                                <div className="space-y-1.5 sm:space-y-2">
+                                    <Label htmlFor="reg-pw" className="text-sm">Password</Label>
                                     <Input
                                         id="reg-pw"
                                         type="password"
@@ -359,14 +359,14 @@ function AuthPageContent() {
                                         required
                                         value={formData.password}
                                         onChange={(e) => setFormData(p => ({ ...p, password: e.target.value }))}
-                                        className="h-11"
+                                        className="h-10 sm:h-11"
                                     />
                                     {formData.password && <PasswordStrength password={formData.password} />}
                                     {validationErrors.password && <p className="text-destructive text-xs">{validationErrors.password}</p>}
                                 </div>
 
-                                <div className="space-y-2">
-                                    <Label htmlFor="reg-confirm-pw">Confirm Password</Label>
+                                <div className="space-y-1.5 sm:space-y-2">
+                                    <Label htmlFor="reg-confirm-pw" className="text-sm">Confirm Password</Label>
                                     <Input
                                         id="reg-confirm-pw"
                                         type="password"
@@ -374,12 +374,12 @@ function AuthPageContent() {
                                         required
                                         value={formData.confirmPassword}
                                         onChange={(e) => setFormData(p => ({ ...p, confirmPassword: e.target.value }))}
-                                        className="h-11"
+                                        className="h-10 sm:h-11"
                                     />
                                     {validationErrors.confirmPassword && <p className="text-destructive text-xs">{validationErrors.confirmPassword}</p>}
                                 </div>
 
-                                <Button type="submit" className="w-full h-11" disabled={registering || usernameAvailable === false}>
+                                <Button type="submit" className="w-full h-10 sm:h-11" disabled={registering || usernameAvailable === false}>
                                     {registering ? "Creating account..." : "Create Account"}
                                 </Button>
                                 <p className="text-xs text-center text-muted-foreground">
@@ -394,8 +394,8 @@ function AuthPageContent() {
                         <div className="absolute top-20 right-20 w-64 h-64 rounded-full border border-primary-foreground/10" />
                         <div className="absolute bottom-20 left-20 w-48 h-48 rounded-full border border-primary-foreground/10" />
                         <div className="relative z-10 max-w-sm">
-                            <h2 className="text-3xl font-bold mb-2">Welcome to Smarana</h2>
-                            <p className="text-primary-foreground/80 mb-8">Master algorithms through spaced repetition and never forget.</p>
+                            <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight mb-4 text-white">Welcome to Smarana</h2>
+                            <p className="text-lg text-primary-foreground/90 mb-10 leading-relaxed">Master algorithms through spaced repetition and never forget.</p>
                             <div className="space-y-5">
                                 {SIGNUP_FEATURES.map((f, i) => (
                                     <div key={i} className="flex gap-3">

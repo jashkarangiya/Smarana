@@ -40,14 +40,14 @@ export default function InsightsPage() {
 
     if (loading) {
         return (
-            <div className="container py-8 space-y-8 animate-pulse">
+            <div className="container px-3 sm:px-4 py-4 sm:py-8 space-y-4 sm:space-y-8 animate-pulse">
                 <div className="h-8 w-48 bg-muted rounded" />
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <div className="grid gap-2 sm:gap-4 grid-cols-2 lg:grid-cols-4">
                     {[...Array(4)].map((_, i) => (
-                        <div key={i} className="h-32 bg-muted rounded-xl" />
+                        <div key={i} className="h-24 sm:h-32 bg-muted rounded-xl" />
                     ))}
                 </div>
-                <div className="h-64 bg-muted rounded-xl" />
+                <div className="h-48 sm:h-64 bg-muted rounded-xl" />
             </div>
         )
     }
@@ -59,102 +59,105 @@ export default function InsightsPage() {
     ].filter(d => d.value > 0) : []
 
     return (
-        <div className="container py-8 space-y-8 max-w-7xl mx-auto">
+        <div className="container px-3 sm:px-4 py-4 sm:py-8 space-y-4 sm:space-y-8 max-w-7xl mx-auto">
             <div>
-                <h1 className="text-3xl font-bold tracking-tight">Insights</h1>
-                <p className="text-muted-foreground">Track your progress and consistency.</p>
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Insights</h1>
+                <p className="text-sm sm:text-base text-muted-foreground">Track your progress and consistency.</p>
             </div>
 
             {/* Stats Overview */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-2 sm:gap-4 grid-cols-2 lg:grid-cols-4">
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Reviews</CardTitle>
-                        <Activity className="h-4 w-4 text-muted-foreground" />
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2 p-3 sm:p-6">
+                        <CardTitle className="text-xs sm:text-sm font-medium">Total Reviews</CardTitle>
+                        <Activity className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
                     </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{stats?.totalReviews || 0}</div>
-                        <p className="text-xs text-muted-foreground">
+                    <CardContent className="p-3 sm:p-6 pt-0">
+                        <div className="text-xl sm:text-2xl font-bold">{stats?.totalReviews || 0}</div>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">
                             Lifetime reviews
                         </p>
                     </CardContent>
                 </Card>
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Current Streak</CardTitle>
-                        <Flame className="h-4 w-4 text-orange-500" />
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2 p-3 sm:p-6">
+                        <CardTitle className="text-xs sm:text-sm font-medium">Current Streak</CardTitle>
+                        <Flame className="h-3 w-3 sm:h-4 sm:w-4 text-orange-500" />
                     </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{stats?.currentStreak || 0} days</div>
-                        <p className="text-xs text-muted-foreground">
+                    <CardContent className="p-3 sm:p-6 pt-0">
+                        <div className="text-xl sm:text-2xl font-bold">{stats?.currentStreak || 0} <span className="text-sm sm:text-base font-normal">days</span></div>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">
                             Keep it up!
                         </p>
                     </CardContent>
                 </Card>
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Mastery Score</CardTitle>
-                        <Target className="h-4 w-4 text-muted-foreground" />
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2 p-3 sm:p-6">
+                        <CardTitle className="text-xs sm:text-sm font-medium">Mastery Score</CardTitle>
+                        <Target className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
                     </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{stats?.masteryScore || 0}</div>
-                        <p className="text-xs text-muted-foreground">
+                    <CardContent className="p-3 sm:p-6 pt-0">
+                        <div className="text-xl sm:text-2xl font-bold">{stats?.masteryScore || 0}</div>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">
                             Avg retention (days)
                         </p>
                     </CardContent>
                 </Card>
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Level {stats?.level || 1}</CardTitle>
-                        <Award className="h-4 w-4 text-yellow-500" />
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2 p-3 sm:p-6">
+                        <CardTitle className="text-xs sm:text-sm font-medium">Level {stats?.level || 1}</CardTitle>
+                        <Award className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-500" />
                     </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{stats?.xp || 0} XP</div>
-                        <p className="text-xs text-muted-foreground">
+                    <CardContent className="p-3 sm:p-6 pt-0">
+                        <div className="text-xl sm:text-2xl font-bold">{stats?.xp || 0} <span className="text-sm sm:text-base font-normal">XP</span></div>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">
                             Total Experience
                         </p>
                     </CardContent>
                 </Card>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-7">
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-7">
                 {/* Heatmap Section */}
-                <Card className="col-span-1 md:col-span-7">
-                    <CardHeader>
-                        <CardTitle>Activity Log</CardTitle>
-                        <CardDescription>Your review consistency over the year</CardDescription>
+                <Card className="md:col-span-7">
+                    <CardHeader className="p-3 sm:p-6">
+                        <CardTitle className="text-base sm:text-lg">Activity Log</CardTitle>
+                        <CardDescription className="text-xs sm:text-sm">Your review consistency over the year</CardDescription>
                     </CardHeader>
-                    <CardContent>
-                        <Heatmap data={activity} className="w-full" />
+                    <CardContent className="p-3 sm:p-6 pt-0">
+                        <div className="overflow-x-auto">
+                            <Heatmap data={activity} />
+                        </div>
                     </CardContent>
                 </Card>
 
                 {/* Forecast Chart */}
-                <Card className="col-span-1 md:col-span-4">
-                    <CardHeader>
-                        <CardTitle>Review Forecast</CardTitle>
-                        <CardDescription>Upcoming reviews for the next 14 days</CardDescription>
+                <Card className="md:col-span-4">
+                    <CardHeader className="p-3 sm:p-6">
+                        <CardTitle className="text-base sm:text-lg">Review Forecast</CardTitle>
+                        <CardDescription className="text-xs sm:text-sm">Upcoming reviews for the next 14 days</CardDescription>
                     </CardHeader>
-                    <CardContent className="pl-2">
-                        <div className="h-[300px] w-full">
+                    <CardContent className="p-3 sm:p-6 pt-0 pl-0 sm:pl-2">
+                        <div className="h-[200px] sm:h-[300px] w-full">
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={forecast}>
                                     <XAxis
                                         dataKey="date"
                                         stroke="#888888"
-                                        fontSize={12}
+                                        fontSize={10}
                                         tickLine={false}
                                         axisLine={false}
                                     />
                                     <YAxis
                                         stroke="#888888"
-                                        fontSize={12}
+                                        fontSize={10}
                                         tickLine={false}
                                         axisLine={false}
                                         tickFormatter={(value) => `${value}`}
+                                        width={24}
                                     />
                                     <RechartsTooltip
-                                        contentStyle={{ backgroundColor: "#1f2937", border: "none" }}
+                                        contentStyle={{ backgroundColor: "#1f2937", border: "none", fontSize: 12 }}
                                         itemStyle={{ color: "#fff" }}
                                         cursor={{ fill: "rgba(255,255,255,0.1)" }}
                                     />
@@ -166,13 +169,13 @@ export default function InsightsPage() {
                 </Card>
 
                 {/* Difficulty Distribution */}
-                <Card className="col-span-1 md:col-span-3">
-                    <CardHeader>
-                        <CardTitle>Difficulty Breakdown</CardTitle>
-                        <CardDescription>Problems by difficulty</CardDescription>
+                <Card className="md:col-span-3">
+                    <CardHeader className="p-3 sm:p-6">
+                        <CardTitle className="text-base sm:text-lg">Difficulty Breakdown</CardTitle>
+                        <CardDescription className="text-xs sm:text-sm">Problems by difficulty</CardDescription>
                     </CardHeader>
-                    <CardContent>
-                        <div className="h-[300px] w-full flex items-center justify-center">
+                    <CardContent className="p-3 sm:p-6 pt-0">
+                        <div className="h-[200px] sm:h-[300px] w-full flex items-center justify-center">
                             {pieData.length > 0 ? (
                                 <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
@@ -180,8 +183,8 @@ export default function InsightsPage() {
                                             data={pieData}
                                             cx="50%"
                                             cy="50%"
-                                            innerRadius={60}
-                                            outerRadius={80}
+                                            innerRadius={40}
+                                            outerRadius={60}
                                             paddingAngle={5}
                                             dataKey="value"
                                         >
@@ -194,16 +197,16 @@ export default function InsightsPage() {
                                 </ResponsiveContainer>
                             ) : (
                                 <div className="text-muted-foreground flex flex-col items-center gap-2">
-                                    <TrendingUp className="h-8 w-8 opacity-50" />
-                                    <p>No problems added yet</p>
+                                    <TrendingUp className="h-6 w-6 sm:h-8 sm:w-8 opacity-50" />
+                                    <p className="text-sm">No problems added yet</p>
                                 </div>
                             )}
                         </div>
-                        <div className="flex justify-center gap-4 mt-4">
+                        <div className="flex flex-wrap justify-center gap-2 sm:gap-4 mt-2 sm:mt-4">
                             {pieData.map((entry) => (
-                                <div key={entry.name} className="flex items-center gap-2">
-                                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.color }} />
-                                    <span className="text-sm text-muted-foreground">{entry.name} ({entry.value})</span>
+                                <div key={entry.name} className="flex items-center gap-1 sm:gap-2">
+                                    <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full" style={{ backgroundColor: entry.color }} />
+                                    <span className="text-xs sm:text-sm text-muted-foreground">{entry.name} ({entry.value})</span>
                                 </div>
                             ))}
                         </div>

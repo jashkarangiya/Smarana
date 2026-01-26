@@ -44,7 +44,13 @@ export function CommandMenu({ onOpenPomodoro }: CommandMenuProps) {
     const [open, setOpen] = React.useState(false)
     const [query, setQuery] = React.useState("")
     const [debouncedQuery, setDebouncedQuery] = React.useState("")
+    const [isMac, setIsMac] = React.useState(true)
     const router = useRouter()
+
+    // Detect OS for keyboard shortcut display
+    React.useEffect(() => {
+        setIsMac(navigator.platform.toUpperCase().indexOf("MAC") >= 0)
+    }, [])
 
     // Debounce the search query
     const debouncedSetQuery = useDebouncedCallback((value: string) => {
@@ -55,17 +61,60 @@ export function CommandMenu({ onOpenPomodoro }: CommandMenuProps) {
         debouncedSetQuery(query)
     }, [query, debouncedSetQuery])
 
+    // Modifier key helper
+    const modKey = isMac ? "⌘" : "Ctrl+"
+
     React.useEffect(() => {
         const down = (e: KeyboardEvent) => {
-            if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+            const mod = e.metaKey || e.ctrlKey
+
+            // Open command menu
+            if (e.key === "k" && mod) {
                 e.preventDefault()
                 setOpen((open) => !open)
+                return
+            }
+
+            // Global shortcuts (work even when menu is closed)
+            if (mod) {
+                switch (e.key.toLowerCase()) {
+                    case "d":
+                        e.preventDefault()
+                        router.push("/dashboard")
+                        break
+                    case "p":
+                        e.preventDefault()
+                        router.push("/problems")
+                        break
+                    case "r":
+                        e.preventDefault()
+                        router.push("/review")
+                        break
+                    case "n":
+                        e.preventDefault()
+                        router.push("/add")
+                        break
+                    case "i":
+                        e.preventDefault()
+                        router.push("/insights")
+                        break
+                    case ",":
+                        e.preventDefault()
+                        router.push("/settings")
+                        break
+                    case "t":
+                        if (onOpenPomodoro) {
+                            e.preventDefault()
+                            onOpenPomodoro()
+                        }
+                        break
+                }
             }
         }
 
         document.addEventListener("keydown", down)
         return () => document.removeEventListener("keydown", down)
-    }, [])
+    }, [router, onOpenPomodoro])
 
     // Search problems
     const problemsQuery = useQuery({
@@ -124,7 +173,7 @@ export function CommandMenu({ onOpenPomodoro }: CommandMenuProps) {
                 variant="ghost"
                 className="relative h-9 w-9 p-0 rounded-lg hover:bg-white/10 text-white/50 hover:text-white transition-colors"
                 onClick={() => setOpen(true)}
-                title="Search (⌘K)"
+                title={`Search (${isMac ? "⌘" : "Ctrl+"}K)`}
             >
                 <Search className="h-5 w-5" />
             </Button>
@@ -149,10 +198,12 @@ export function CommandMenu({ onOpenPomodoro }: CommandMenuProps) {
                                 <CommandItem onSelect={() => go("/dashboard")}>
                                     <LayoutDashboard className="mr-2 h-4 w-4" />
                                     <span>Dashboard</span>
+                                    <CommandShortcut>{modKey}D</CommandShortcut>
                                 </CommandItem>
                                 <CommandItem onSelect={() => go("/problems")}>
                                     <ListTodo className="mr-2 h-4 w-4" />
                                     <span>Problems</span>
+                                    <CommandShortcut>{modKey}P</CommandShortcut>
                                 </CommandItem>
                                 <CommandItem onSelect={() => go("/schedule")}>
                                     <Calendar className="mr-2 h-4 w-4" />
@@ -165,10 +216,12 @@ export function CommandMenu({ onOpenPomodoro }: CommandMenuProps) {
                                 <CommandItem onSelect={() => go("/insights")}>
                                     <Activity className="mr-2 h-4 w-4" />
                                     <span>Insights</span>
+                                    <CommandShortcut>{modKey}I</CommandShortcut>
                                 </CommandItem>
                                 <CommandItem onSelect={() => go("/settings")}>
                                     <Settings className="mr-2 h-4 w-4" />
                                     <span>Settings</span>
+                                    <CommandShortcut>{modKey},</CommandShortcut>
                                 </CommandItem>
                             </CommandGroup>
 
@@ -178,11 +231,12 @@ export function CommandMenu({ onOpenPomodoro }: CommandMenuProps) {
                                 <CommandItem onSelect={() => go("/review")}>
                                     <Play className="mr-2 h-4 w-4 text-emerald-400" />
                                     <span>Start Review</span>
-                                    <CommandShortcut>Today</CommandShortcut>
+                                    <CommandShortcut>{modKey}R</CommandShortcut>
                                 </CommandItem>
                                 <CommandItem onSelect={() => go("/add")}>
                                     <Plus className="mr-2 h-4 w-4 text-blue-400" />
                                     <span>Add Problem</span>
+                                    <CommandShortcut>{modKey}N</CommandShortcut>
                                 </CommandItem>
                                 {onOpenPomodoro && (
                                     <CommandItem
@@ -192,6 +246,7 @@ export function CommandMenu({ onOpenPomodoro }: CommandMenuProps) {
                                     >
                                         <Timer className="mr-2 h-4 w-4 text-amber-400" />
                                         <span>Open Pomodoro</span>
+                                        <CommandShortcut>{modKey}T</CommandShortcut>
                                     </CommandItem>
                                 )}
                             </CommandGroup>
@@ -260,10 +315,12 @@ export function CommandMenu({ onOpenPomodoro }: CommandMenuProps) {
                                 <CommandItem onSelect={() => go("/review")}>
                                     <Play className="mr-2 h-4 w-4 text-emerald-400" />
                                     <span>Start Review</span>
+                                    <CommandShortcut>{modKey}R</CommandShortcut>
                                 </CommandItem>
                                 <CommandItem onSelect={() => go("/add")}>
                                     <Plus className="mr-2 h-4 w-4 text-blue-400" />
                                     <span>Add Problem</span>
+                                    <CommandShortcut>{modKey}N</CommandShortcut>
                                 </CommandItem>
                             </CommandGroup>
                         </>

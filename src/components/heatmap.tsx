@@ -141,25 +141,22 @@ export function Heatmap({ data, className = "", year }: HeatmapProps) {
             </div>
 
             {/* Heatmap */}
-            <div className="overflow-x-scroll max-w-full flex justify-center scrollbar-thin scrollbar-thumb-secondary scrollbar-track-transparent">
+            <div className="overflow-x-auto max-w-full scrollbar-thin scrollbar-thumb-secondary scrollbar-track-transparent">
                 <div className="inline-flex min-w-max">
                     {/* Day labels */}
                     <div
-                        className="flex flex-col justify-between pr-2 shrink-0"
+                        className="flex flex-col pr-2 shrink-0"
                         style={{
-                            height: `${7 * cellSize + 6 * cellGap}px`,
-                            paddingTop: "1px",
-                            paddingBottom: "1px",
+                            gap: cellGap,
                         }}
                     >
                         {dayLabels.map((label, i) => (
                             <span
                                 key={i}
-                                className="text-[10px] text-muted-foreground leading-none"
+                                className="text-[10px] text-muted-foreground leading-none flex items-center"
                                 style={{
                                     height: `${cellSize}px`,
-                                    display: i % 2 === 1 ? "flex" : "none", // show Mon, Wed, Fri
-                                    alignItems: "center",
+                                    visibility: i % 2 === 1 ? "visible" : "hidden", // show Mon, Wed, Fri
                                 }}
                             >
                                 {label}

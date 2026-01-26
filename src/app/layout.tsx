@@ -15,8 +15,11 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Smarana",
-  description: "Master LeetCode with Spaced Repetition",
+  title: {
+    default: "Smarana - The Spaced Repetition Layer for Algorithms",
+    template: "%s - Smarana",
+  },
+  description: "Master algorithms, LeetCode, and system design with spaced repetition.",
 };
 
 export default function RootLayout({
@@ -26,7 +29,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
-      <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
+      <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`} suppressHydrationWarning>
         <Providers>
           <NavBar />
           <main>{children}</main>

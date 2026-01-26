@@ -1,3 +1,4 @@
+import Image from "next/image"
 import { cn } from "@/lib/utils"
 
 interface LogoProps {
@@ -5,23 +6,30 @@ interface LogoProps {
     size?: "sm" | "md" | "lg"
 }
 
+const sizeMap = {
+    sm: 32,
+    md: 40,
+    lg: 48,
+}
+
 export function Logo({ className, size = "md" }: LogoProps) {
-    const sizeClasses = {
-        sm: "h-8 w-8 text-sm",
-        md: "h-10 w-10 text-base",
-        lg: "h-12 w-12 text-lg",
-    }
+    const pixels = sizeMap[size]
 
     return (
         <div
             className={cn(
-                "flex items-center justify-center rounded-lg font-mono font-bold",
-                "bg-primary text-primary-foreground",
-                sizeClasses[size],
+                "rounded-xl overflow-hidden",
                 className
             )}
+            style={{ width: pixels, height: pixels }}
         >
-            AR
+            <Image
+                src="/logo.png"
+                alt="Smarana"
+                width={pixels}
+                height={pixels}
+                className="w-full h-full object-cover"
+            />
         </div>
     )
 }

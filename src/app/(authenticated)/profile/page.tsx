@@ -307,32 +307,32 @@ export default function ProfilePage() {
     }
 
     return (
-        <div className="container mx-auto px-4 py-6 max-w-6xl">
+        <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-6xl">
             {/* Header */}
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-                <p className="text-muted-foreground mt-1">Manage your account and preferences</p>
+            <div className="mb-4 sm:mb-8">
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Settings</h1>
+                <p className="text-sm sm:text-base text-muted-foreground mt-1">Manage your account and preferences</p>
             </div>
 
-            <div className="flex flex-col lg:flex-row gap-8">
-                {/* Sidebar Navigation */}
+            <div className="flex flex-col lg:flex-row gap-4 sm:gap-8">
+                {/* Sidebar Navigation - Horizontal scroll on mobile */}
                 <aside className="lg:w-64 flex-shrink-0">
-                    <nav className="space-y-1 lg:sticky lg:top-24">
+                    <nav className="flex lg:flex-col gap-2 lg:gap-1 overflow-x-auto pb-2 lg:pb-0 lg:sticky lg:top-24 -mx-3 px-3 sm:mx-0 sm:px-0">
                         {sections.map((section) => (
                             <button
                                 key={section.id}
                                 onClick={() => setActiveSection(section.id)}
                                 className={cn(
-                                    "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all",
+                                    "flex items-center gap-2 lg:gap-3 px-3 lg:px-4 py-2 lg:py-3 rounded-lg lg:rounded-xl text-left transition-all shrink-0 lg:w-full",
                                     activeSection === section.id
                                         ? "bg-primary/10 text-primary border border-primary/20"
-                                        : "hover:bg-muted/50 text-muted-foreground hover:text-foreground"
+                                        : "hover:bg-muted/50 text-muted-foreground hover:text-foreground border border-transparent"
                                 )}
                             >
-                                <section.icon className="h-5 w-5" />
+                                <section.icon className="h-4 w-4 lg:h-5 lg:w-5" />
                                 <div>
-                                    <p className="font-medium text-sm">{section.label}</p>
-                                    <p className="text-xs opacity-70 hidden sm:block">{section.description}</p>
+                                    <p className="font-medium text-xs lg:text-sm whitespace-nowrap">{section.label}</p>
+                                    <p className="text-xs opacity-70 hidden lg:block">{section.description}</p>
                                 </div>
                             </button>
                         ))}
