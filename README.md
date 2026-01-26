@@ -1,4 +1,4 @@
-# <img src="public/logo.png" width="48" height="48" alt="Smarana Logo" /> Smarana
+# <img src="public/logo.png" width="25" height="25" alt="Smarana Logo" />    Smarana
 
 **The Spaced Repetition Layer for Algorithms**
 
