@@ -44,5 +44,7 @@ next-env.d.ts
 
 # prisma
 debug.log
-dev.db
+*.db
+*.db-journal
+prisma/dev.db
 .env

@@ -3,13 +3,41 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-// Note: SQLite doesn't support enums, using String with validation in code
-// ProfileVisibility: "PUBLIC" | "FRIENDS_ONLY" | "PRIVATE"
-// NotificationType: "FRIEND_REQUEST_RECEIVED" | "FRIEND_REQUEST_ACCEPTED" | "SYSTEM"
+// Enums for PostgreSQL
+enum ProfileVisibility {
+  PUBLIC
+  FRIENDS_ONLY
+  PRIVATE
+}
+
+enum NotificationType {
+  FRIEND_REQUEST_RECEIVED
+  FRIEND_REQUEST_ACCEPTED
+  SYSTEM
+}
+
+enum FriendRequestStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+enum LeetCodeAuthType {
+  PUBLIC
+  COOKIE
+  EXTENSION
+  UPLOAD
+}
+
+enum SyncStatus {
+  OK
+  ERROR
+  SYNCING
+}
 
 model Account {
   id                String  @id @default(cuid())
