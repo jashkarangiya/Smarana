@@ -1,6 +1,8 @@
-# AlgoRecall
+# ![Smarana Logo](public/logo.png) Smarana
 
-AlgoRecall is a spaced repetition application for LeetCode problems. It helps you track your solved problems and schedules them for review to maximize retention.
+**The Spaced Repetition Layer for Algorithms**
+
+Smarana is a spaced repetition application designed to help you master algorithms and patterns. Whether you practice on LeetCode, Codeforces, or AtCoder, Smarana helps you track your solved problems and schedules them for review to maximize long-term retention.
 
 ## Features
 
