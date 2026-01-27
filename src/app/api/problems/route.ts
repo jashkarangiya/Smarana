@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { NextResponse } from "next/server"
 import { startOfDay, endOfDay, addDays } from "date-fns"
+import { safeDecrypt } from "@/lib/encryption"
 
 export async function GET(req: Request) {
     const session = await getServerSession(authOptions)
@@ -45,5 +46,12 @@ export async function GET(req: Request) {
         orderBy: { nextReviewAt: "asc" },
     })
 
-    return NextResponse.json(problems)
+    // Decrypt sensitive fields for each problem
+    const decryptedProblems = problems.map(problem => ({
+        ...problem,
+        notes: safeDecrypt(problem.notes),
+        solution: safeDecrypt(problem.solution),
+    }))
+
+    return NextResponse.json(decryptedProblems)
 }

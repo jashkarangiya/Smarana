@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { safeDecrypt } from "@/lib/encryption"
 
 export async function GET(
     request: Request,
@@ -25,7 +26,12 @@ export async function GET(
             return NextResponse.json({ error: "Problem not found" }, { status: 404 })
         }
 
-        return NextResponse.json(problem)
+        // Decrypt sensitive fields
+        return NextResponse.json({
+            ...problem,
+            notes: safeDecrypt(problem.notes),
+            solution: safeDecrypt(problem.solution),
+        })
     } catch (error) {
         console.error("Get problem error:", error)
         return NextResponse.json({ error: "Failed to fetch problem" }, { status: 500 })

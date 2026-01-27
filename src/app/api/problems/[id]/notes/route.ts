@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { NextResponse } from "next/server"
+import { encrypt, safeDecrypt } from "@/lib/encryption"
 
 export async function PUT(
     req: Request,
@@ -33,15 +34,21 @@ export async function PUT(
     const body = await req.json()
     const { notes, solution } = body
 
+    // Encrypt sensitive fields before storing
     const updated = await prisma.revisionProblem.update({
         where: { id: problem.id },
         data: {
-            ...(notes !== undefined && { notes }),
-            ...(solution !== undefined && { solution }),
+            ...(notes !== undefined && { notes: encrypt(notes) }),
+            ...(solution !== undefined && { solution: encrypt(solution) }),
         },
     })
 
-    return NextResponse.json(updated)
+    // Decrypt before returning
+    return NextResponse.json({
+        ...updated,
+        notes: safeDecrypt(updated.notes),
+        solution: safeDecrypt(updated.solution),
+    })
 }
 
 export async function GET(
@@ -77,5 +84,10 @@ export async function GET(
         return new NextResponse("Problem not found", { status: 404 })
     }
 
-    return NextResponse.json(problem)
+    // Decrypt sensitive fields before returning
+    return NextResponse.json({
+        ...problem,
+        notes: safeDecrypt(problem.notes),
+        solution: safeDecrypt(problem.solution),
+    })
 }

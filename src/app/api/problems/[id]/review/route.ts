@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { NextResponse } from "next/server"
 import { getNextReviewDate } from "@/lib/repetition"
+import { safeDecrypt } from "@/lib/encryption"
 
 // XP values by difficulty
 const XP_REWARDS: Record<string, number> = {
@@ -150,7 +151,12 @@ export async function POST(
             return updatedProblem
         })
 
-        return NextResponse.json({ ...result, xpEarned })
+        return NextResponse.json({
+            ...result,
+            notes: safeDecrypt(result.notes),
+            solution: safeDecrypt(result.solution),
+            xpEarned
+        })
 
     } catch (error) {
         console.error("Review transaction failed:", error)
