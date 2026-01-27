@@ -16,6 +16,7 @@ import {
     User,
     FileCode,
     ChevronRight,
+    Sparkles,
 } from "lucide-react"
 import {
     CommandDialog,
@@ -32,6 +33,7 @@ import { Button } from "./ui/button"
 import { useQuery } from "@tanstack/react-query"
 import { useDebouncedCallback } from "use-debounce"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
+import { useEasterEgg } from "./easter-egg-provider"
 
 type UserHit = { username: string; name?: string | null; image?: string | null }
 type ProblemHit = { id: string; title: string; difficulty: string; platform: string }
@@ -46,6 +48,7 @@ export function CommandMenu({ onOpenPomodoro }: CommandMenuProps) {
     const [debouncedQuery, setDebouncedQuery] = React.useState("")
     const [isMac, setIsMac] = React.useState(true)
     const router = useRouter()
+    const { triggerUnlock } = useEasterEgg()
 
     // Detect OS for keyboard shortcut display
     React.useEffect(() => {
@@ -323,6 +326,23 @@ export function CommandMenu({ onOpenPomodoro }: CommandMenuProps) {
                                     <CommandShortcut>{modKey}N</CommandShortcut>
                                 </CommandItem>
                             </CommandGroup>
+
+                            {/* Secret Easter Egg Command */}
+                            {debouncedQuery.toLowerCase().includes("smarana") && (
+                                <>
+                                    <CommandSeparator />
+                                    <CommandGroup heading="Secret">
+                                        <CommandItem
+                                            onSelect={() => {
+                                                runCommand(() => triggerUnlock())
+                                            }}
+                                        >
+                                            <Sparkles className="mr-2 h-4 w-4 text-[#BB7331]" />
+                                            <span>Invoke <span className="text-[#BB7331]">स्मरण</span></span>
+                                        </CommandItem>
+                                    </CommandGroup>
+                                </>
+                            )}
                         </>
                     )}
                 </CommandList>

@@ -23,11 +23,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { LayoutDashboard, ListTodo, Settings, LogOut, Menu, Calendar, Activity, Brain, Trophy, Timer } from "lucide-react"
 import { useStats, useProblems } from "@/hooks/use-problems"
 import { motion } from "framer-motion"
-import { useState } from "react"
+import { useState, useRef, useCallback } from "react"
 import { CommandMenu } from "./command-menu"
 import { NotificationsBell } from "./notifications-bell"
 import { PomodoroSheet } from "./pomodoro-sheet"
 import { usePomodoro } from "@/hooks/use-pomodoro"
+import { useEasterEgg } from "./easter-egg-provider"
 
 export function NavBar() {
     const { data: session } = useSession()
@@ -39,6 +40,31 @@ export function NavBar() {
 
     // Use shared Pomodoro context for consistent state
     const { isActive: pomodoroActive, timeLeft: pomodoroTimeLeft, formatTime } = usePomodoro()
+
+    // Easter egg: 5-click trigger on logo
+    const { triggerUnlock } = useEasterEgg()
+    const clickCountRef = useRef(0)
+    const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+    const handleLogoClick = useCallback((e: React.MouseEvent) => {
+        // Don't prevent navigation, just track clicks
+        clickCountRef.current += 1
+
+        // Reset click count after 1.8 seconds of inactivity
+        if (clickTimerRef.current) {
+            clearTimeout(clickTimerRef.current)
+        }
+        clickTimerRef.current = setTimeout(() => {
+            clickCountRef.current = 0
+        }, 1800)
+
+        // Trigger easter egg on 5 clicks
+        if (clickCountRef.current >= 5) {
+            e.preventDefault()
+            clickCountRef.current = 0
+            triggerUnlock()
+        }
+    }, [triggerUnlock])
 
     const isActive = (path: string) => pathname === path
 
@@ -66,7 +92,11 @@ export function NavBar() {
                 >
                     {/* Brand */}
                     <div className="flex items-center gap-4">
-                        <Link href={session ? "/dashboard" : "/"} className="flex items-center gap-2.5 group">
+                        <Link
+                            href={session ? "/dashboard" : "/"}
+                            className="flex items-center gap-2.5 group"
+                            onClick={handleLogoClick}
+                        >
                             <div className="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0 transition-all duration-300 group-hover:scale-105 group-hover:shadow-[0_0_20px_rgba(214,162,75,0.3)]">
                                 <Image
                                     src="/logo.png"
@@ -138,9 +168,8 @@ export function NavBar() {
                                 {/* Pomodoro Timer */}
                                 <Button
                                     variant="ghost"
-                                    className={`relative h-9 rounded-lg hover:bg-white/10 transition-colors hidden sm:flex items-center gap-1.5 px-2 ${
-                                        pomodoroActive ? "text-amber-400" : "text-white/50 hover:text-white"
-                                    }`}
+                                    className={`relative h-9 rounded-lg hover:bg-white/10 transition-colors hidden sm:flex items-center gap-1.5 px-2 ${pomodoroActive ? "text-amber-400" : "text-white/50 hover:text-white"
+                                        }`}
                                     onClick={() => setPomodoroOpen(true)}
                                     title="Pomodoro Timer"
                                 >
@@ -247,11 +276,10 @@ export function NavBar() {
                                                     setMobileMenuOpen(false)
                                                     setPomodoroOpen(true)
                                                 }}
-                                                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all w-full text-left ${
-                                                    pomodoroActive
+                                                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all w-full text-left ${pomodoroActive
                                                         ? 'bg-amber-500/10 text-amber-400'
                                                         : 'text-white/60 hover:bg-white/5 hover:text-white'
-                                                }`}
+                                                    }`}
                                             >
                                                 <Timer className="h-5 w-5" />
                                                 <span className="font-medium">Pomodoro Timer</span>

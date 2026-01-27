@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react"
 import { redirect } from "next/navigation"
 import { useEffect } from "react"
 import { Loader2 } from "lucide-react"
+import { EasterEggProvider } from "@/components/easter-egg-provider"
 
 export default function AuthenticatedLayout({
     children,
@@ -28,8 +29,10 @@ export default function AuthenticatedLayout({
 
     // Wrapper with top padding to account for fixed navbar
     return (
-        <main className="pt-20 min-h-screen">
-            {children}
-        </main>
+        <EasterEggProvider>
+            <main className="pt-20 min-h-screen">
+                {children}
+            </main>
+        </EasterEggProvider>
     )
 }
