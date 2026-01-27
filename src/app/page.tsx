@@ -201,19 +201,21 @@ export default function LandingPage() {
                 Stop forgetting solutions. Start building lasting problem-solving skills.
               </p>
 
-              <div className="grid md:grid-cols-2 gap-6 sm:gap-8">
+              <div className="grid md:grid-cols-2 gap-4">
                 {/* Problem */}
-                <div className="p-6 sm:p-8 rounded-2xl border border-red-500/20 bg-red-500/5">
-                  <h3 className="text-lg sm:text-xl font-semibold mb-4 text-red-400">The Problem</h3>
-                  <ul className="space-y-3">
+                <div className="rounded-2xl border border-[#BB7331]/20 bg-gradient-to-b from-[#BB7331]/10 to-white/[0.02] p-5 shadow-sm transition-transform duration-200 hover:-translate-y-0.5 hover:border-[#BB7331]/30">
+                  <div className="mb-3 flex items-center gap-2">
+                    <span className="text-sm font-semibold text-[#BB7331]">The Problem</span>
+                  </div>
+                  <ul className="space-y-2 text-sm text-white/70">
                     {[
-                      "Solve a problem, forget it in a week",
+                      "Solve a problem, forget it a week later",
                       "Recognize patterns but can't recall solutions",
-                      "No system to track what you've learned",
+                      "Keep repeating the same \"easy\" mistakes",
                       "Interview prep feels like starting from scratch"
                     ].map((item, i) => (
-                      <li key={i} className="flex items-start gap-3 text-sm sm:text-base text-muted-foreground">
-                        <span className="text-red-400 mt-0.5">✕</span>
+                      <li key={i} className="flex gap-2">
+                        <span className="mt-0.5 text-[#BB7331]/80">✕</span>
                         {item}
                       </li>
                     ))}
@@ -221,17 +223,21 @@ export default function LandingPage() {
                 </div>
 
                 {/* Solution */}
-                <div className="p-6 sm:p-8 rounded-2xl border border-emerald-500/20 bg-emerald-500/5">
-                  <h3 className="text-lg sm:text-xl font-semibold mb-4 text-emerald-400">The Solution</h3>
-                  <ul className="space-y-3">
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 shadow-sm transition-transform duration-200 hover:-translate-y-0.5 hover:border-white/20">
+                  <div className="mb-3 flex items-center gap-2">
+                    <span className="text-sm font-semibold text-white/85">
+                      The <span className="text-[#BB7331]">Solution</span>
+                    </span>
+                  </div>
+                  <ul className="space-y-2 text-sm text-white/70">
                     {[
                       "Spaced repetition ensures long-term retention",
-                      "Smart scheduling tells you exactly what to review",
-                      "Automatic LeetCode sync tracks your progress",
-                      "Build muscle memory for common patterns"
+                      "Smart scheduling adjusts to what you review",
+                      "Sync solved problems and track progress",
+                      "Build a memory system for common patterns"
                     ].map((item, i) => (
-                      <li key={i} className="flex items-start gap-3 text-sm sm:text-base text-muted-foreground">
-                        <Check className="h-4 w-4 text-emerald-400 mt-0.5 shrink-0" />
+                      <li key={i} className="flex gap-2">
+                        <span className="mt-0.5 text-[#BB7331]">✓</span>
                         {item}
                       </li>
                     ))}
@@ -319,25 +325,39 @@ export default function LandingPage() {
                 "Remembrance is the root of knowledge"
               </p>
 
-              <div className="flex items-center gap-2 bg-white/5 pr-4 pl-1 py-1 rounded-full border border-white/5 hover:bg-white/10 transition-colors w-fit">
-                <div className="h-6 w-6 rounded-full overflow-hidden bg-gradient-to-tr from-amber-500 to-purple-600 p-[1px]">
-                  <div className="h-full w-full rounded-full bg-black flex items-center justify-center">
-                    <span className="font-bold text-[10px] text-white">JK</span>
-                  </div>
+              <div className="flex items-center gap-3 text-sm text-white/50">
+                <div className="h-8 w-8 rounded-full border border-white/10 bg-white/[0.03] flex items-center justify-center font-semibold text-white/70 hover:ring-1 hover:ring-[#BB7331]/30 transition">
+                  JK
                 </div>
-                <span className="text-xs text-white/80">Developed by <span className="font-medium text-white">Jash Karangiya</span></span>
-              </div>
-
-              <div className="flex items-center gap-4 pt-2">
-                <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
-                  <Twitter className="h-5 w-5" />
-                </a>
-                <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
-                  <Github className="h-5 w-5" />
-                </a>
-                <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
-                  <Linkedin className="h-5 w-5" />
-                </a>
+                <div className="flex items-center gap-1">
+                  <a
+                    href="https://x.com/jashkarangiya"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 rounded-md hover:bg-white/[0.04] hover:text-[#BB7331] transition"
+                    aria-label="X"
+                  >
+                    <Twitter className="h-4 w-4" />
+                  </a>
+                  <a
+                    href="https://github.com/jashkarangiya"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 rounded-md hover:bg-white/[0.04] hover:text-[#BB7331] transition"
+                    aria-label="GitHub"
+                  >
+                    <Github className="h-4 w-4" />
+                  </a>
+                  <a
+                    href="https://linkedin.com/in/jashkarangiya"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 rounded-md hover:bg-white/[0.04] hover:text-[#BB7331] transition"
+                    aria-label="LinkedIn"
+                  >
+                    <Linkedin className="h-4 w-4" />
+                  </a>
+                </div>
               </div>
             </div>
 
