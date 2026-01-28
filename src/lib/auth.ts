@@ -10,6 +10,9 @@ export const authOptions: NextAuthOptions = {
     session: {
         strategy: "jwt",
     },
+    // Trust Vercel's forwarding headers (Fixes auth on Vercel deployments)
+    trustHost: true,
+    debug: process.env.NODE_ENV === "development", // Enable debug logs in dev (or change to true temporarily if needed)
     pages: {
         signIn: "/sign-in",
     },
