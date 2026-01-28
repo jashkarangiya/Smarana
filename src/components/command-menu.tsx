@@ -33,7 +33,7 @@ import { Button } from "./ui/button"
 import { useQuery } from "@tanstack/react-query"
 import { useDebouncedCallback } from "use-debounce"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
-import { useEasterEgg } from "./easter-egg-provider"
+import { useEasterEgg } from "./ember-trail-provider"
 
 type UserHit = { username: string; name?: string | null; image?: string | null }
 type ProblemHit = { id: string; title: string; difficulty: string; platform: string }
@@ -331,8 +331,9 @@ export function CommandMenu({ onOpenPomodoro }: CommandMenuProps) {
                             {debouncedQuery.toLowerCase().includes("smarana") && (
                                 <>
                                     <CommandSeparator />
-                                    <CommandGroup heading="Secret">
+                                    <CommandGroup heading="Secret" forceMount>
                                         <CommandItem
+                                            value="smarana invoke"
                                             onSelect={() => {
                                                 runCommand(() => triggerUnlock())
                                             }}

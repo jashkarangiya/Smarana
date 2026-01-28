@@ -17,7 +17,10 @@ export async function GET() {
                 showStreakToPublic: true,
                 showStreakToFriends: true,
                 showPlatformsToPublic: true,
-                showPlatformsToFriends: true
+                showPlatformsToFriends: true,
+                showBioPublicly: true,
+                showTimezoneToPublic: true,
+                showTimezoneToFriends: true,
             }
         })
 
@@ -46,7 +49,10 @@ export async function POST(req: Request) {
             showStreakToPublic,
             showStreakToFriends,
             showPlatformsToPublic,
-            showPlatformsToFriends
+            showPlatformsToFriends,
+            showBioPublicly,
+            showTimezoneToPublic,
+            showTimezoneToFriends,
         } = body
 
         // Validate profileVisibility
@@ -62,7 +68,10 @@ export async function POST(req: Request) {
                 showStreakToPublic: showStreakToPublic !== undefined ? showStreakToPublic : undefined,
                 showStreakToFriends: showStreakToFriends !== undefined ? showStreakToFriends : undefined,
                 showPlatformsToPublic: showPlatformsToPublic !== undefined ? showPlatformsToPublic : undefined,
-                showPlatformsToFriends: showPlatformsToFriends !== undefined ? showPlatformsToFriends : undefined
+                showPlatformsToFriends: showPlatformsToFriends !== undefined ? showPlatformsToFriends : undefined,
+                showBioPublicly: showBioPublicly !== undefined ? showBioPublicly : undefined,
+                showTimezoneToPublic: showTimezoneToPublic !== undefined ? showTimezoneToPublic : undefined,
+                showTimezoneToFriends: showTimezoneToFriends !== undefined ? showTimezoneToFriends : undefined,
             }
         })
 

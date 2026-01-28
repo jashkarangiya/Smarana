@@ -28,7 +28,7 @@ import { CommandMenu } from "./command-menu"
 import { NotificationsBell } from "./notifications-bell"
 import { PomodoroSheet } from "./pomodoro-sheet"
 import { usePomodoro } from "@/hooks/use-pomodoro"
-import { useEasterEgg } from "./easter-egg-provider"
+import { useEasterEgg } from "./ember-trail-provider"
 
 export function NavBar() {
     const { data: session } = useSession()

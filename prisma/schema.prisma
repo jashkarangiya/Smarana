@@ -74,6 +74,8 @@ model User {
   passwordHash       String?
   passwordUpdatedAt  DateTime?
   image              String?
+  bio                String?   @db.VarChar(160)
+  timezone           String?   @default("UTC")
   username           String?   @unique
   usernameLower      String?   @unique
   usernameChangedAt  DateTime?
@@ -99,6 +101,9 @@ model User {
   showStreakToFriends     Boolean @default(true)
   showPlatformsToPublic   Boolean @default(true)
   showPlatformsToFriends  Boolean @default(true)
+  showBioPublicly         Boolean @default(true)
+  showTimezoneToPublic    Boolean @default(false)
+  showTimezoneToFriends   Boolean @default(true)
 
   // Deprecated - migrate to profileVisibility
   isProfilePublic      Boolean   @default(true)

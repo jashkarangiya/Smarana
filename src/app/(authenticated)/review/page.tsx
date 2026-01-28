@@ -24,6 +24,8 @@ import Link from "next/link"
 import { toast } from "sonner"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { cn } from "@/lib/utils"
+import { useEmberTrail } from "@/components/ember-trail-provider"
+import { getTrailLevel } from "@/lib/easter-egg"
 
 type Rating = "remembered" | "kinda" | "forgot"
 
@@ -46,6 +48,7 @@ export default function ReviewPage() {
     const { data: allDueProblems, isLoading } = useProblems("due")
     const { data: stats } = useStats()
     const queryClient = useQueryClient()
+    const { triggerReviewEmber } = useEmberTrail()
 
     const [currentIndex, setCurrentIndex] = useState(0)
     const [revealed, setRevealed] = useState(false)
@@ -86,6 +89,11 @@ export default function ReviewPage() {
                 setRevealed(false)
             } else {
                 setSessionComplete(true)
+                // Trigger Node 3 easter egg after completing a review session
+                // Only triggers if user is at level 2 (has found Profile Ember)
+                if (getTrailLevel() === 2) {
+                    triggerReviewEmber()
+                }
             }
 
             // Invalidate queries
