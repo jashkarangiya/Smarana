@@ -5,7 +5,7 @@ import { redirect } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, Brain, BookOpen, Sparkles, Github, Linkedin, Twitter, Check, Users, Target, TrendingUp, ChevronDown } from "lucide-react"
+import { ArrowRight, Brain, BookOpen, Sparkles, Github, Linkedin, Twitter, Check, X, Users, Target, TrendingUp, ChevronDown } from "lucide-react"
 
 export default function LandingPage() {
   const { data: session, status } = useSession()
@@ -202,12 +202,14 @@ export default function LandingPage() {
               </p>
 
               <div className="grid md:grid-cols-2 gap-4">
-                {/* Problem */}
-                <div className="rounded-2xl border border-[#BB7331]/20 bg-gradient-to-b from-[#BB7331]/10 to-white/[0.02] p-5 shadow-sm transition-transform duration-200 hover:-translate-y-0.5 hover:border-[#BB7331]/30">
+                {/* Problem card - stronger ember tint */}
+                <div className="rounded-2xl border border-[#BB7331]/25 bg-gradient-to-b from-[#BB7331]/12 to-white/[0.02] p-5 sm:p-6 shadow-sm transition-transform duration-200 hover:-translate-y-0.5 hover:border-[#BB7331]/35">
                   <div className="mb-3 flex items-center gap-2">
-                    <span className="text-sm font-semibold text-[#BB7331]">The Problem</span>
+                    <h3 className="text-sm font-semibold text-white/80">
+                      The <span className="text-[#BB7331]">Problem</span>
+                    </h3>
                   </div>
-                  <ul className="space-y-2 text-sm text-white/70">
+                  <ul className="space-y-2.5 text-sm text-white/70">
                     {[
                       "Solve a problem, forget it a week later",
                       "Recognize patterns but can't recall solutions",
@@ -215,21 +217,21 @@ export default function LandingPage() {
                       "Interview prep feels like starting from scratch"
                     ].map((item, i) => (
                       <li key={i} className="flex gap-2">
-                        <span className="mt-0.5 text-[#BB7331]/80">✕</span>
+                        <X className="mt-0.5 h-4 w-4 shrink-0 text-[#BB7331]/70" />
                         {item}
                       </li>
                     ))}
                   </ul>
                 </div>
 
-                {/* Solution */}
-                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 shadow-sm transition-transform duration-200 hover:-translate-y-0.5 hover:border-white/20">
+                {/* Solution card - lighter ember tint for positive feel */}
+                <div className="rounded-2xl border border-[#BB7331]/15 bg-gradient-to-b from-[#BB7331]/7 to-white/[0.02] p-5 sm:p-6 shadow-sm transition-transform duration-200 hover:-translate-y-0.5 hover:border-[#BB7331]/25">
                   <div className="mb-3 flex items-center gap-2">
-                    <span className="text-sm font-semibold text-white/85">
+                    <h3 className="text-sm font-semibold text-white/80">
                       The <span className="text-[#BB7331]">Solution</span>
-                    </span>
+                    </h3>
                   </div>
-                  <ul className="space-y-2 text-sm text-white/70">
+                  <ul className="space-y-2.5 text-sm text-white/70">
                     {[
                       "Spaced repetition ensures long-term retention",
                       "Smart scheduling adjusts to what you review",
@@ -237,7 +239,7 @@ export default function LandingPage() {
                       "Build a memory system for common patterns"
                     ].map((item, i) => (
                       <li key={i} className="flex gap-2">
-                        <span className="mt-0.5 text-[#BB7331]">✓</span>
+                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#BB7331]" />
                         {item}
                       </li>
                     ))}

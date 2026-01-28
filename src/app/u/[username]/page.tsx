@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Flame, Trophy, Target, Calendar, UserPlus, UserCheck, Shield, Code2 } from "lucide-react"
+import { Flame, Trophy, Target, Calendar, UserPlus, UserCheck, Shield, Code2, BadgeCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { format } from "date-fns"
 import { Heatmap } from "@/components/heatmap" // Reuse existing heatmap component
@@ -41,6 +41,7 @@ interface UserProfile {
         codeforcesUsername: string | null
         codechefUsername: string | null
         atcoderUsername: string | null
+        platformVerifications?: Record<string, { verified: boolean; verifiedAt: string | null }>
     }
     activityHeatmap: Record<string, number>
 }
@@ -191,27 +192,31 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
                 />
             </div>
 
-            <div className="grid md:grid-cols-3 gap-6 sm:gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Activity Heatmap Area */}
-                <div className="md:col-span-2 space-y-4 sm:space-y-6">
-                    <Card>
+                <div className="lg:col-span-2 space-y-4">
+                    <Card className="overflow-hidden">
                         <CardHeader className="pb-2 sm:pb-4">
                             <CardTitle className="text-base">Activity</CardTitle>
                         </CardHeader>
-                        <CardContent className="px-3 sm:px-6 pb-4 sm:pb-6">
-                            <p className="text-sm text-muted-foreground mb-4">
-                                {user.stats.reviewsThisWeek} reviews this week
-                            </p>
-                            {/* Responsive heatmap wrapper with fade edges */}
+                        <CardContent className="p-0">
+                            <div className="px-3 sm:px-6 pb-2">
+                                <p className="text-sm text-muted-foreground">
+                                    {user.stats.reviewsThisWeek} reviews this week
+                                </p>
+                            </div>
+                            {/* Scrollable heatmap wrapper */}
                             <div className="relative">
-                                <Heatmap
-                                    data={profile.activityHeatmap}
-                                    className="w-full"
-                                    year={new Date().getFullYear()}
-                                />
+                                <div className="overflow-x-auto px-3 sm:px-6 pb-4 sm:pb-6">
+                                    <Heatmap
+                                        data={profile.activityHeatmap}
+                                        className="min-w-max"
+                                        year={new Date().getFullYear()}
+                                    />
+                                </div>
                                 {/* Fade edges for scroll indication on mobile */}
-                                <div className="pointer-events-none absolute inset-y-0 left-0 w-4 bg-gradient-to-r from-card to-transparent sm:hidden" />
-                                <div className="pointer-events-none absolute inset-y-0 right-0 w-4 bg-gradient-to-l from-card to-transparent sm:hidden" />
+                                <div className="pointer-events-none absolute inset-y-0 left-0 w-6 bg-gradient-to-r from-card to-transparent lg:hidden" />
+                                <div className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-card to-transparent lg:hidden" />
                             </div>
                         </CardContent>
                     </Card>
@@ -231,6 +236,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
                                     name="LeetCode"
                                     username={user.leetcodeUsername}
                                     href={`https://leetcode.com/${user.leetcodeUsername}`}
+                                    isVerified={user.platformVerifications?.leetcode?.verified}
                                 />
                             )}
                             {user.codeforcesUsername && (
@@ -238,6 +244,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
                                     name="Codeforces"
                                     username={user.codeforcesUsername}
                                     href={`https://codeforces.com/profile/${user.codeforcesUsername}`}
+                                    isVerified={user.platformVerifications?.codeforces?.verified}
                                 />
                             )}
                             {user.codechefUsername && (
@@ -245,6 +252,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
                                     name="CodeChef"
                                     username={user.codechefUsername}
                                     href={`https://www.codechef.com/users/${user.codechefUsername}`}
+                                    isVerified={user.platformVerifications?.codechef?.verified}
                                 />
                             )}
                             {user.atcoderUsername && (
@@ -252,6 +260,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
                                     name="AtCoder"
                                     username={user.atcoderUsername}
                                     href={`https://atcoder.jp/users/${user.atcoderUsername}`}
+                                    isVerified={user.platformVerifications?.atcoder?.verified}
                                 />
                             )}
                             {!user.leetcodeUsername && !user.codeforcesUsername && !user.codechefUsername && !user.atcoderUsername && (
@@ -263,7 +272,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
 
                 {/* LeetCode History */}
                 {user.stats?.leetcodeActivity && (
-                    <div className="md:col-span-3 space-y-4">
+                    <div className="lg:col-span-3 space-y-4">
                         <h2 className="text-xl font-bold flex items-center gap-2">
                             <Code2 className="w-5 h-5 text-green-500" />
                             LeetCode Activity
@@ -294,12 +303,15 @@ function StatCard({ label, value, icon, hidden }: { label: string, value: string
     )
 }
 
-function PlatformRow({ name, username, href }: { name: string; username: string; href: string }) {
+function PlatformRow({ name, username, href, isVerified }: { name: string; username: string; href: string; isVerified?: boolean }) {
     return (
         <div className="rounded-xl border border-border/50 bg-muted/30 p-3 sm:p-4">
             <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
-                    <div className="text-sm font-medium">{name}</div>
+                    <div className="flex items-center gap-1 text-sm font-medium">
+                        {name}
+                        {isVerified && <BadgeCheck className="h-4 w-4 text-primary" />}
+                    </div>
                     <div className="mt-0.5 text-xs text-muted-foreground truncate">@{username}</div>
                 </div>
                 <a

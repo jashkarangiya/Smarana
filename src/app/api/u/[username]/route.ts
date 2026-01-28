@@ -49,6 +49,10 @@ export async function GET(
                 codeforcesUsername: true,
                 codechefUsername: true,
                 atcoderUsername: true,
+                platformVerifications: {
+                    where: { isVerified: true },
+                    select: { platform: true, verifiedAt: true }
+                },
                 friendsAsUser: { where: { friendId: viewerId || "" }, select: { id: true } },
                 friendsAsFriend: { where: { userId: viewerId || "" }, select: { id: true } },
                 reviewLogs: {
@@ -139,6 +143,10 @@ export async function GET(
                 codeforcesUsername: canViewPlatforms ? user.codeforcesUsername : null,
                 codechefUsername: canViewPlatforms ? user.codechefUsername : null,
                 atcoderUsername: canViewPlatforms ? user.atcoderUsername : null,
+                platformVerifications: canViewPlatforms ? user.platformVerifications.reduce((acc, v) => {
+                    acc[v.platform] = { verified: true, verifiedAt: v.verifiedAt }
+                    return acc
+                }, {} as Record<string, { verified: boolean; verifiedAt: Date | null }>) : {},
             },
             activityHeatmap: user.reviewLogs.reduce((acc, log) => {
                 const dateStr = log.date.toISOString().split("T")[0]

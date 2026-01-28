@@ -20,7 +20,7 @@ import {
     SheetTrigger,
 } from "@/components/ui/sheet"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { LayoutDashboard, ListTodo, Settings, LogOut, Menu, Calendar, Activity, Brain, Trophy, Timer } from "lucide-react"
+import { LayoutDashboard, ListTodo, Settings, LogOut, Menu, Calendar, Activity, Brain, Timer, Globe, BookOpen } from "lucide-react"
 import { useStats, useProblems } from "@/hooks/use-problems"
 import { motion } from "framer-motion"
 import { useState, useRef, useCallback } from "react"
@@ -197,21 +197,27 @@ export function NavBar() {
                                     <SheetContent side="right" className="w-[280px] sm:w-[320px] p-0 bg-[#0c0c0c]/95 backdrop-blur-xl border-white/10">
                                         <SheetHeader className="p-4 sm:p-6 pb-4 border-b border-white/10">
                                             <SheetTitle className="flex items-center gap-3">
-                                                <AvatarWithProgress
-                                                    progress={xpProgress}
-                                                    image={session.user?.image}
-                                                    name={session.user?.name}
-                                                    size={44}
-                                                />
-                                                <div className="text-left min-w-0 flex-1">
-                                                    <p className="font-semibold text-white truncate">{session.user?.name}</p>
-                                                    <div className="flex items-center gap-2 mt-1">
-                                                        <span className="text-xs font-bold text-[#d6a24b] bg-[#d6a24b]/10 px-1.5 py-0.5 rounded">
-                                                            LVL {stats?.level || 1}
-                                                        </span>
-                                                        <span className="text-xs text-white/50">{stats?.xp || 0} XP</span>
+                                                <Link
+                                                    href={`/u/${session.user?.username}`}
+                                                    onClick={() => setMobileMenuOpen(false)}
+                                                    className="flex items-center gap-3 w-full hover:opacity-80 transition-opacity"
+                                                >
+                                                    <AvatarWithProgress
+                                                        progress={xpProgress}
+                                                        image={session.user?.image}
+                                                        name={session.user?.name}
+                                                        size={44}
+                                                    />
+                                                    <div className="text-left min-w-0 flex-1">
+                                                        <p className="font-semibold text-white truncate">{session.user?.name}</p>
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            <span className="text-xs font-bold text-[#d6a24b] bg-[#d6a24b]/10 px-1.5 py-0.5 rounded">
+                                                                LVL {stats?.level || 1}
+                                                            </span>
+                                                            <span className="text-xs text-white/50">@{session.user?.username}</span>
+                                                        </div>
                                                     </div>
-                                                </div>
+                                                </Link>
                                             </SheetTitle>
                                         </SheetHeader>
 
@@ -269,6 +275,35 @@ export function NavBar() {
                                                 <Settings className="h-5 w-5" />
                                                 <span className="font-medium">Settings</span>
                                             </Link>
+                                            <Link
+                                                href="/resources"
+                                                onClick={() => setMobileMenuOpen(false)}
+                                                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive("/resources")
+                                                    ? 'bg-white/10 text-white'
+                                                    : 'text-white/60 hover:bg-white/5 hover:text-white'
+                                                    }`}
+                                            >
+                                                <BookOpen className="h-5 w-5" />
+                                                <span className="font-medium">Resources</span>
+                                            </Link>
+
+                                            {/* Account Section */}
+                                            <div className="pt-4 mt-2 border-t border-white/10">
+                                                <div className="px-4 py-2 text-xs uppercase tracking-wider text-white/35">
+                                                    Account
+                                                </div>
+                                                <Link
+                                                    href={`/u/${session.user?.username}`}
+                                                    onClick={() => setMobileMenuOpen(false)}
+                                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive(`/u/${session.user?.username}`)
+                                                        ? 'bg-white/10 text-white'
+                                                        : 'text-white/60 hover:bg-white/5 hover:text-white'
+                                                        }`}
+                                                >
+                                                    <Globe className="h-5 w-5" />
+                                                    <span className="font-medium">Public Profile</span>
+                                                </Link>
+                                            </div>
 
                                             {/* Pomodoro Timer for Mobile */}
                                             <button
@@ -277,8 +312,8 @@ export function NavBar() {
                                                     setPomodoroOpen(true)
                                                 }}
                                                 className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all w-full text-left ${pomodoroActive
-                                                        ? 'bg-amber-500/10 text-amber-400'
-                                                        : 'text-white/60 hover:bg-white/5 hover:text-white'
+                                                    ? 'bg-amber-500/10 text-amber-400'
+                                                    : 'text-white/60 hover:bg-white/5 hover:text-white'
                                                     }`}
                                             >
                                                 <Timer className="h-5 w-5" />
@@ -328,33 +363,45 @@ export function NavBar() {
                                             backdropFilter: 'blur(16px)',
                                         }}
                                     >
-                                        <div className="px-3 py-3 mb-2 rounded-xl bg-white/5 flex items-center gap-3">
-                                            <Avatar className="h-10 w-10 border border-white/10">
-                                                <AvatarImage src={session.user?.image || ""} />
-                                                <AvatarFallback>{session.user?.name?.[0]}</AvatarFallback>
-                                            </Avatar>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="font-semibold text-white truncate">{session.user?.name}</p>
-                                                <div className="flex items-center gap-2 mt-0.5">
-                                                    <span className="text-[10px] font-bold text-[#d6a24b] bg-[#d6a24b]/10 px-1.5 py-0.5 rounded border border-[#d6a24b]/20">
-                                                        LVL {stats?.level || 1}
-                                                    </span>
-                                                    <span className="text-[10px] text-white/50">{stats?.xp || 0} XP</span>
+                                        <DropdownMenuItem asChild className="p-0 mb-2 focus:bg-transparent">
+                                            <Link
+                                                href={`/u/${session.user?.username}`}
+                                                className="px-3 py-3 rounded-xl bg-white/5 flex items-center gap-3 hover:bg-white/[0.08] transition-colors w-full cursor-pointer"
+                                            >
+                                                <Avatar className="h-10 w-10 border border-white/10">
+                                                    <AvatarImage src={session.user?.image || ""} />
+                                                    <AvatarFallback>{session.user?.name?.[0]}</AvatarFallback>
+                                                </Avatar>
+                                                <div className="flex-1 min-w-0 overflow-hidden">
+                                                    <p className="font-semibold text-white truncate">{session.user?.name}</p>
+                                                    <div className="flex items-center gap-2 mt-0.5 overflow-hidden">
+                                                        <span className="text-[10px] font-bold text-[#d6a24b] bg-[#d6a24b]/10 px-1.5 py-0.5 rounded border border-[#d6a24b]/20 flex-shrink-0">
+                                                            LVL {stats?.level || 1}
+                                                        </span>
+                                                        <span className="text-[10px] text-white/50 truncate">@{session.user?.username}</span>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </div>
+                                            </Link>
+                                        </DropdownMenuItem>
 
                                         <DropdownMenuItem asChild className="rounded-lg cursor-pointer text-white/80 focus:text-white focus:bg-white/10 py-2.5">
                                             <Link href="/insights" className="flex items-center gap-2">
-                                                <Activity className="h-4 w-4 text-emerald-400" />
+                                                <Activity className="h-4 w-4" />
                                                 <span className="flex-1">Insights</span>
                                             </Link>
                                         </DropdownMenuItem>
 
                                         <DropdownMenuItem asChild className="rounded-lg cursor-pointer text-white/80 focus:text-white focus:bg-white/10 py-2.5">
                                             <Link href={`/u/${session.user?.username}`} className="flex items-center gap-2">
-                                                <Trophy className="h-4 w-4 text-yellow-500" />
+                                                <Globe className="h-4 w-4" />
                                                 <span className="flex-1">Public Profile</span>
+                                            </Link>
+                                        </DropdownMenuItem>
+
+                                        <DropdownMenuItem asChild className="rounded-lg cursor-pointer text-white/80 focus:text-white focus:bg-white/10 py-2.5">
+                                            <Link href="/resources" className="flex items-center gap-2">
+                                                <BookOpen className="h-4 w-4" />
+                                                <span className="flex-1">Resources</span>
                                             </Link>
                                         </DropdownMenuItem>
 
