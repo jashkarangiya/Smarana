@@ -282,7 +282,7 @@ async function main() {
 
     reviewLogs.push({
       userId: DEMO_USER_ID,
-      date,
+      day: date.toISOString().split('T')[0],
       count: Math.floor(Math.random() * 8) + 1,
       xpEarned: (Math.floor(Math.random() * 8) + 1) * 25,
     })
