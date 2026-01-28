@@ -43,7 +43,7 @@ export async function middleware(req: NextRequest) {
             if (path.startsWith("/api/cron") || path.startsWith("/api/sync")) {
                 // pass
             } else {
-                return new NextResponse("Forbidden: CSRF check failed", { status: 403 });
+                return NextResponse.json({ error: "Forbidden: CSRF check failed" }, { status: 403 });
             }
         }
     }

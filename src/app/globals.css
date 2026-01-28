@@ -80,6 +80,13 @@
     font-weight: 600;
     letter-spacing: -0.02em;
   }
+
+  h4,
+  h5,
+  h6 {
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
 }
 
 @layer components {
@@ -137,11 +144,17 @@
 
   /* Premium Button Press */
   .btn-premium {
-    transition: transform var(--dur-1) var(--ease-out), filter var(--dur-1) var(--ease-out);
+    @apply relative overflow-hidden transition-all duration-300;
+  }
+
+  .btn-premium:hover {
+    box-shadow: 0 0 20px rgba(214, 162, 75, 0.15);
+    filter: brightness(1.1);
   }
 
   .btn-premium:active {
-    transform: translateY(1px) scale(0.99);
+    transform: translateY(1px) scale(0.98);
+    filter: brightness(0.95);
   }
 }
 

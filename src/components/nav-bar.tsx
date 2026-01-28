@@ -20,7 +20,7 @@ import {
     SheetTrigger,
 } from "@/components/ui/sheet"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { LayoutDashboard, ListTodo, Settings, LogOut, Menu, Calendar, Activity, Brain, Timer, Globe, BookOpen } from "lucide-react"
+import { Menu, Timer, LogOut } from "lucide-react"
 import { useStats, useProblems } from "@/hooks/use-problems"
 import { motion } from "framer-motion"
 import { useState, useRef, useCallback } from "react"
@@ -29,6 +29,7 @@ import { NotificationsBell } from "./notifications-bell"
 import { PomodoroSheet } from "./pomodoro-sheet"
 import { usePomodoro } from "@/hooks/use-pomodoro"
 import { useEasterEgg } from "./ember-trail-provider"
+import { MAIN_NAV, UTILITY_NAV, ACTIONS_NAV } from "@/config/navigation"
 
 export function NavBar() {
     const { data: session } = useSession()
@@ -68,15 +69,20 @@ export function NavBar() {
 
     const isActive = (path: string) => pathname === path
 
-    const navLinks = [
-        { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-        { href: "/problems", label: "Problems", icon: ListTodo },
-        { href: "/schedule", label: "Schedule", icon: Calendar },
-    ]
-
     // Calculate XP progress (0 to 1)
     const xpProgress = stats ? ((stats.xp || 0) % 500) / 500 : 0
     const totalDue = dueProblems?.length || 0
+
+    // Resolve dynamic links (e.g. /u/me -> /u/username)
+    const resolveHref = (href: string) => {
+        if (href === "/u/me" && session?.user?.username) {
+            return `/u/${session.user.username}`
+        }
+        return href
+    }
+
+    // Find specific actions from config
+    const reviewAction = ACTIONS_NAV.find(a => a.title === "Review")
 
     return (
         <nav className="fixed top-0 left-0 right-0 z-50 px-3 sm:px-4 py-3">
@@ -112,10 +118,10 @@ export function NavBar() {
                         </Link>
                     </div>
 
-                    {/* Segmented Control Tabs - Desktop */}
+                    {/* Segmented Control Tabs - Desktop (Consuming MAIN_NAV) */}
                     {session && (
                         <div className="hidden lg:flex relative p-1 rounded-full bg-black/20 border border-white/5">
-                            {navLinks.map((link) => {
+                            {MAIN_NAV.map((link) => {
                                 const active = isActive(link.href)
                                 return (
                                     <Link
@@ -135,7 +141,7 @@ export function NavBar() {
                                             />
                                         )}
                                         <link.icon className={`h-4 w-4 ${active ? "text-[#d6a24b]" : "opacity-70"}`} />
-                                        {link.label}
+                                        {link.title}
                                     </Link>
                                 )
                             })}
@@ -147,15 +153,15 @@ export function NavBar() {
                         {session ? (
                             <>
                                 {/* Review CTA - The ONLY prominent action */}
-                                {totalDue > 0 && (
+                                {totalDue > 0 && reviewAction && (
                                     <Button
                                         asChild
                                         size="sm"
                                         className="hidden sm:flex rounded-full bg-[#d6a24b] text-black hover:bg-[#b8862f] h-9 px-4 font-semibold shadow-[0_0_15px_rgba(214,162,75,0.25)] hover:shadow-[0_0_20px_rgba(214,162,75,0.4)] transition-all"
                                     >
-                                        <Link href="/review">
-                                            <Brain className="mr-2 h-4 w-4" />
-                                            Review ({totalDue})
+                                        <Link href={reviewAction.href}>
+                                            <reviewAction.icon className="mr-2 h-4 w-4" />
+                                            {reviewAction.title} ({totalDue})
                                         </Link>
                                     </Button>
                                 )}
@@ -222,24 +228,24 @@ export function NavBar() {
                                         </SheetHeader>
 
                                         {/* Review CTA for Mobile */}
-                                        {totalDue > 0 && (
+                                        {totalDue > 0 && reviewAction && (
                                             <div className="p-4 pb-2">
                                                 <Button
                                                     asChild
                                                     className="w-full rounded-xl bg-[#d6a24b] text-black hover:bg-[#b8862f] h-11 font-semibold shadow-[0_0_15px_rgba(214,162,75,0.25)]"
                                                     onClick={() => setMobileMenuOpen(false)}
                                                 >
-                                                    <Link href="/review">
-                                                        <Brain className="mr-2 h-4 w-4" />
+                                                    <Link href={reviewAction.href}>
+                                                        <reviewAction.icon className="mr-2 h-4 w-4" />
                                                         Review {totalDue} Problems
                                                     </Link>
                                                 </Button>
                                             </div>
                                         )}
 
-                                        {/* Navigation Links */}
+                                        {/* Navigation Links (Consuming config) */}
                                         <div className="p-4 pt-2 space-y-1">
-                                            {navLinks.map((link) => (
+                                            {MAIN_NAV.map((link) => (
                                                 <Link
                                                     key={link.href}
                                                     href={link.href}
@@ -250,60 +256,28 @@ export function NavBar() {
                                                         }`}
                                                 >
                                                     <link.icon className="h-5 w-5" />
-                                                    <span className="font-medium">{link.label}</span>
+                                                    <span className="font-medium">{link.title}</span>
                                                 </Link>
                                             ))}
-                                            <Link
-                                                href="/insights"
-                                                onClick={() => setMobileMenuOpen(false)}
-                                                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive("/insights")
-                                                    ? 'bg-white/10 text-white'
-                                                    : 'text-white/60 hover:bg-white/5 hover:text-white'
-                                                    }`}
-                                            >
-                                                <Activity className="h-5 w-5" />
-                                                <span className="font-medium">Insights</span>
-                                            </Link>
-                                            <Link
-                                                href="/settings"
-                                                onClick={() => setMobileMenuOpen(false)}
-                                                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive("/settings")
-                                                    ? 'bg-white/10 text-white'
-                                                    : 'text-white/60 hover:bg-white/5 hover:text-white'
-                                                    }`}
-                                            >
-                                                <Settings className="h-5 w-5" />
-                                                <span className="font-medium">Settings</span>
-                                            </Link>
-                                            <Link
-                                                href="/resources"
-                                                onClick={() => setMobileMenuOpen(false)}
-                                                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive("/resources")
-                                                    ? 'bg-white/10 text-white'
-                                                    : 'text-white/60 hover:bg-white/5 hover:text-white'
-                                                    }`}
-                                            >
-                                                <BookOpen className="h-5 w-5" />
-                                                <span className="font-medium">Resources</span>
-                                            </Link>
 
-                                            {/* Account Section */}
-                                            <div className="pt-4 mt-2 border-t border-white/10">
-                                                <div className="px-4 py-2 text-xs uppercase tracking-wider text-white/35">
-                                                    Account
-                                                </div>
-                                                <Link
-                                                    href={`/u/${session.user?.username}`}
-                                                    onClick={() => setMobileMenuOpen(false)}
-                                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive(`/u/${session.user?.username}`)
-                                                        ? 'bg-white/10 text-white'
-                                                        : 'text-white/60 hover:bg-white/5 hover:text-white'
-                                                        }`}
-                                                >
-                                                    <Globe className="h-5 w-5" />
-                                                    <span className="font-medium">Public Profile</span>
-                                                </Link>
-                                            </div>
+                                            {/* Utility Links in Mobile */}
+                                            {UTILITY_NAV.map((link) => {
+                                                const href = resolveHref(link.href)
+                                                return (
+                                                    <Link
+                                                        key={link.title}
+                                                        href={href}
+                                                        onClick={() => setMobileMenuOpen(false)}
+                                                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive(href)
+                                                            ? 'bg-white/10 text-white'
+                                                            : 'text-white/60 hover:bg-white/5 hover:text-white'
+                                                            }`}
+                                                    >
+                                                        <link.icon className="h-5 w-5" />
+                                                        <span className="font-medium">{link.title}</span>
+                                                    </Link>
+                                                )
+                                            })}
 
                                             {/* Pomodoro Timer for Mobile */}
                                             <button
@@ -384,33 +358,37 @@ export function NavBar() {
                                             </Link>
                                         </DropdownMenuItem>
 
-                                        <DropdownMenuItem asChild className="rounded-lg cursor-pointer text-white/80 focus:text-white focus:bg-white/10 py-2.5">
-                                            <Link href="/insights" className="flex items-center gap-2">
-                                                <Activity className="h-4 w-4" />
-                                                <span className="flex-1">Insights</span>
-                                            </Link>
-                                        </DropdownMenuItem>
+                                        {/* Utility Links in Dropdown */}
+                                        {UTILITY_NAV.map((link) => {
+                                            const href = resolveHref(link.href)
+                                            // Skip profile as it's already the header
+                                            if (link.title === "Profile") return null
+                                            return (
+                                                <DropdownMenuItem key={link.title} asChild className="rounded-lg cursor-pointer text-white/80 focus:text-white focus:bg-white/10 py-2.5">
+                                                    <Link href={href} className="flex items-center gap-2">
+                                                        <link.icon className="h-4 w-4" />
+                                                        <span className="flex-1">{link.title}</span>
+                                                    </Link>
+                                                </DropdownMenuItem>
+                                            )
+                                        })}
 
-                                        <DropdownMenuItem asChild className="rounded-lg cursor-pointer text-white/80 focus:text-white focus:bg-white/10 py-2.5">
-                                            <Link href={`/u/${session.user?.username}`} className="flex items-center gap-2">
-                                                <Globe className="h-4 w-4" />
-                                                <span className="flex-1">Public Profile</span>
-                                            </Link>
-                                        </DropdownMenuItem>
-
-                                        <DropdownMenuItem asChild className="rounded-lg cursor-pointer text-white/80 focus:text-white focus:bg-white/10 py-2.5">
-                                            <Link href="/resources" className="flex items-center gap-2">
-                                                <BookOpen className="h-4 w-4" />
-                                                <span className="flex-1">Resources</span>
-                                            </Link>
-                                        </DropdownMenuItem>
-
-                                        <DropdownMenuItem asChild className="rounded-lg cursor-pointer text-white/80 focus:text-white focus:bg-white/10 py-2.5">
-                                            <Link href="/settings" className="flex items-center gap-2">
-                                                <Settings className="h-4 w-4" />
-                                                <span className="flex-1">Settings</span>
-                                            </Link>
-                                        </DropdownMenuItem>
+                                        {/* Also show MAIN_NAV in dropdown just in case? Or too redundant? 
+                                            Currently not showing MAIN_NAV in dropdown (kept sidebar/tabs for that). 
+                                            But let's include Insight/Resources if they aren't in tabs?
+                                            Tabs only show 3 items. MAIN_NAV has 5. We should probably show all MAIN_NAV in dropdown or ensure tabs are responsive.
+                                            For now, let's keep it clean and assume tabs + mobile.
+                                            But wait, "Insights" and "Resources" were manually in dropdown.
+                                            Let's add them back via config.
+                                         */}
+                                        {MAIN_NAV.filter(l => !['Dashboard', 'Problems', 'Schedule'].includes(l.title)).map(link => (
+                                            <DropdownMenuItem key={link.title} asChild className="rounded-lg cursor-pointer text-white/80 focus:text-white focus:bg-white/10 py-2.5">
+                                                <Link href={link.href} className="flex items-center gap-2">
+                                                    <link.icon className="h-4 w-4" />
+                                                    <span className="flex-1">{link.title}</span>
+                                                </Link>
+                                            </DropdownMenuItem>
+                                        ))}
 
                                         <DropdownMenuSeparator className="my-1 bg-white/10" />
                                         <DropdownMenuItem

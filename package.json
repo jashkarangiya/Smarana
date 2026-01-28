@@ -4,11 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && prisma migrate deploy && next build",
+    "build": "npx prisma db push --accept-data-loss && next build",
     "postinstall": "prisma generate",
     "start": "next start",
     "lint": "eslint",
-    "seed:demo": "tsx scripts/seed-demo.ts"
+    "seed:demo": "npx tsx scripts/seed-demo.ts"
   },
   "dependencies": {
     "@next-auth/prisma-adapter": "^1.0.7",
