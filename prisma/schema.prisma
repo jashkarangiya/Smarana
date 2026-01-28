@@ -126,6 +126,7 @@ model User {
 
   notifications        Notification[]
   actorNotifications   Notification[] @relation("NotificationActor")
+  platformVerifications PlatformVerification[]
 
   @@index([usernameLower])
 }
@@ -336,4 +337,23 @@ model Notification {
   createdAt DateTime  @default(now())
 
   @@index([userId, readAt, createdAt])
+}
+
+// Platform verification for ownership proof
+model PlatformVerification {
+  id                String    @id @default(cuid())
+  userId            String
+  platform          String    // "leetcode" | "codeforces" | "codechef" | "atcoder"
+  username          String
+  verificationToken String
+  tokenExpiresAt    DateTime
+  isVerified        Boolean   @default(false)
+  verifiedAt        DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, platform])
+  @@index([verificationToken])
 }

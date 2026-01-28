@@ -6,8 +6,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
+import { AutoResizeTextarea } from "@/components/ui/auto-resize-textarea"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Separator } from "@/components/ui/separator"
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog"
 import {
     ArrowLeft,
     ExternalLink,
@@ -21,7 +28,8 @@ import {
     Save,
     CheckCircle2,
     Brain,
-    Zap
+    Zap,
+    Maximize2
 } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
@@ -57,6 +65,10 @@ export default function ProblemDetailPage() {
     const [pitfalls, setPitfalls] = useState("")
     const [solution, setSolution] = useState("")
     const [hasChanges, setHasChanges] = useState(false)
+
+    // Expand dialogs
+    const [notesExpanded, setNotesExpanded] = useState(false)
+    const [solutionExpanded, setSolutionExpanded] = useState(false)
 
     // Fetch problem
     const { data: problem, isLoading, error } = useQuery<Problem>({
@@ -273,20 +285,27 @@ export default function ProblemDetailPage() {
                     {/* Notes */}
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-lg">
-                                <FileText className="h-5 w-5" />
-                                Your Notes
-                            </CardTitle>
-                            <CardDescription>
-                                Key insights, approach, and things to remember
-                            </CardDescription>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <CardTitle className="flex items-center gap-2 text-lg">
+                                        <FileText className="h-5 w-5" />
+                                        Your Notes
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Key insights, approach, and things to remember
+                                    </CardDescription>
+                                </div>
+                                <Button variant="ghost" size="sm" onClick={() => setNotesExpanded(true)} className="text-muted-foreground hover:text-foreground">
+                                    <Maximize2 className="h-4 w-4" />
+                                </Button>
+                            </div>
                         </CardHeader>
                         <CardContent>
-                            <Textarea
+                            <AutoResizeTextarea
                                 value={notes}
                                 onChange={(e) => setNotes(e.target.value)}
-                                placeholder="Add your notes about this problem..."
-                                className="min-h-[120px] resize-none"
+                                placeholder="Key insights, approach, things to remember…"
+                                className="min-h-[160px] p-4"
                             />
                         </CardContent>
                     </Card>
@@ -303,11 +322,13 @@ export default function ProblemDetailPage() {
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <Textarea
+                            <AutoResizeTextarea
                                 value={recallPrompts}
                                 onChange={(e) => setRecallPrompts(e.target.value)}
-                                placeholder="• What pattern does this use?&#10;• What's the key insight?&#10;• What's the time complexity?"
-                                className="min-h-[100px] resize-none"
+                                placeholder="• What pattern does this use?
+• What's the key insight?
+• What's the time complexity?"
+                                className="min-h-[100px] p-4"
                             />
                         </CardContent>
                     </Card>
@@ -324,11 +345,13 @@ export default function ProblemDetailPage() {
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <Textarea
+                            <AutoResizeTextarea
                                 value={pitfalls}
                                 onChange={(e) => setPitfalls(e.target.value)}
-                                placeholder="• Don't forget to handle empty input&#10;• Watch for integer overflow&#10;• Edge case: single element"
-                                className="min-h-[100px] resize-none"
+                                placeholder="• Don't forget to handle empty input
+• Watch for integer overflow
+• Edge case: single element"
+                                className="min-h-[100px] p-4"
                             />
                         </CardContent>
                     </Card>
@@ -336,36 +359,58 @@ export default function ProblemDetailPage() {
                     {/* Solution Outline */}
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-lg">
-                                <Zap className="h-5 w-5 text-primary" />
-                                Solution Outline
-                            </CardTitle>
-                            <CardDescription>
-                                Brief outline or pseudocode (not full solution)
-                            </CardDescription>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <CardTitle className="flex items-center gap-2 text-lg">
+                                        <Zap className="h-5 w-5 text-primary" />
+                                        Solution Outline
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Brief outline or pseudocode (not full solution)
+                                    </CardDescription>
+                                </div>
+                                <Button variant="ghost" size="sm" onClick={() => setSolutionExpanded(true)} className="text-muted-foreground hover:text-foreground">
+                                    <Maximize2 className="h-4 w-4" />
+                                </Button>
+                            </div>
                         </CardHeader>
                         <CardContent>
-                            <Textarea
+                            <AutoResizeTextarea
                                 value={solution}
                                 onChange={(e) => setSolution(e.target.value)}
-                                placeholder="1. Sort the array&#10;2. Use two pointers&#10;3. ..."
-                                className="min-h-[120px] font-mono text-sm resize-none"
+                                placeholder="1. Sort the array
+2. Use two pointers
+3. ..."
+                                className="min-h-[160px] p-4 font-mono text-sm"
+                                maxHeight={720}
                             />
                         </CardContent>
                     </Card>
                 </div>
 
-                {/* Sidebar */}
-                <div className="space-y-6">
-                    {/* Save Button */}
-                    <Button
-                        onClick={() => saveMutation.mutate()}
-                        disabled={!hasChanges || saveMutation.isPending}
-                        className="w-full"
-                    >
-                        <Save className="h-4 w-4 mr-2" />
-                        {saveMutation.isPending ? "Saving..." : "Save Changes"}
-                    </Button>
+                {/* Sidebar - Sticky */}
+                <div className="space-y-6 lg:sticky lg:top-24 h-fit">
+                    {/* Save Section */}
+                    <div className="space-y-2">
+                        <Button
+                            onClick={() => saveMutation.mutate()}
+                            disabled={!hasChanges || saveMutation.isPending}
+                            className="w-full"
+                        >
+                            <Save className="h-4 w-4 mr-2" />
+                            {saveMutation.isPending ? "Saving..." : "Save Changes"}
+                        </Button>
+                        {/* Save Status Indicator */}
+                        <div className="text-center text-xs">
+                            {saveMutation.isPending ? (
+                                <span className="text-muted-foreground animate-pulse">Saving...</span>
+                            ) : hasChanges ? (
+                                <span className="text-amber-500">Unsaved changes</span>
+                            ) : (
+                                <span className="text-emerald-500">✓ All changes saved</span>
+                            )}
+                        </div>
+                    </div>
 
                     {/* Review History */}
                     <Card>
@@ -431,6 +476,42 @@ export default function ProblemDetailPage() {
                     </Card>
                 </div>
             </div>
-        </div>
+
+            {/* Expand Dialog - Notes */}
+            <Dialog open={notesExpanded} onOpenChange={setNotesExpanded}>
+                <DialogContent className="max-w-4xl border-white/10 bg-[#0a0a0a] backdrop-blur-xl">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <FileText className="h-5 w-5" />
+                            Your Notes
+                        </DialogTitle>
+                    </DialogHeader>
+                    <Textarea
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        placeholder="Key insights, approach, things to remember…"
+                        className="min-h-[60vh] resize-none bg-white/[0.03] border-white/10 text-white/90 p-4 leading-relaxed"
+                    />
+                </DialogContent>
+            </Dialog>
+
+            {/* Expand Dialog - Solution */}
+            <Dialog open={solutionExpanded} onOpenChange={setSolutionExpanded}>
+                <DialogContent className="max-w-4xl border-white/10 bg-[#0a0a0a] backdrop-blur-xl">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Zap className="h-5 w-5 text-primary" />
+                            Solution Outline
+                        </DialogTitle>
+                    </DialogHeader>
+                    <Textarea
+                        value={solution}
+                        onChange={(e) => setSolution(e.target.value)}
+                        placeholder="1. Sort the array\n2. Use two pointers\n3. ..."
+                        className="min-h-[60vh] resize-none bg-white/[0.03] border-white/10 text-white/90 p-4 font-mono text-sm leading-relaxed"
+                    />
+                </DialogContent>
+            </Dialog>
+        </div >
     )
 }

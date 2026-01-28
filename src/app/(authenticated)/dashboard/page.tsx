@@ -11,8 +11,11 @@ import { PomodoroTimer } from "@/components/pomodoro-timer"
 import { FriendsList } from "@/components/friends-list"
 import { ProblemNotesModal } from "@/components/problem-notes-modal"
 import { LeaderboardWidget } from "@/components/leaderboard-widget"
+import { SocialPulseCard } from "@/components/social-pulse-card"
+import { HeroMiniLeaderboard } from "@/components/hero-mini-leaderboard"
 import { formatDistanceToNow } from "date-fns"
 import { Brain, CheckCircle2, Calendar, RefreshCw, ArrowUpRight, Flame, TrendingUp, Trophy, Star, Zap, Lightbulb, FileText, Share2, Timer, ArrowRight } from "lucide-react"
+import { tipForUserTodayWithMix } from "@/lib/daily-tips"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Link from "next/link"
 import { toast } from "sonner"
@@ -123,9 +126,9 @@ export default function DashboardPage() {
                     </div>
                 </div>
 
-                {/* Quick Stats or Illustration */}
-                <div className="hidden lg:block relative z-10">
-                    <div className="p-6 rounded-2xl bg-black/20 backdrop-blur-md border border-white/10 flex flex-col items-center gap-2 min-w-[160px]">
+                {/* Quick Stats - Streak + Mini Leaderboard */}
+                <div className="hidden lg:flex gap-4 relative z-10">
+                    <div className="p-6 rounded-2xl bg-black/20 backdrop-blur-md border border-white/10 flex flex-col items-center gap-2 min-w-[140px]">
                         <span className="text-xs font-bold text-white/50 uppercase tracking-widest">Current Streak</span>
                         <div className="flex items-center gap-2">
                             <Flame className={`h-8 w-8 ${stats?.streak ? "text-orange-500 fill-orange-500" : "text-white/20"}`} />
@@ -133,6 +136,7 @@ export default function DashboardPage() {
                         </div>
                         <span className="text-xs text-white/40">days</span>
                     </div>
+                    <HeroMiniLeaderboard userStreak={stats?.streak || 0} />
                 </div>
             </div>
 
@@ -289,14 +293,17 @@ export default function DashboardPage() {
                     </Card>
                 </div>
 
-                {/* Sidebar with Tabs */}
-                <div className="space-y-6">
+                {/* Sidebar - Social Pulse Always Visible */}
+                <div className="order-first lg:order-last space-y-6">
+                    {/* Social Pulse - Always Visible */}
+                    <SocialPulseCard />
+
+                    {/* Other Widgets in Tabs */}
                     <Tabs defaultValue="challenge" className="w-full">
-                        <TabsList className="grid w-full grid-cols-4 mb-4">
+                        <TabsList className="grid w-full grid-cols-3 mb-4">
                             <TabsTrigger value="challenge" title="Daily Challenge"><Zap className="h-4 w-4" /></TabsTrigger>
                             <TabsTrigger value="upcoming" title="Upcoming"><Calendar className="h-4 w-4" /></TabsTrigger>
                             <TabsTrigger value="focus" title="Focus"><Timer className="h-4 w-4" /></TabsTrigger>
-                            <TabsTrigger value="social" title="Friends"><Share2 className="h-4 w-4" /></TabsTrigger>
                         </TabsList>
 
                         <TabsContent value="challenge" className="mt-0">
@@ -361,13 +368,6 @@ export default function DashboardPage() {
                         <TabsContent value="focus" className="mt-0">
                             <PomodoroTimer />
                         </TabsContent>
-
-
-
-                        <TabsContent value="social" className="mt-0 space-y-6">
-                            <FriendsList />
-                            <LeaderboardWidget />
-                        </TabsContent>
                     </Tabs>
 
                 </div>
@@ -417,33 +417,46 @@ function DifficultyBar({ label, count, total, color }: { label: string, count: n
     )
 }
 
-const TIPS = [
-    "Consistency beats intensity. A little practice every day compounds!",
-    "Focus on patterns, not just solutions. Patterns transfer to new problems.",
-    "Review problems you struggled with first. That's where growth happens.",
-    "Take breaks! Your brain consolidates learning during rest.",
-    "Explain solutions out loud. If you can teach it, you understand it.",
-    "Don't memorize code—understand the intuition behind each approach.",
-    "Track your weak areas and prioritize them in reviews.",
-]
-
 function MotivationalTip() {
-    const tipIndex = useMemo(() => {
-        // Different tip each day
-        const day = new Date().getDate()
-        return day % TIPS.length
-    }, [])
+    const { data: user } = useUser()
+
+    const tip = useMemo(() => {
+        if (!user?.id) return null
+        return tipForUserTodayWithMix(user.id)
+    }, [user?.id])
+
+    if (!tip) return null
 
     return (
         <Card className="bg-gradient-to-br from-secondary/50 to-transparent border-dashed">
             <CardContent className="p-4">
                 <div className="flex items-start gap-3">
                     <div className="p-2 rounded-lg bg-primary/10 shrink-0">
-                        <Lightbulb className="h-4 w-4 text-primary" />
+                        {tip.mood === "pun" ? (
+                            <Zap className="h-4 w-4 text-amber-500" />
+                        ) : (
+                            <Lightbulb className="h-4 w-4 text-primary" />
+                        )}
                     </div>
                     <div>
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Daily Tip</p>
-                        <p className="text-sm leading-relaxed">{TIPS[tipIndex]}</p>
+                        <div className="flex items-center gap-2 mb-1">
+                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Daily Tip</p>
+                            {tip.mood === "pun" && (
+                                <span className="text-[10px] bg-amber-500/10 text-amber-500 px-1.5 py-0.5 rounded border border-amber-500/20">
+                                    Pun
+                                </span>
+                            )}
+                        </div>
+                        <p className="text-sm leading-relaxed text-white/90">{tip.text}</p>
+                        {tip.tags && tip.tags.length > 0 && (
+                            <div className="flex gap-1.5 mt-2">
+                                {tip.tags.slice(0, 3).map(tag => (
+                                    <span key={tag} className="text-[10px] text-white/40 bg-white/5 px-1.5 py-0.5 rounded">
+                                        #{tag}
+                                    </span>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
             </CardContent>

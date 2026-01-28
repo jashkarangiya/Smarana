@@ -17,6 +17,7 @@ import {
     FileCode,
     ChevronRight,
     Sparkles,
+    BookOpen,
 } from "lucide-react"
 import {
     CommandDialog,
@@ -225,6 +226,10 @@ export function CommandMenu({ onOpenPomodoro }: CommandMenuProps) {
                                     <Settings className="mr-2 h-4 w-4" />
                                     <span>Settings</span>
                                     <CommandShortcut>{modKey},</CommandShortcut>
+                                </CommandItem>
+                                <CommandItem onSelect={() => go("/resources")}>
+                                    <BookOpen className="mr-2 h-4 w-4" />
+                                    <span>Resources</span>
                                 </CommandItem>
                             </CommandGroup>
 
