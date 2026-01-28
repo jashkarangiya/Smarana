@@ -106,6 +106,6 @@ export const authOptions: NextAuthOptions = {
                 session.user.leetcodeUsername = token.leetcodeUsername as string
             }
             return session
-        },
+        } as unknown as NextAuthOptions,
     },
 }
