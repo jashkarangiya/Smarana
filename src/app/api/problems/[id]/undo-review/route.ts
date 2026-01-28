@@ -20,7 +20,7 @@ export async function POST(
     const session = await getServerSession(authOptions)
 
     if (!session?.user?.email) {
-        return new NextResponse("Unauthorized", { status: 401 })
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const user = await prisma.user.findUnique({
@@ -28,7 +28,7 @@ export async function POST(
     })
 
     if (!user) {
-        return new NextResponse("User not found", { status: 404 })
+        return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
     const problem = await prisma.revisionProblem.findUnique({
@@ -36,12 +36,12 @@ export async function POST(
     })
 
     if (!problem || problem.userId !== user.id) {
-        return new NextResponse("Problem not found", { status: 404 })
+        return NextResponse.json({ error: "Problem not found" }, { status: 404 })
     }
 
     // Can only undo if reviewCount > 0
     if (problem.reviewCount <= 0) {
-        return new NextResponse("No reviews to undo", { status: 400 })
+        return NextResponse.json({ error: "No reviews to undo" }, { status: 400 })
     }
 
     const now = new Date()
@@ -75,11 +75,17 @@ export async function POST(
     })
 
     // Update ReviewLog - decrement count for today
+    // We assume undo happens on the same day usually, or we decrement the day the undo happens.
+    // Ideally we should decrement the log of the actual review day, but we don't store "reviewLogId" in ReviewEvent easily accessible here without query.
+    // For MVP, simplistic approach: decrement today's count if > 0. 
+    // Correction: If the user reviews today and undoes today, this is correct.
+    const dayKey = new Date().toISOString().split('T')[0]
+
     const existingLog = await prisma.reviewLog.findUnique({
         where: {
-            userId_date: {
+            userId_day: {
                 userId: user.id,
-                date: today,
+                day: dayKey,
             },
         },
     })

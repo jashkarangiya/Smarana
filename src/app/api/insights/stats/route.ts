@@ -22,52 +22,48 @@ export async function GET() {
         // 2. Current Streak
         const recentLogs = await prisma.reviewLog.findMany({
             where: { userId },
-            orderBy: { date: "desc" },
+            orderBy: { day: "desc" },
             take: 365,
         })
 
         let currentStreak = 0
         const today = new Date()
-        today.setHours(0, 0, 0, 0)
-
         const todayString = today.toISOString().split('T')[0]
-        const logMap = new Set(recentLogs.map(l => l.date.toISOString().split('T')[0]))
+
+        // Create a Set of day strings for O(1) lookup
+        const logMap = new Set(recentLogs.map(l => l.day))
 
         // Determine starting point for streak check
-        let checkDate: Date | null = new Date(today)
+        // Check if we have an entry for today
+        let checkDateString = todayString
 
         if (!logMap.has(todayString)) {
             // If no review today, check yesterday
-            checkDate.setDate(checkDate.getDate() - 1)
-            if (!logMap.has(checkDate.toISOString().split('T')[0])) {
+            const yesterday = new Date(today)
+            yesterday.setDate(yesterday.getDate() - 1)
+            const yesterdayString = yesterday.toISOString().split('T')[0]
+
+            if (!logMap.has(yesterdayString)) {
                 // No review yesterday either -> Streak is 0
-                checkDate = null
+                checkDateString = ""
+            } else {
+                checkDateString = yesterdayString
             }
         }
 
-        if (checkDate) {
+        if (checkDateString) {
             currentStreak = 0
 
-            // Start counting backwards from the determined valid date (today or yesterday)
-            let pointer: Date | null = new Date(today)
+            // Start counting from checkDate backwards
+            let pointer = new Date(checkDateString)
 
-            // Adjust pointer if today is missing but we are starting from yesterday
-            if (!logMap.has(pointer.toISOString().split('T')[0])) {
-                pointer.setDate(pointer.getDate() - 1)
-                // Double check yesterday exists (it should if checkDate is set)
-                if (!logMap.has(pointer.toISOString().split('T')[0])) {
-                    pointer = null
-                }
-            }
-
-            if (pointer) {
-                while (true) {
-                    if (logMap.has(pointer.toISOString().split('T')[0])) {
-                        currentStreak++
-                        pointer.setDate(pointer.getDate() - 1)
-                    } else {
-                        break
-                    }
+            while (true) {
+                const pointerString = pointer.toISOString().split('T')[0]
+                if (logMap.has(pointerString)) {
+                    currentStreak++
+                    pointer.setDate(pointer.getDate() - 1)
+                } else {
+                    break
                 }
             }
         }

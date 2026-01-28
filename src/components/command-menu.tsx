@@ -19,6 +19,7 @@ import {
     Sparkles,
     BookOpen,
 } from "lucide-react"
+import { MAIN_NAV, UTILITY_NAV, ACTIONS_NAV } from "@/config/navigation"
 import {
     CommandDialog,
     CommandEmpty,
@@ -199,53 +200,36 @@ export function CommandMenu({ onOpenPomodoro }: CommandMenuProps) {
                     {!debouncedQuery.trim() && (
                         <>
                             <CommandGroup heading="Navigation">
-                                <CommandItem onSelect={() => go("/dashboard")}>
-                                    <LayoutDashboard className="mr-2 h-4 w-4" />
-                                    <span>Dashboard</span>
-                                    <CommandShortcut>{modKey}D</CommandShortcut>
-                                </CommandItem>
-                                <CommandItem onSelect={() => go("/problems")}>
-                                    <ListTodo className="mr-2 h-4 w-4" />
-                                    <span>Problems</span>
-                                    <CommandShortcut>{modKey}P</CommandShortcut>
-                                </CommandItem>
-                                <CommandItem onSelect={() => go("/schedule")}>
-                                    <Calendar className="mr-2 h-4 w-4" />
-                                    <span>Schedule</span>
-                                </CommandItem>
-                                <CommandItem onSelect={() => go("/friends")}>
-                                    <Users className="mr-2 h-4 w-4" />
-                                    <span>Friends</span>
-                                </CommandItem>
-                                <CommandItem onSelect={() => go("/insights")}>
-                                    <Activity className="mr-2 h-4 w-4" />
-                                    <span>Insights</span>
-                                    <CommandShortcut>{modKey}I</CommandShortcut>
-                                </CommandItem>
-                                <CommandItem onSelect={() => go("/settings")}>
-                                    <Settings className="mr-2 h-4 w-4" />
-                                    <span>Settings</span>
-                                    <CommandShortcut>{modKey},</CommandShortcut>
-                                </CommandItem>
-                                <CommandItem onSelect={() => go("/resources")}>
-                                    <BookOpen className="mr-2 h-4 w-4" />
-                                    <span>Resources</span>
-                                </CommandItem>
+                                {MAIN_NAV.map(link => (
+                                    <CommandItem key={link.href} onSelect={() => go(link.href)}>
+                                        <link.icon className="mr-2 h-4 w-4" />
+                                        <span>{link.title}</span>
+                                    </CommandItem>
+                                ))}
+                                {UTILITY_NAV.map(link => (
+                                    <CommandItem key={link.href} onSelect={() => {
+                                        // Replace ME with specific logic if needed, but for command palette /u/me redirects usually work if handled by middleware or page
+                                        // For safety let's assume /u/me works or user context is needed elsewhere. 
+                                        // The config has /u/me which usually needs resolving, but command menu might not have session access easily without prop drilling. 
+                                        // Ideally /u/me should redirect to valid profile.
+                                        go(link.href)
+                                    }}>
+                                        <link.icon className="mr-2 h-4 w-4" />
+                                        <span>{link.title}</span>
+                                    </CommandItem>
+                                ))}
                             </CommandGroup>
 
                             <CommandSeparator />
 
                             <CommandGroup heading="Actions">
-                                <CommandItem onSelect={() => go("/review")}>
-                                    <Play className="mr-2 h-4 w-4 text-emerald-400" />
-                                    <span>Start Review</span>
-                                    <CommandShortcut>{modKey}R</CommandShortcut>
-                                </CommandItem>
-                                <CommandItem onSelect={() => go("/add")}>
-                                    <Plus className="mr-2 h-4 w-4 text-blue-400" />
-                                    <span>Add Problem</span>
-                                    <CommandShortcut>{modKey}N</CommandShortcut>
-                                </CommandItem>
+                                {ACTIONS_NAV.filter(l => l.title !== "Pomodoro").map(link => (
+                                    <CommandItem key={link.href} onSelect={() => go(link.href)}>
+                                        <link.icon className="mr-2 h-4 w-4 text-emerald-400" />
+                                        <span>{link.title}</span>
+                                    </CommandItem>
+                                ))}
+
                                 {onOpenPomodoro && (
                                     <CommandItem
                                         onSelect={() =>

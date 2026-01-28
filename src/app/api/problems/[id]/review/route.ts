@@ -20,7 +20,7 @@ export async function POST(
     const session = await getServerSession(authOptions)
 
     if (!session?.user?.email) {
-        return new NextResponse("Unauthorized", { status: 401 })
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const { rating } = await req.json().catch(() => ({ rating: 3 })) // Default to 'Good' if not provided
@@ -30,7 +30,7 @@ export async function POST(
     })
 
     if (!user) {
-        return new NextResponse("User not found", { status: 404 })
+        return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
     const problem = await prisma.revisionProblem.findUnique({
@@ -38,7 +38,7 @@ export async function POST(
     })
 
     if (!problem || problem.userId !== user.id) {
-        return new NextResponse("Problem not found", { status: 404 })
+        return NextResponse.json({ error: "Problem not found" }, { status: 404 })
     }
 
     const now = new Date()
@@ -94,11 +94,14 @@ export async function POST(
             })
 
             // 4. Update Daily Log (Aggregated)
+            // Use UTC YYYY-MM-DD for consistency
+            const dayKey = now.toISOString().split('T')[0]
+
             await tx.reviewLog.upsert({
                 where: {
-                    userId_date: {
+                    userId_day: {
                         userId: user.id,
-                        date: today,
+                        day: dayKey,
                     },
                 },
                 update: {
@@ -107,7 +110,8 @@ export async function POST(
                 },
                 create: {
                     userId: user.id,
-                    date: today,
+                    day: dayKey,
+                    // createdAt will default to now()
                     count: 1,
                     xpEarned: xpEarned,
                 },
@@ -160,6 +164,6 @@ export async function POST(
 
     } catch (error) {
         console.error("Review transaction failed:", error)
-        return new NextResponse("Internal Server Error", { status: 500 })
+        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })
     }
 }

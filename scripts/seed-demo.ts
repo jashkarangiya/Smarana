@@ -277,7 +277,7 @@ async function main() {
         const log = await prisma.reviewLog.create({
             data: {
                 userId: demoUser.id,
-                date,
+                day: date.toISOString().split('T')[0],
                 count,
                 xpEarned: xp
             }

@@ -25,6 +25,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
+import { EmptyState } from "@/components/empty-state"
 
 export default function ProblemsPage() {
     const { data: problems, isLoading } = useProblems("all")
@@ -164,9 +165,17 @@ export default function ProblemsPage() {
                         </Link>
                     ))
                 ) : (
-                    <Card className="p-8 text-center text-muted-foreground">
-                        No problems found.
-                    </Card>
+                    <div className="border border-dashed rounded-xl p-8 bg-muted/5">
+                        <EmptyState
+                            icon={Filter}
+                            title="No problems found"
+                            description="Try adjusting your search or filters, or add a new problem to your list."
+                            action={{
+                                label: "Add Problem",
+                                href: "/add"
+                            }}
+                        />
+                    </div>
                 )}
             </div>
 
@@ -250,8 +259,16 @@ export default function ProblemsPage() {
                                     ))
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={5} className="h-24 text-center">
-                                            No problems found.
+                                        <TableCell colSpan={5} className="h-64">
+                                            <EmptyState
+                                                icon={Filter}
+                                                title="No problems found"
+                                                description="Try adjusting your search or filters, or add a new problem to your list."
+                                                action={{
+                                                    label: "Add Problem",
+                                                    href: "/add"
+                                                }}
+                                            />
                                         </TableCell>
                                     </TableRow>
                                 )}

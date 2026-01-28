@@ -11,6 +11,21 @@ interface LeetCodeSubmission {
     timestamp: string
 }
 
+// Helper for timeout
+async function fetchWithTimeout(url: string, options: RequestInit = {}, timeout = 10000): Promise<Response> {
+    const controller = new AbortController()
+    const id = setTimeout(() => controller.abort(), timeout)
+    try {
+        const response = await fetch(url, {
+            ...options,
+            signal: controller.signal
+        })
+        return response
+    } finally {
+        clearTimeout(id)
+    }
+}
+
 export async function fetchLeetCodeSolvedProblems(username: string): Promise<PlatformProblem[]> {
     if (!username) return []
 
@@ -26,7 +41,7 @@ export async function fetchLeetCodeSolvedProblems(username: string): Promise<Pla
             }
         `
 
-        const submissionsResponse = await fetch(LEETCODE_GRAPHQL_URL, {
+        const submissionsResponse = await fetchWithTimeout(LEETCODE_GRAPHQL_URL, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -70,7 +85,7 @@ export async function fetchLeetCodeSolvedProblems(username: string): Promise<Pla
             `
 
             try {
-                const problemResponse = await fetch(LEETCODE_GRAPHQL_URL, {
+                const problemResponse = await fetchWithTimeout(LEETCODE_GRAPHQL_URL, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -123,7 +138,7 @@ export async function validateLeetCodeUsername(username: string): Promise<boolea
             }
         `
 
-        const response = await fetch(LEETCODE_GRAPHQL_URL, {
+        const response = await fetchWithTimeout(LEETCODE_GRAPHQL_URL, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -156,7 +171,7 @@ export async function fetchLeetCodeStats(username: string): Promise<{ submission
             }
         `
 
-        const response = await fetch(LEETCODE_GRAPHQL_URL, {
+        const response = await fetchWithTimeout(LEETCODE_GRAPHQL_URL, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

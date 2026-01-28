@@ -115,14 +115,13 @@ export async function POST(
         })
 
         // Log the review activity (upsert for the day)
-        const today = new Date()
-        today.setHours(0, 0, 0, 0) // Normalize to midnight
+        const dayKey = new Date().toISOString().split('T')[0]
 
         await prisma.reviewLog.upsert({
             where: {
-                userId_date: {
+                userId_day: {
                     userId: session.user.id,
-                    date: today,
+                    day: dayKey,
                 },
             },
             update: {
@@ -131,7 +130,7 @@ export async function POST(
             },
             create: {
                 userId: session.user.id,
-                date: today,
+                day: dayKey,
                 count: 1,
                 xpEarned: xpReward,
             },
