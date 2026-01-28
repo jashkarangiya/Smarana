@@ -166,7 +166,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                 <StatCard
                     label="Current Streak"
                     value={user.stats.currentStreak ?? "Hidden"}
@@ -191,88 +191,68 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
                 />
             </div>
 
-            <div className="grid md:grid-cols-3 gap-8">
-                {/* Activity Heatmap Area (Using current user's heatmap component for now, simplified) */}
-                <div className="md:col-span-2 space-y-6">
+            <div className="grid md:grid-cols-3 gap-6 sm:gap-8">
+                {/* Activity Heatmap Area */}
+                <div className="md:col-span-2 space-y-4 sm:space-y-6">
                     <Card>
-                        <CardHeader>
+                        <CardHeader className="pb-2 sm:pb-4">
                             <CardTitle className="text-base">Activity</CardTitle>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="px-3 sm:px-6 pb-4 sm:pb-6">
                             <p className="text-sm text-muted-foreground mb-4">
                                 {user.stats.reviewsThisWeek} reviews this week
                             </p>
-                            {/* Placeholder for now as Heatmap component needs refactor to accept userId */}
-                            <Heatmap
-                                data={profile.activityHeatmap}
-                                className="w-full overflow-hidden"
-                                year={new Date().getFullYear()}
-                            />
+                            {/* Responsive heatmap wrapper with fade edges */}
+                            <div className="relative">
+                                <Heatmap
+                                    data={profile.activityHeatmap}
+                                    className="w-full"
+                                    year={new Date().getFullYear()}
+                                />
+                                {/* Fade edges for scroll indication on mobile */}
+                                <div className="pointer-events-none absolute inset-y-0 left-0 w-4 bg-gradient-to-r from-card to-transparent sm:hidden" />
+                                <div className="pointer-events-none absolute inset-y-0 right-0 w-4 bg-gradient-to-l from-card to-transparent sm:hidden" />
+                            </div>
                         </CardContent>
                     </Card>
 
                     {/* Maybe recent achievements here later */}
-                    {/* Recent Activity (Private for now or could be extended) */}
                 </div>
 
                 {/* Sidebar Info */}
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                     <Card>
-                        <CardHeader>
+                        <CardHeader className="pb-2 sm:pb-4">
                             <CardTitle className="text-base">Platforms</CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-3">
+                        <CardContent className="px-3 sm:px-6 pb-4 sm:pb-6 space-y-3">
                             {user.leetcodeUsername && (
-                                <div className="flex items-center justify-between text-sm">
-                                    <span className="text-muted-foreground">LeetCode</span>
-                                    <a
-                                        href={`https://leetcode.com/${user.leetcodeUsername}`}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="font-medium hover:underline"
-                                    >
-                                        {user.leetcodeUsername}
-                                    </a>
-                                </div>
+                                <PlatformRow
+                                    name="LeetCode"
+                                    username={user.leetcodeUsername}
+                                    href={`https://leetcode.com/${user.leetcodeUsername}`}
+                                />
                             )}
                             {user.codeforcesUsername && (
-                                <div className="flex items-center justify-between text-sm">
-                                    <span className="text-muted-foreground">Codeforces</span>
-                                    <a
-                                        href={`https://codeforces.com/profile/${user.codeforcesUsername}`}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="font-medium hover:underline"
-                                    >
-                                        {user.codeforcesUsername}
-                                    </a>
-                                </div>
+                                <PlatformRow
+                                    name="Codeforces"
+                                    username={user.codeforcesUsername}
+                                    href={`https://codeforces.com/profile/${user.codeforcesUsername}`}
+                                />
                             )}
                             {user.codechefUsername && (
-                                <div className="flex items-center justify-between text-sm">
-                                    <span className="text-muted-foreground">CodeChef</span>
-                                    <a
-                                        href={`https://www.codechef.com/users/${user.codechefUsername}`}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="font-medium hover:underline"
-                                    >
-                                        {user.codechefUsername}
-                                    </a>
-                                </div>
+                                <PlatformRow
+                                    name="CodeChef"
+                                    username={user.codechefUsername}
+                                    href={`https://www.codechef.com/users/${user.codechefUsername}`}
+                                />
                             )}
                             {user.atcoderUsername && (
-                                <div className="flex items-center justify-between text-sm">
-                                    <span className="text-muted-foreground">AtCoder</span>
-                                    <a
-                                        href={`https://atcoder.jp/users/${user.atcoderUsername}`}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="font-medium hover:underline"
-                                    >
-                                        {user.atcoderUsername}
-                                    </a>
-                                </div>
+                                <PlatformRow
+                                    name="AtCoder"
+                                    username={user.atcoderUsername}
+                                    href={`https://atcoder.jp/users/${user.atcoderUsername}`}
+                                />
                             )}
                             {!user.leetcodeUsername && !user.codeforcesUsername && !user.codechefUsername && !user.atcoderUsername && (
                                 <div className="text-sm text-muted-foreground italic">No platforms visible</div>
@@ -301,16 +281,37 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
 function StatCard({ label, value, icon, hidden }: { label: string, value: string | number, icon: React.ReactNode, hidden?: boolean }) {
     return (
         <Card className={hidden ? "opacity-60" : ""}>
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs font-medium text-muted-foreground uppercase">{label}</p>
+                    <p className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase">{label}</p>
                     {icon}
                 </div>
-                <div className="text-2xl font-bold tracking-tight">
+                <div className="text-xl sm:text-2xl font-bold tracking-tight">
                     {hidden ? <span className="text-lg text-muted-foreground blur-sm select-none">123</span> : value}
                 </div>
             </CardContent>
         </Card>
+    )
+}
+
+function PlatformRow({ name, username, href }: { name: string; username: string; href: string }) {
+    return (
+        <div className="rounded-xl border border-border/50 bg-muted/30 p-3 sm:p-4">
+            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                    <div className="text-sm font-medium">{name}</div>
+                    <div className="mt-0.5 text-xs text-muted-foreground truncate">@{username}</div>
+                </div>
+                <a
+                    href={href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-md border border-border/50 px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted/50 transition-colors w-fit"
+                >
+                    View
+                </a>
+            </div>
+        </div>
     )
 }
 
