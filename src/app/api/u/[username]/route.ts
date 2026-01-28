@@ -22,6 +22,8 @@ export async function GET(
                 name: true,
                 username: true,
                 image: true,
+                bio: true,
+                timezone: true,
                 level: true,
                 xp: true,
                 profileVisibility: true,
@@ -29,6 +31,9 @@ export async function GET(
                 showStreakToFriends: true,
                 showPlatformsToPublic: true,
                 showPlatformsToFriends: true,
+                showBioPublicly: true,
+                showTimezoneToPublic: true,
+                showTimezoneToFriends: true,
                 createdAt: true,
                 stats: {
                     select: {
@@ -92,7 +97,7 @@ export async function GET(
             })
         }
 
-        // 3. Determine visibility for streak and platforms
+        // 3. Determine visibility for streak, platforms, bio, and timezone
         const canViewStreak = isSelf ||
             (isFriend && user.showStreakToFriends) ||
             (!isFriend && user.showStreakToPublic)
@@ -100,6 +105,12 @@ export async function GET(
         const canViewPlatforms = isSelf ||
             (isFriend && user.showPlatformsToFriends) ||
             (!isFriend && user.showPlatformsToPublic)
+
+        const canViewBio = isSelf || user.showBioPublicly
+
+        const canViewTimezone = isSelf ||
+            (isFriend && user.showTimezoneToFriends) ||
+            (!isFriend && user.showTimezoneToPublic)
 
         // 4. Assemble Response
         const responseData = {
@@ -111,6 +122,8 @@ export async function GET(
                 name: user.name,
                 username: user.username,
                 image: user.image,
+                bio: canViewBio ? user.bio : null,
+                timezone: canViewTimezone ? user.timezone : null,
                 level: user.level,
                 xp: user.xp,
                 createdAt: user.createdAt,

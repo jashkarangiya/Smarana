@@ -1,47 +1,84 @@
 "use client"
 
 import { useSession } from "next-auth/react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Separator } from "@/components/ui/separator"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { useUser, useUpdateLeetCodeUsername, useSync, useStats } from "@/hooks/use-problems"
+import { useUser, useSync, useStats } from "@/hooks/use-problems"
 import { toast } from "sonner"
-import { RefreshCw, User, Link as LinkIcon, CheckCircle2, Lock, AtSign, Clock, Settings, Link2, Shield, Bell, Share2, Download, ArrowLeft, Eye, EyeOff, Globe, ExternalLink, Copy, Check } from "lucide-react"
+import {
+    RefreshCw, User, CheckCircle2, Clock, Share2, Download,
+    ArrowLeft, Eye, EyeOff, Globe, ExternalLink, Copy, Check, Shield,
+    Users, Lock
+} from "lucide-react"
 import Link from "next/link"
 import { Switch } from "@/components/ui/switch"
 import { PlatformConnector } from "@/components/platform-connector"
 import { AvatarUpload } from "@/components/avatar-upload"
 import { cn } from "@/lib/utils"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
 
-type SettingsSection = "basic" | "details" | "platforms" | "visibility" | "accounts"
+type SettingsSection = "basic" | "platforms" | "visibility" | "accounts"
 
 const sections = [
-    { id: "basic" as const, label: "Basic Info", icon: User, description: "Name and profile picture" },
-    { id: "details" as const, label: "Profile Details", icon: AtSign, description: "Username and bio" },
-    { id: "platforms" as const, label: "Platform", icon: Share2, description: "Connected platforms" },
-    { id: "visibility" as const, label: "Visibility", icon: Eye, description: "Privacy settings" },
+    { id: "basic" as const, label: "Basic Info", icon: User, description: "Profile and personal details" },
+    { id: "platforms" as const, label: "Platforms", icon: Share2, description: "Connected platforms and sync" },
+    { id: "visibility" as const, label: "Visibility", icon: Eye, description: "Privacy and sharing settings" },
     { id: "accounts" as const, label: "Accounts", icon: Shield, description: "Password and security" },
+]
+
+// Common timezone options
+const TIMEZONES = [
+    { value: "UTC", label: "UTC (Coordinated Universal Time)" },
+    { value: "America/New_York", label: "Eastern Time (US & Canada)" },
+    { value: "America/Chicago", label: "Central Time (US & Canada)" },
+    { value: "America/Denver", label: "Mountain Time (US & Canada)" },
+    { value: "America/Los_Angeles", label: "Pacific Time (US & Canada)" },
+    { value: "America/Anchorage", label: "Alaska" },
+    { value: "Pacific/Honolulu", label: "Hawaii" },
+    { value: "Europe/London", label: "London" },
+    { value: "Europe/Paris", label: "Paris" },
+    { value: "Europe/Berlin", label: "Berlin" },
+    { value: "Europe/Moscow", label: "Moscow" },
+    { value: "Asia/Dubai", label: "Dubai" },
+    { value: "Asia/Kolkata", label: "India (IST)" },
+    { value: "Asia/Singapore", label: "Singapore" },
+    { value: "Asia/Shanghai", label: "China (CST)" },
+    { value: "Asia/Tokyo", label: "Tokyo" },
+    { value: "Asia/Seoul", label: "Seoul" },
+    { value: "Australia/Sydney", label: "Sydney" },
+    { value: "Pacific/Auckland", label: "Auckland" },
 ]
 
 export default function ProfilePage() {
     const { data: session, update: updateSession } = useSession()
     const { data: user, refetch: refetchUser } = useUser()
     const { data: stats } = useStats()
-    const { mutate: updateLeetcodeUsername, isPending: updatingLeetcode } = useUpdateLeetCodeUsername()
     const { mutate: sync, isPending: syncing } = useSync()
 
     const [activeSection, setActiveSection] = useState<SettingsSection>("basic")
-    const [isPublicProfile, setIsPublicProfile] = useState(true)
     const [copied, setCopied] = useState(false)
-    const [leetcodeUsername, setLeetcodeUsername] = useState("")
+
+    // Basic Info form state
+    const [displayName, setDisplayName] = useState("")
+    const [bio, setBio] = useState("")
+    const [timezone, setTimezone] = useState("UTC")
+    const [savingBasicInfo, setSavingBasicInfo] = useState(false)
 
     // Username state
     const [username, setUsername] = useState("")
     const [usernameInfo, setUsernameInfo] = useState<{ canChange: boolean; daysUntilChange: number } | null>(null)
-    const [savingUsername, setSavingUsername] = useState(false)
 
     // Password state
     const [hasPassword, setHasPassword] = useState(false)
@@ -53,15 +90,46 @@ export default function ProfilePage() {
     const [showNewPassword, setShowNewPassword] = useState(false)
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
-    // Avatar state
-    const [avatarUrl, setAvatarUrl] = useState("")
-    const [savingAvatar, setSavingAvatar] = useState(false)
+    // Visibility state
+    const [profileVisibility, setProfileVisibility] = useState<"PUBLIC" | "FRIENDS_ONLY" | "PRIVATE">("PUBLIC")
+    const [showStreakPublicly, setShowStreakPublicly] = useState(true)
+    const [showPlatformsPublicly, setShowPlatformsPublicly] = useState(true)
+    const [showBioPublicly, setShowBioPublicly] = useState(true)
+    const [showTimezoneToPublic, setShowTimezoneToPublic] = useState(false)
+    const [showTimezoneToFriends, setShowTimezoneToFriends] = useState(true)
+    const [savingVisibility, setSavingVisibility] = useState(false)
 
+    // Track if form has unsaved changes
+    const initialBasicInfo = useMemo(() => ({
+        displayName: user?.name || session?.user?.name || "",
+        bio: user?.bio || "",
+        timezone: user?.timezone || "UTC",
+    }), [user, session])
+
+    const hasUnsavedChanges = useMemo(() => {
+        return (
+            displayName !== initialBasicInfo.displayName ||
+            bio !== initialBasicInfo.bio ||
+            timezone !== initialBasicInfo.timezone
+        )
+    }, [displayName, bio, timezone, initialBasicInfo])
+
+    // Initialize form with user data
     useEffect(() => {
-        if (user?.leetcodeUsername) {
-            setLeetcodeUsername(user.leetcodeUsername)
+        if (user) {
+            setDisplayName(user.name || "")
+            setBio(user.bio || "")
+            setTimezone(user.timezone || "UTC")
+            setProfileVisibility(user.profileVisibility as "PUBLIC" | "FRIENDS_ONLY" | "PRIVATE" || "PUBLIC")
+            setShowStreakPublicly(user.showStreakToPublic ?? true)
+            setShowPlatformsPublicly(user.showPlatformsToPublic ?? true)
+            setShowBioPublicly(user.showBioPublicly ?? true)
+            setShowTimezoneToPublic(user.showTimezoneToPublic ?? false)
+            setShowTimezoneToFriends(user.showTimezoneToFriends ?? true)
+        } else if (session?.user?.name) {
+            setDisplayName(session.user.name)
         }
-    }, [user])
+    }, [user, session])
 
     useEffect(() => {
         const fetchUsernameInfo = async () => {
@@ -94,56 +162,76 @@ export default function ProfilePage() {
         fetchPasswordStatus()
     }, [])
 
-    const handleSaveLeetcodeUsername = () => {
-        if (!leetcodeUsername.trim()) {
-            toast.error("Please enter a username")
-            return
-        }
-        updateLeetcodeUsername(leetcodeUsername, {
-            onSuccess: () => toast.success("LeetCode username saved successfully"),
-            onError: (error) => toast.error(error.message || "Failed to save username"),
-        })
-    }
-
     const handleSync = () => {
         sync(undefined, {
-            onSuccess: (data: any) => toast.success(`Synced ${data.added || 0} new problems`),
+            onSuccess: (data: { added?: number }) => toast.success(`Synced ${data.added || 0} new problems`),
             onError: () => toast.error("Sync failed. Check your username."),
         })
     }
 
-    const handleSaveUsername = async () => {
-        if (!username.trim()) {
-            toast.error("Please enter a username")
-            return
-        }
-        if (username.length < 3 || username.length > 20) {
-            toast.error("Username must be 3-20 characters")
-            return
-        }
-        if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-            toast.error("Username can only contain letters, numbers, and underscores")
+    const handleSaveBasicInfo = async () => {
+        if (!displayName.trim()) {
+            toast.error("Display name cannot be empty")
             return
         }
 
-        setSavingUsername(true)
+        setSavingBasicInfo(true)
         try {
-            const res = await fetch("/api/me/username", {
-                method: "POST",
+            const res = await fetch("/api/me", {
+                method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ username }),
+                body: JSON.stringify({
+                    name: displayName.trim(),
+                    bio: bio.trim(),
+                    timezone,
+                }),
             })
             const data = await res.json()
             if (res.ok) {
-                toast.success("Username updated!")
-                setUsernameInfo({ canChange: false, daysUntilChange: 30 })
+                toast.success("Profile updated!")
+                await updateSession()
+                refetchUser()
             } else {
-                toast.error(data.error || "Failed to update username")
+                toast.error(data.error || "Failed to update profile")
             }
-        } catch (e) {
-            toast.error("Failed to update username")
+        } catch {
+            toast.error("Failed to update profile")
         } finally {
-            setSavingUsername(false)
+            setSavingBasicInfo(false)
+        }
+    }
+
+    const handleCancelBasicInfo = () => {
+        setDisplayName(initialBasicInfo.displayName)
+        setBio(initialBasicInfo.bio)
+        setTimezone(initialBasicInfo.timezone)
+    }
+
+    const handleSaveVisibility = async () => {
+        setSavingVisibility(true)
+        try {
+            const res = await fetch("/api/me/privacy", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    profileVisibility,
+                    showStreakToPublic: showStreakPublicly,
+                    showPlatformsToPublic: showPlatformsPublicly,
+                    showBioPublicly,
+                    showTimezoneToPublic,
+                    showTimezoneToFriends,
+                }),
+            })
+            if (res.ok) {
+                toast.success("Privacy settings updated!")
+                refetchUser()
+            } else {
+                toast.error("Failed to update privacy settings")
+            }
+        } catch {
+            toast.error("Failed to update privacy settings")
+        } finally {
+            setSavingVisibility(false)
         }
     }
 
@@ -178,45 +266,10 @@ export default function ProfilePage() {
             } else {
                 toast.error(data.error || "Failed to update password")
             }
-        } catch (e) {
+        } catch {
             toast.error("Failed to update password")
         } finally {
             setSavingPassword(false)
-        }
-    }
-
-    const handleSaveAvatar = async () => {
-        if (!avatarUrl.trim()) {
-            toast.error("Please enter an image URL")
-            return
-        }
-        try {
-            new URL(avatarUrl)
-        } catch {
-            toast.error("Please enter a valid URL")
-            return
-        }
-
-        setSavingAvatar(true)
-        try {
-            const res = await fetch("/api/me/avatar", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ imageUrl: avatarUrl }),
-            })
-            const data = await res.json()
-            if (res.ok) {
-                toast.success("Profile picture updated!")
-                setAvatarUrl("")
-                await updateSession()
-                refetchUser()
-            } else {
-                toast.error(data.error || "Failed to update avatar")
-            }
-        } catch (e) {
-            toast.error("Failed to update avatar")
-        } finally {
-            setSavingAvatar(false)
         }
     }
 
@@ -235,7 +288,7 @@ export default function ProfilePage() {
             window.URL.revokeObjectURL(url)
             document.body.removeChild(a)
             toast.success("Data exported successfully")
-        } catch (error) {
+        } catch {
             toast.error("Failed to export data")
         }
     }
@@ -249,7 +302,7 @@ export default function ProfilePage() {
     }
 
     return (
-        <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-6xl">
+        <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-5xl">
             {/* Back Link */}
             <Link
                 href={`/u/${username}`}
@@ -261,7 +314,7 @@ export default function ProfilePage() {
 
             <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
                 {/* Sidebar Navigation */}
-                <aside className="lg:w-64 flex-shrink-0">
+                <aside className="lg:w-56 flex-shrink-0">
                     <Card className="sticky top-24">
                         <CardContent className="p-2">
                             <nav className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0 -mx-2 px-2 lg:mx-0 lg:px-0">
@@ -289,16 +342,32 @@ export default function ProfilePage() {
                 <div className="flex-1 min-w-0">
                     {/* Basic Info Section */}
                     {activeSection === "basic" && (
-                        <Card>
-                            <CardHeader className="p-4 sm:p-6">
-                                <CardTitle className="text-base sm:text-lg">Basic Info</CardTitle>
-                                <CardDescription className="text-xs sm:text-sm">
-                                    Update your profile picture and display name
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-6 p-4 sm:p-6 pt-0">
-                                {/* Avatar Upload */}
-                                <div className="flex items-center gap-4">
+                        <div className="space-y-6">
+                            {/* Page Header with Actions */}
+                            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                                <div>
+                                    <h1 className="text-2xl font-semibold text-white/90">Basic Info</h1>
+                                    <p className="text-sm text-white/50 mt-1">Update your photo, name, and profile basics.</p>
+                                </div>
+                                <div className="flex gap-2">
+                                    <Button variant="outline" size="sm" onClick={copyProfileUrl}>
+                                        {copied ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
+                                        {copied ? "Copied!" : "Copy Link"}
+                                    </Button>
+                                    {profileVisibility === "PUBLIC" && username && (
+                                        <Button size="sm" className="bg-[#BB7331] hover:bg-[#BB7331]/90" asChild>
+                                            <Link href={`/u/${username}`}>
+                                                <ExternalLink className="h-4 w-4 mr-2" />
+                                                View Profile
+                                            </Link>
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Profile Header Card */}
+                            <Card className="border-white/10 bg-white/[0.03]">
+                                <CardContent className="p-6 flex flex-col sm:flex-row items-center gap-5">
                                     <AvatarUpload
                                         currentImage={session?.user?.image}
                                         name={session?.user?.name}
@@ -319,101 +388,139 @@ export default function ProfilePage() {
                                             }
                                         }}
                                     />
-                                    <div className="min-w-0 flex-1">
-                                        <p className="font-semibold text-lg truncate">{session?.user?.name}</p>
-                                        <p className="text-sm text-muted-foreground truncate">{maskEmail(session?.user?.email)}</p>
-                                        <p className="text-xs text-muted-foreground/70 mt-1">Click photo to change</p>
+                                    <div className="flex-1 text-center sm:text-left">
+                                        <div className="text-lg font-semibold text-white/90">{displayName || session?.user?.name}</div>
+                                        <div className="text-sm text-white/50">{session?.user?.email}</div>
+                                        <div className="mt-1 text-xs text-white/40">Click photo to update your avatar</div>
                                     </div>
-                                </div>
+                                </CardContent>
+                            </Card>
 
-                                {/* Display Name */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="display-name">Display Name</Label>
-                                    <Input
-                                        id="display-name"
-                                        placeholder="Your name"
-                                        defaultValue={session?.user?.name || ""}
-                                        className="max-w-md"
-                                    />
-                                </div>
-
-                                {/* Email (read-only) */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="email">Email</Label>
-                                    <Input
-                                        id="email"
-                                        value={session?.user?.email || ""}
-                                        disabled
-                                        className="max-w-md bg-muted/50"
-                                    />
-                                    <p className="text-xs text-muted-foreground">Email cannot be changed</p>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )}
-
-                    {/* Profile Details Section */}
-                    {activeSection === "details" && (
-                        <Card>
-                            <CardHeader className="p-4 sm:p-6">
-                                <CardTitle className="text-base sm:text-lg">Profile Details</CardTitle>
-                                <CardDescription className="text-xs sm:text-sm">
-                                    Your public profile information
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-6 p-4 sm:p-6 pt-0">
-                                {/* Username */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="username">Username</Label>
-                                    <div className="flex gap-2 max-w-md">
+                            {/* Profile Fields Card */}
+                            <Card className="border-white/10 bg-white/[0.03]">
+                                <CardContent className="p-6 space-y-6">
+                                    {/* Display Name */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="display-name">Display Name</Label>
                                         <Input
-                                            id="username"
-                                            placeholder="your_username"
-                                            value={username}
-                                            onChange={(e) => setUsername(e.target.value)}
-                                            disabled={!usernameInfo?.canChange}
-                                            className="font-mono"
+                                            id="display-name"
+                                            value={displayName}
+                                            onChange={(e) => setDisplayName(e.target.value)}
+                                            placeholder="Your name"
+                                            className="max-w-md"
                                         />
-                                        <Button
-                                            onClick={handleSaveUsername}
-                                            disabled={savingUsername || !usernameInfo?.canChange}
-                                        >
-                                            {savingUsername ? "Saving..." : "Save"}
+                                        <p className="text-xs text-white/40">Shown on your profile and in friend activity.</p>
+                                    </div>
+
+                                    <Separator className="bg-white/10" />
+
+                                    {/* Username (read-only with edit link) */}
+                                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                                        <div className="space-y-1">
+                                            <Label>Username</Label>
+                                            <div className="text-sm text-white/70 font-mono">@{username || "not set"}</div>
+                                            <p className="text-xs text-white/40">
+                                                {usernameInfo?.canChange
+                                                    ? "You can change your username once (90-day cooldown after first change)."
+                                                    : usernameInfo?.daysUntilChange && usernameInfo.daysUntilChange > 0
+                                                        ? `Next change available in ${usernameInfo.daysUntilChange} days.`
+                                                        : "Username changes are limited to protect your profile URL."}
+                                            </p>
+                                        </div>
+                                        <Button variant="outline" size="sm" asChild>
+                                            <Link href="/settings/username">Edit</Link>
                                         </Button>
                                     </div>
-                                    <p className="text-xs text-muted-foreground">
-                                        3-20 characters, letters, numbers, and underscores only.
-                                    </p>
-                                    {!usernameInfo?.canChange && usernameInfo?.daysUntilChange && usernameInfo.daysUntilChange > 0 && (
-                                        <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 max-w-md">
-                                            <Clock className="h-4 w-4 text-amber-500 shrink-0" />
-                                            <span className="text-sm text-amber-500">
-                                                You can change your username in {usernameInfo.daysUntilChange} days
-                                            </span>
-                                        </div>
-                                    )}
-                                </div>
 
-                                {/* Bio */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="bio">Bio</Label>
-                                    <textarea
-                                        id="bio"
-                                        placeholder="Tell others about yourself..."
-                                        className="w-full max-w-md h-24 px-3 py-2 rounded-md border border-input bg-background text-sm resize-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                    />
-                                    <p className="text-xs text-muted-foreground">Brief description for your profile</p>
+                                    <Separator className="bg-white/10" />
+
+                                    {/* Email (read-only) */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="email">Email</Label>
+                                        <Input
+                                            id="email"
+                                            value={session?.user?.email || ""}
+                                            disabled
+                                            className="max-w-md bg-muted/50"
+                                        />
+                                        <p className="text-xs text-white/40">Email can&apos;t be changed here.</p>
+                                    </div>
+
+                                    <Separator className="bg-white/10" />
+
+                                    {/* Timezone */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="timezone">Timezone</Label>
+                                        <Select value={timezone} onValueChange={setTimezone}>
+                                            <SelectTrigger className="max-w-md">
+                                                <SelectValue placeholder="Select timezone" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {TIMEZONES.map((tz) => (
+                                                    <SelectItem key={tz.value} value={tz.value}>
+                                                        {tz.label}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <p className="text-xs text-white/40">Used for scheduling and streak accuracy.</p>
+                                    </div>
+
+                                    <Separator className="bg-white/10" />
+
+                                    {/* Bio */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="bio">Bio</Label>
+                                        <Textarea
+                                            id="bio"
+                                            value={bio}
+                                            onChange={(e) => setBio(e.target.value.slice(0, 160))}
+                                            placeholder="Tell others about yourself..."
+                                            className="max-w-md h-24 resize-none"
+                                            maxLength={160}
+                                        />
+                                        <div className="flex justify-between text-xs text-white/40 max-w-md">
+                                            <span>Optional. Shows on your public profile.</span>
+                                            <span>{bio.length}/160</span>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            {/* Sticky Save Bar */}
+                            {hasUnsavedChanges && (
+                                <div className="sticky bottom-4 z-10">
+                                    <div className="rounded-xl border border-white/10 bg-black/80 backdrop-blur-lg p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+                                        <div className="text-sm text-white/60">You have unsaved changes</div>
+                                        <div className="flex gap-2">
+                                            <Button variant="outline" onClick={handleCancelBasicInfo}>
+                                                Cancel
+                                            </Button>
+                                            <Button
+                                                className="bg-[#BB7331] hover:bg-[#BB7331]/90"
+                                                onClick={handleSaveBasicInfo}
+                                                disabled={savingBasicInfo}
+                                            >
+                                                {savingBasicInfo ? "Saving..." : "Save changes"}
+                                            </Button>
+                                        </div>
+                                    </div>
                                 </div>
-                            </CardContent>
-                        </Card>
+                            )}
+                        </div>
                     )}
 
                     {/* Platforms Section */}
                     {activeSection === "platforms" && (
                         <div className="space-y-6">
+                            <div>
+                                <h1 className="text-2xl font-semibold text-white/90">Platforms</h1>
+                                <p className="text-sm text-white/50 mt-1">Connect your coding platforms and sync your progress.</p>
+                            </div>
+
                             <PlatformConnector />
 
-                            <Card>
+                            <Card className="border-white/10 bg-white/[0.03]">
                                 <CardHeader className="p-4 sm:p-6">
                                     <CardTitle className="text-base sm:text-lg">Sync Problems</CardTitle>
                                     <CardDescription className="text-xs sm:text-sm">
@@ -449,63 +556,192 @@ export default function ProfilePage() {
 
                     {/* Visibility Section */}
                     {activeSection === "visibility" && (
-                        <Card>
-                            <CardHeader className="p-4 sm:p-6">
-                                <CardTitle className="text-base sm:text-lg">Visibility</CardTitle>
-                                <CardDescription className="text-xs sm:text-sm">
-                                    Control who can see your profile and activity
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-6 p-4 sm:p-6 pt-0">
-                                <div className="flex items-center justify-between gap-4">
-                                    <div className="space-y-1">
-                                        <div className="flex items-center gap-2">
-                                            <Globe className="h-4 w-4 text-muted-foreground" />
-                                            <Label className="text-base">Public Profile</Label>
-                                        </div>
-                                        <p className="text-sm text-muted-foreground">
-                                            Allow others to view your profile and progress
-                                        </p>
-                                    </div>
-                                    <Switch
-                                        checked={isPublicProfile}
-                                        onCheckedChange={setIsPublicProfile}
-                                    />
-                                </div>
+                        <div className="space-y-6">
+                            <div>
+                                <h1 className="text-2xl font-semibold text-white/90">Visibility</h1>
+                                <p className="text-sm text-white/50 mt-1">Control who can see your profile and activity.</p>
+                            </div>
 
-                                <div className="flex items-center justify-between gap-4">
-                                    <div className="space-y-1">
-                                        <div className="flex items-center gap-2">
-                                            <Share2 className="h-4 w-4 text-muted-foreground" />
-                                            <Label className="text-base">Show Activity</Label>
-                                        </div>
-                                        <p className="text-sm text-muted-foreground">
-                                            Display your review activity on your profile
-                                        </p>
-                                    </div>
-                                    <Switch defaultChecked />
-                                </div>
+                            <Card className="border-white/10 bg-white/[0.03]">
+                                <CardContent className="p-6 space-y-6">
+                                    {/* Profile Visibility */}
+                                    <div className="space-y-4">
+                                        <Label className="text-base">Profile Visibility</Label>
+                                        <div className="space-y-3">
+                                            <button
+                                                onClick={() => setProfileVisibility("PUBLIC")}
+                                                className={cn(
+                                                    "w-full flex items-center gap-4 p-4 rounded-lg border transition-all text-left",
+                                                    profileVisibility === "PUBLIC"
+                                                        ? "border-[#BB7331] bg-[#BB7331]/10"
+                                                        : "border-white/10 hover:border-white/20"
+                                                )}
+                                            >
+                                                <Globe className="h-5 w-5 text-white/70" />
+                                                <div className="flex-1">
+                                                    <div className="font-medium text-white/90">Public</div>
+                                                    <div className="text-sm text-white/50">Anyone can view your profile</div>
+                                                </div>
+                                                {profileVisibility === "PUBLIC" && (
+                                                    <CheckCircle2 className="h-5 w-5 text-[#BB7331]" />
+                                                )}
+                                            </button>
 
-                                <div className="flex items-center justify-between gap-4">
-                                    <div className="space-y-1">
-                                        <div className="flex items-center gap-2">
-                                            <Bell className="h-4 w-4 text-muted-foreground" />
-                                            <Label className="text-base">Email Notifications</Label>
+                                            <button
+                                                onClick={() => setProfileVisibility("FRIENDS_ONLY")}
+                                                className={cn(
+                                                    "w-full flex items-center gap-4 p-4 rounded-lg border transition-all text-left",
+                                                    profileVisibility === "FRIENDS_ONLY"
+                                                        ? "border-[#BB7331] bg-[#BB7331]/10"
+                                                        : "border-white/10 hover:border-white/20"
+                                                )}
+                                            >
+                                                <Users className="h-5 w-5 text-white/70" />
+                                                <div className="flex-1">
+                                                    <div className="font-medium text-white/90">Friends Only</div>
+                                                    <div className="text-sm text-white/50">Only friends can view your profile</div>
+                                                </div>
+                                                {profileVisibility === "FRIENDS_ONLY" && (
+                                                    <CheckCircle2 className="h-5 w-5 text-[#BB7331]" />
+                                                )}
+                                            </button>
+
+                                            <button
+                                                onClick={() => setProfileVisibility("PRIVATE")}
+                                                className={cn(
+                                                    "w-full flex items-center gap-4 p-4 rounded-lg border transition-all text-left",
+                                                    profileVisibility === "PRIVATE"
+                                                        ? "border-[#BB7331] bg-[#BB7331]/10"
+                                                        : "border-white/10 hover:border-white/20"
+                                                )}
+                                            >
+                                                <Lock className="h-5 w-5 text-white/70" />
+                                                <div className="flex-1">
+                                                    <div className="font-medium text-white/90">Private</div>
+                                                    <div className="text-sm text-white/50">Only you can view your profile</div>
+                                                </div>
+                                                {profileVisibility === "PRIVATE" && (
+                                                    <CheckCircle2 className="h-5 w-5 text-[#BB7331]" />
+                                                )}
+                                            </button>
                                         </div>
-                                        <p className="text-sm text-muted-foreground">
-                                            Receive daily review reminders
-                                        </p>
                                     </div>
-                                    <Switch />
-                                </div>
-                            </CardContent>
-                        </Card>
+
+                                    <Separator className="bg-white/10" />
+
+                                    {/* Show Streak Publicly */}
+                                    <div className="flex items-center justify-between gap-4">
+                                        <div className="space-y-1">
+                                            <Label className="text-base">Show Streak</Label>
+                                            <p className="text-sm text-white/50">
+                                                Display your streak on your public profile
+                                            </p>
+                                        </div>
+                                        <Switch
+                                            checked={showStreakPublicly}
+                                            onCheckedChange={setShowStreakPublicly}
+                                        />
+                                    </div>
+
+                                    <Separator className="bg-white/10" />
+
+                                    {/* Show Platforms Publicly */}
+                                    <div className="flex items-center justify-between gap-4">
+                                        <div className="space-y-1">
+                                            <Label className="text-base">Show Platform Usernames</Label>
+                                            <p className="text-sm text-white/50">
+                                                Display your LeetCode, Codeforces usernames publicly
+                                            </p>
+                                        </div>
+                                        <Switch
+                                            checked={showPlatformsPublicly}
+                                            onCheckedChange={setShowPlatformsPublicly}
+                                        />
+                                    </div>
+
+                                    <Separator className="bg-white/10" />
+
+                                    {/* Show Bio Publicly */}
+                                    <div className="flex items-center justify-between gap-4">
+                                        <div className="space-y-1">
+                                            <Label className="text-base">Show Bio</Label>
+                                            <p className="text-sm text-white/50">
+                                                Display your bio on your public profile
+                                            </p>
+                                        </div>
+                                        <Switch
+                                            checked={showBioPublicly}
+                                            onCheckedChange={setShowBioPublicly}
+                                        />
+                                    </div>
+
+                                    <Separator className="bg-white/10" />
+
+                                    {/* Show Timezone */}
+                                    <div className="space-y-4">
+                                        <div className="space-y-1">
+                                            <Label className="text-base">Show Local Time</Label>
+                                            <p className="text-sm text-white/50">
+                                                Display your local time on your profile (based on timezone)
+                                            </p>
+                                        </div>
+                                        <div className="space-y-3 pl-4 border-l-2 border-white/10">
+                                            <div className="flex items-center justify-between gap-4">
+                                                <span className="text-sm text-white/70">Show to everyone</span>
+                                                <Switch
+                                                    checked={showTimezoneToPublic}
+                                                    onCheckedChange={setShowTimezoneToPublic}
+                                                />
+                                            </div>
+                                            <div className="flex items-center justify-between gap-4">
+                                                <span className="text-sm text-white/70">Show to friends</span>
+                                                <Switch
+                                                    checked={showTimezoneToFriends}
+                                                    onCheckedChange={setShowTimezoneToFriends}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <Separator className="bg-white/10" />
+
+                                    {/* Profile Actions */}
+                                    <div className="flex flex-col sm:flex-row gap-3">
+                                        <Button variant="outline" onClick={copyProfileUrl}>
+                                            {copied ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
+                                            Copy Profile URL
+                                        </Button>
+                                        {profileVisibility === "PUBLIC" && username && (
+                                            <Button variant="outline" asChild>
+                                                <Link href={`/u/${username}`}>
+                                                    <ExternalLink className="h-4 w-4 mr-2" />
+                                                    View Profile
+                                                </Link>
+                                            </Button>
+                                        )}
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            <Button
+                                className="bg-[#BB7331] hover:bg-[#BB7331]/90"
+                                onClick={handleSaveVisibility}
+                                disabled={savingVisibility}
+                            >
+                                {savingVisibility ? "Saving..." : "Save Privacy Settings"}
+                            </Button>
+                        </div>
                     )}
 
                     {/* Accounts Section */}
                     {activeSection === "accounts" && (
                         <div className="space-y-6">
-                            <Card>
+                            <div>
+                                <h1 className="text-2xl font-semibold text-white/90">Accounts</h1>
+                                <p className="text-sm text-white/50 mt-1">Manage your password and account security.</p>
+                            </div>
+
+                            <Card className="border-white/10 bg-white/[0.03]">
                                 <CardHeader className="p-4 sm:p-6">
                                     <CardTitle className="text-base sm:text-lg">
                                         {hasPassword ? "Change Password" : "Set Password"}
@@ -588,7 +824,7 @@ export default function ProfilePage() {
                                 </CardContent>
                             </Card>
 
-                            <Card>
+                            <Card className="border-white/10 bg-white/[0.03]">
                                 <CardHeader className="p-4 sm:p-6">
                                     <CardTitle className="text-base sm:text-lg">Data Management</CardTitle>
                                     <CardDescription className="text-xs sm:text-sm">
@@ -605,91 +841,7 @@ export default function ProfilePage() {
                         </div>
                     )}
                 </div>
-
-                {/* Profile Preview Card - Right Side */}
-                <aside className="hidden xl:block w-72 flex-shrink-0">
-                    <Card className="sticky top-24">
-                        <CardContent className="p-4">
-                            {/* Public Profile Toggle */}
-                            <div className="flex items-center justify-between mb-4 pb-4 border-b">
-                                <div className="flex items-center gap-2">
-                                    <Globe className="h-4 w-4 text-muted-foreground" />
-                                    <span className="text-sm font-medium">Public Profile</span>
-                                </div>
-                                <Switch
-                                    checked={isPublicProfile}
-                                    onCheckedChange={setIsPublicProfile}
-                                />
-                            </div>
-
-                            {/* Refresh Button */}
-                            <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors">
-                                <RefreshCw className="h-4 w-4" />
-                                Refresh Now
-                            </button>
-
-                            {/* Profile Preview */}
-                            <div className="text-center">
-                                <div className="relative inline-block mb-4">
-                                    <Avatar className="h-24 w-24 border-4 border-background shadow-lg">
-                                        <AvatarImage src={session?.user?.image || ""} />
-                                        <AvatarFallback className="text-2xl">
-                                            {session?.user?.name?.[0]?.toUpperCase() || "U"}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    <button className="absolute bottom-0 right-0 p-1.5 rounded-full bg-background border shadow-sm hover:bg-muted transition-colors">
-                                        <ExternalLink className="h-3 w-3" />
-                                    </button>
-                                </div>
-
-                                <h3 className="font-semibold text-lg">{session?.user?.name}</h3>
-                                <Link
-                                    href={`/u/${username}`}
-                                    className="text-primary text-sm hover:underline"
-                                >
-                                    @{username}
-                                </Link>
-
-                                {/* Copy Profile URL */}
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="w-full mt-4"
-                                    onClick={copyProfileUrl}
-                                >
-                                    {copied ? (
-                                        <>
-                                            <Check className="h-4 w-4 mr-2" />
-                                            Copied!
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Copy className="h-4 w-4 mr-2" />
-                                            Copy Profile URL
-                                        </>
-                                    )}
-                                </Button>
-
-                                {/* Stats Preview */}
-                                {stats && stats.total > 0 && (
-                                    <div className="mt-4 pt-4 border-t">
-                                        <p className="text-xs text-muted-foreground mb-2">Problems Solved</p>
-                                        <p className="text-2xl font-bold">{stats.total}</p>
-                                    </div>
-                                )}
-                            </div>
-                        </CardContent>
-                    </Card>
-                </aside>
             </div>
         </div>
     )
-}
-
-function maskEmail(email: string | null | undefined) {
-    if (!email) return ""
-    const [name, domain] = email.split("@")
-    if (!domain) return email
-    const maskedName = name.length > 2 ? `${name.substring(0, 2)}...` : name
-    return `${maskedName}@${domain}`
 }

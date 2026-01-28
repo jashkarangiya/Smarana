@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "User" ADD COLUMN "bio" VARCHAR(160);
+ALTER TABLE "User" ADD COLUMN "timezone" TEXT DEFAULT 'UTC';

@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { NavBar } from "@/components/nav-bar";
+import { EmberTrailProvider } from "@/components/ember-trail-provider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -31,8 +32,10 @@ export default function RootLayout({
     <html lang="en" className="dark" suppressHydrationWarning>
       <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`} suppressHydrationWarning>
         <Providers>
-          <NavBar />
-          <main>{children}</main>
+          <EmberTrailProvider>
+            <NavBar />
+            <main>{children}</main>
+          </EmberTrailProvider>
         </Providers>
       </body>
     </html>

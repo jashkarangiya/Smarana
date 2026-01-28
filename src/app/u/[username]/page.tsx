@@ -7,13 +7,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Flame, Trophy, Target, Calendar, UserPlus, UserCheck, Shield } from "lucide-react"
+import { Flame, Trophy, Target, Calendar, UserPlus, UserCheck, Shield, Code2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { format } from "date-fns"
 import { Heatmap } from "@/components/heatmap" // Reuse existing heatmap component
 import { LeetCodeHeatmap } from "@/components/leetcode-heatmap"
-import { motion } from "framer-motion"
-import { Code2 } from "lucide-react"
+import { LocalTime } from "@/components/local-time"
+import { ProfileEmberDot } from "@/components/profile-ember-dot"
 
 interface UserProfile {
     isPrivate: boolean
@@ -24,6 +24,8 @@ interface UserProfile {
         name: string
         username: string
         image: string
+        bio: string | null
+        timezone: string | null
         level: number
         xp: number
         createdAt: string
@@ -112,7 +114,14 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
                             <p className="text-white/60 text-lg">@{user.username}</p>
                         </div>
 
-                        <div className="flex flex-wrap gap-3 justify-center md:justify-start">
+                        {/* Bio */}
+                        {user.bio && (
+                            <p className="text-sm text-white/60 leading-relaxed line-clamp-3 max-w-xl">
+                                {user.bio}
+                            </p>
+                        )}
+
+                        <div className="flex flex-wrap gap-3 justify-center md:justify-start items-center">
                             <Badge variant="secondary" className="bg-white/10 hover:bg-white/20 text-white border-none py-1.5 px-3">
                                 Level {user.level}
                             </Badge>
@@ -123,6 +132,14 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
                                 Joined {format(new Date(user.createdAt), "MMMM yyyy")}
                             </span>
                         </div>
+
+                        {/* Local Time with Profile Ember Dot */}
+                        {user.timezone && (
+                            <div className="flex items-center gap-2 text-xs">
+                                <LocalTime timezone={user.timezone} className="flex items-center" />
+                                <ProfileEmberDot />
+                            </div>
+                        )}
                     </div>
 
                     <div className="flex gap-3">

@@ -48,15 +48,24 @@ const SignUpSchema = z.object({
         .max(20, "Username must be at most 20 chars")
         .regex(usernameRegex, "Only lowercase letters, numbers, and underscores"),
     password: z.string()
-        .min(12, "Password must be at least 12 characters")
-        .refine(v => /[a-z]/.test(v), "Add a lowercase letter")
-        .refine(v => /[A-Z]/.test(v), "Add an uppercase letter")
-        .refine(v => /[0-9]/.test(v), "Add a number")
-        .refine(v => /[^A-Za-z0-9]/.test(v), "Add a symbol"),
+        .min(8, "Password must be at least 8 characters"),
     confirmPassword: z.string()
 }).refine((d) => d.password === d.confirmPassword, {
     message: "Passwords do not match",
     path: ["confirmPassword"]
+}).refine((d) => {
+    // Strength check: must pass 4+ of the 5 criteria
+    const checks = [
+        d.password.length >= 12,
+        /[a-z]/.test(d.password),
+        /[A-Z]/.test(d.password),
+        /[0-9]/.test(d.password),
+        /[^A-Za-z0-9]/.test(d.password),
+    ]
+    return checks.filter(Boolean).length >= 4
+}, {
+    message: "Password strength too weak - try a longer passphrase or add variety",
+    path: ["password"]
 })
 
 function AuthPageContent() {
@@ -355,7 +364,7 @@ function AuthPageContent() {
                                     <Input
                                         id="reg-pw"
                                         type="password"
-                                        placeholder="Min 12 chars"
+                                        placeholder="Min 8 chars"
                                         required
                                         value={formData.password}
                                         onChange={(e) => setFormData(p => ({ ...p, password: e.target.value }))}
