@@ -57,12 +57,12 @@ export async function GET(
                 friendsAsFriend: { where: { userId: viewerId || "" }, select: { id: true } },
                 reviewLogs: {
                     where: {
-                        date: {
-                            gte: new Date(new Date().setFullYear(new Date().getFullYear() - 1))
+                        day: {
+                            gte: new Date(new Date().setFullYear(new Date().getFullYear() - 1)).toISOString().split('T')[0]
                         }
                     },
                     select: {
-                        date: true,
+                        day: true,
                         count: true
                     }
                 }
@@ -149,8 +149,7 @@ export async function GET(
                 }, {} as Record<string, { verified: boolean; verifiedAt: Date | null }>) : {},
             },
             activityHeatmap: user.reviewLogs.reduce((acc, log) => {
-                const dateStr = log.date.toISOString().split("T")[0]
-                acc[dateStr] = log.count
+                acc[log.day] = log.count
                 return acc
             }, {} as Record<string, number>)
         }

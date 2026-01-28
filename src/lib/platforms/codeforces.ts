@@ -30,11 +30,26 @@ function getDifficultyFromRating(rating?: number): string {
     return "Hard"
 }
 
+// Helper for timeout
+async function fetchWithTimeout(url: string, options: RequestInit = {}, timeout = 10000): Promise<Response> {
+    const controller = new AbortController()
+    const id = setTimeout(() => controller.abort(), timeout)
+    try {
+        const response = await fetch(url, {
+            ...options,
+            signal: controller.signal
+        })
+        return response
+    } finally {
+        clearTimeout(id)
+    }
+}
+
 export async function fetchCodeforcesSolvedProblems(username: string): Promise<PlatformProblem[]> {
     if (!username) return []
 
     try {
-        const response = await fetch(
+        const response = await fetchWithTimeout(
             `https://codeforces.com/api/user.status?handle=${encodeURIComponent(username)}&from=1&count=100`
         )
 
@@ -79,7 +94,7 @@ export async function fetchCodeforcesSolvedProblems(username: string): Promise<P
 
 export async function validateCodeforcesUsername(username: string): Promise<boolean> {
     try {
-        const response = await fetch(
+        const response = await fetchWithTimeout(
             `https://codeforces.com/api/user.info?handles=${encodeURIComponent(username)}`
         )
         const data = await response.json()

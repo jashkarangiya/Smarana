@@ -30,20 +30,23 @@ export async function GET() {
     const hard = problems.filter(p => p.difficulty.toLowerCase() === "hard").length
 
     // Get review logs for last 365 days (for heatmap)
-    const oneYearAgo = subDays(new Date(), 365)
+    // Using string comparison for day (YYYY-MM-DD) works for ISO format
+    const oneYearAgoDate = subDays(new Date(), 365)
+    const oneYearAgoStr = format(oneYearAgoDate, "yyyy-MM-dd")
+
     const reviewLogs = await prisma.reviewLog.findMany({
         where: {
             userId: user.id,
-            date: { gte: oneYearAgo },
+            day: { gte: oneYearAgoStr },
         },
-        orderBy: { date: "asc" },
+        orderBy: { day: "asc" },
     })
 
     // Build heatmap data (date string -> count)
     const heatmapData: Record<string, number> = {}
     reviewLogs.forEach(log => {
-        const dateKey = format(new Date(log.date), "yyyy-MM-dd")
-        heatmapData[dateKey] = log.count
+        // log.day is already YYYY-MM-DD
+        heatmapData[log.day] = log.count
     })
 
     // Count reviewed today

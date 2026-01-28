@@ -75,11 +75,17 @@ export async function POST(
     })
 
     // Update ReviewLog - decrement count for today
+    // We assume undo happens on the same day usually, or we decrement the day the undo happens.
+    // Ideally we should decrement the log of the actual review day, but we don't store "reviewLogId" in ReviewEvent easily accessible here without query.
+    // For MVP, simplistic approach: decrement today's count if > 0. 
+    // Correction: If the user reviews today and undoes today, this is correct.
+    const dayKey = new Date().toISOString().split('T')[0]
+
     const existingLog = await prisma.reviewLog.findUnique({
         where: {
-            userId_date: {
+            userId_day: {
                 userId: user.id,
-                date: today,
+                day: dayKey,
             },
         },
     })

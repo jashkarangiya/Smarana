@@ -16,15 +16,14 @@ export async function GET() {
         // Optimizing: Could limit to last year if dataset grows large, but for now fetch all
         const logs = await prisma.reviewLog.findMany({
             where: { userId },
-            select: { date: true, count: true },
+            select: { day: true, count: true },
         })
 
         // Transform to formatted object: { "YYYY-MM-DD": count }
         const data: Record<string, number> = {}
 
         logs.forEach(log => {
-            const dateStr = log.date.toISOString().split('T')[0]
-            data[dateStr] = log.count
+            data[log.day] = log.count
         })
 
         return NextResponse.json(data)

@@ -94,11 +94,14 @@ export async function POST(
             })
 
             // 4. Update Daily Log (Aggregated)
+            // Use UTC YYYY-MM-DD for consistency
+            const dayKey = now.toISOString().split('T')[0]
+
             await tx.reviewLog.upsert({
                 where: {
-                    userId_date: {
+                    userId_day: {
                         userId: user.id,
-                        date: today,
+                        day: dayKey,
                     },
                 },
                 update: {
@@ -107,7 +110,8 @@ export async function POST(
                 },
                 create: {
                     userId: user.id,
-                    date: today,
+                    day: dayKey,
+                    // createdAt will default to now()
                     count: 1,
                     xpEarned: xpEarned,
                 },

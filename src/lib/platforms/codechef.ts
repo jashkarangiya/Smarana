@@ -18,6 +18,21 @@ interface CodeChefApiResponse {
     // Note: This API may not return individual problems
 }
 
+// Helper for timeout
+async function fetchWithTimeout(url: string, options: RequestInit = {}, timeout = 10000): Promise<Response> {
+    const controller = new AbortController()
+    const id = setTimeout(() => controller.abort(), timeout)
+    try {
+        const response = await fetch(url, {
+            ...options,
+            signal: controller.signal
+        })
+        return response
+    } finally {
+        clearTimeout(id)
+    }
+}
+
 export async function fetchCodeChefSolvedProblems(username: string): Promise<PlatformProblem[]> {
     if (!username) return []
 
@@ -26,7 +41,7 @@ export async function fetchCodeChefSolvedProblems(username: string): Promise<Pla
         // We'll validate the username and return empty for now
         // A full implementation would require scraping or a different API
 
-        const response = await fetch(
+        const response = await fetchWithTimeout(
             `https://codechef-api.vercel.app/handle/${encodeURIComponent(username)}`
         )
 
@@ -54,7 +69,7 @@ export async function fetchCodeChefSolvedProblems(username: string): Promise<Pla
 
 export async function validateCodeChefUsername(username: string): Promise<boolean> {
     try {
-        const response = await fetch(
+        const response = await fetchWithTimeout(
             `https://codechef-api.vercel.app/handle/${encodeURIComponent(username)}`
         )
         const data = await response.json()

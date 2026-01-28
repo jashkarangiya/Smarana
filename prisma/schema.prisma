@@ -231,17 +231,23 @@ model RevisionProblem {
   updatedAt        DateTime @updatedAt
 
   @@unique([userId, platform, problemSlug])
+  // Performance Indexes for Dashboard & Stats
+  @@index([userId, nextReviewAt])
+  @@index([userId, lastReviewedAt])
 }
 
 model ReviewLog {
   id        String   @id @default(cuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  date      DateTime @default(now())
+  
+  day       String   // YYYY-MM-DD for uniqueness
+  createdAt DateTime @default(now())
+  
   count     Int      @default(1)
   xpEarned  Int      @default(0)
 
-  @@unique([userId, date])
+  @@unique([userId, day])
 }
 
 model UserStats {
