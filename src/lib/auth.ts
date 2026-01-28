@@ -105,7 +105,6 @@ export const authOptions: NextAuthOptions = {
                 session.user.username = token.username as string
                 session.user.leetcodeUsername = token.leetcodeUsername as string
             }
-            return session
-        } as unknown as NextAuthOptions,
+        }
     },
-}
+} as any
