@@ -91,7 +91,7 @@ export const authOptions: NextAuthOptions = {
         })
     ],
     callbacks: {
-        async jwt({ token, user }) {
+        async jwt({ token, user }: { token: any, user: any }) {
             if (user) {
                 const u = user as any
                 token.username = u.username
@@ -99,7 +99,7 @@ export const authOptions: NextAuthOptions = {
             }
             return token
         },
-        async session({ session, token }) {
+        async session({ session, token }: { session: any, token: any }) {
             if (token && session.user) {
                 session.user.id = token.sub as string
                 session.user.username = token.username as string
