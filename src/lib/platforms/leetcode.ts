@@ -2,6 +2,7 @@
 // Moved to platforms folder for unified interface
 
 import { PlatformProblem } from "./index"
+import { fetchWithTimeout, fetchWithRetry } from "@/lib/fetch-utils"
 
 const LEETCODE_GRAPHQL_URL = "https://leetcode.com/graphql"
 
@@ -9,21 +10,6 @@ interface LeetCodeSubmission {
     title: string
     titleSlug: string
     timestamp: string
-}
-
-// Helper for timeout
-async function fetchWithTimeout(url: string, options: RequestInit = {}, timeout = 10000): Promise<Response> {
-    const controller = new AbortController()
-    const id = setTimeout(() => controller.abort(), timeout)
-    try {
-        const response = await fetch(url, {
-            ...options,
-            signal: controller.signal
-        })
-        return response
-    } finally {
-        clearTimeout(id)
-    }
 }
 
 export async function fetchLeetCodeSolvedProblems(username: string): Promise<PlatformProblem[]> {
@@ -41,7 +27,7 @@ export async function fetchLeetCodeSolvedProblems(username: string): Promise<Pla
             }
         `
 
-        const submissionsResponse = await fetchWithTimeout(LEETCODE_GRAPHQL_URL, {
+        const submissionsResponse = await fetchWithRetry(LEETCODE_GRAPHQL_URL, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -51,7 +37,7 @@ export async function fetchLeetCodeSolvedProblems(username: string): Promise<Pla
                 query: recentSubmissionsQuery,
                 variables: { username, limit: 20 },
             }),
-        })
+        }, 2)
 
         if (!submissionsResponse.ok) {
             console.error("LeetCode API error:", submissionsResponse.status)

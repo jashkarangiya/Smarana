@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { usernameSchema } from "@/lib/validations/user"
+import { handleApiError } from "@/lib/api-error"
 
 export async function PUT(request: Request) {
     try {
@@ -10,20 +12,15 @@ export async function PUT(request: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
         }
 
-        const { username } = await request.json()
+        const body = await request.json()
 
-        if (!username || typeof username !== "string") {
-            return NextResponse.json({ error: "Username is required" }, { status: 400 })
+        const validation = usernameSchema.safeParse(body)
+        if (!validation.success) {
+            const errorMsg = validation.error.issues[0].message
+            return NextResponse.json({ error: errorMsg }, { status: 400 })
         }
 
-        // Validate username format: 3-20 chars, alphanumeric + underscores
-        const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/
-        if (!usernameRegex.test(username)) {
-            return NextResponse.json(
-                { error: "Username must be 3-20 characters, alphanumeric and underscores only" },
-                { status: 400 }
-            )
-        }
+        const { username } = validation.data
 
         // Get current user
         const user = await prisma.user.findUnique({
@@ -75,8 +72,7 @@ export async function PUT(request: Request) {
             username: updatedUser.username,
         })
     } catch (error) {
-        console.error("Username update error:", error)
-        return NextResponse.json({ error: "Failed to update username" }, { status: 500 })
+        return handleApiError(error)
     }
 }
 
@@ -124,7 +120,6 @@ export async function GET(request: Request) {
             daysUntilChange,
         })
     } catch (error) {
-        console.error("Get username error:", error)
-        return NextResponse.json({ error: "Failed to get username" }, { status: 500 })
+        return handleApiError(error)
     }
 }

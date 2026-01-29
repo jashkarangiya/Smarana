@@ -58,7 +58,7 @@ export default function AddProblemPage() {
     // Create Problem Mutation
     const createProblem = useMutation({
         mutationFn: async () => {
-            const res = await fetch("/api/problems/create", {
+            const res = await fetch("/api/problems", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

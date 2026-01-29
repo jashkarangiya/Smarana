@@ -2,6 +2,7 @@
 // Uses community API: https://kenkoooo.com/atcoder/atcoder-api/v3/user/submissions?user={username}
 
 import { PlatformProblem } from "./index"
+import { fetchWithTimeout, fetchWithRetry } from "@/lib/fetch-utils"
 
 interface AtCoderSubmission {
     id: number
@@ -32,28 +33,15 @@ function getDifficultyFromPoints(difficulty?: number): string {
     return "Hard"
 }
 
-// Helper for timeout
-async function fetchWithTimeout(url: string, options: RequestInit = {}, timeout = 10000): Promise<Response> {
-    const controller = new AbortController()
-    const id = setTimeout(() => controller.abort(), timeout)
-    try {
-        const response = await fetch(url, {
-            ...options,
-            signal: controller.signal
-        })
-        return response
-    } finally {
-        clearTimeout(id)
-    }
-}
-
 export async function fetchAtCoderSolvedProblems(username: string): Promise<PlatformProblem[]> {
     if (!username) return []
 
     try {
         // Fetch submissions
-        const submissionsResponse = await fetchWithTimeout(
-            `https://kenkoooo.com/atcoder/atcoder-api/v3/user/submissions?user=${encodeURIComponent(username)}&from_second=0`
+        const submissionsResponse = await fetchWithRetry(
+            `https://kenkoooo.com/atcoder/atcoder-api/v3/user/submissions?user=${encodeURIComponent(username)}&from_second=0`,
+            {},
+            2
         )
 
         if (!submissionsResponse.ok) {

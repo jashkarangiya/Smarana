@@ -54,7 +54,7 @@ export function ReviewQueueCard({
     }
 
     return (
-        <Card className={cn("h-[600px] flex flex-col overflow-hidden border-muted bg-card/50 hover-card", className)}>
+        <Card className={cn("h-full flex flex-col min-h-0 overflow-hidden border-muted bg-card/50 hover-card", className)}>
             {/* Header */}
             <div className="px-6 pt-6 pb-4 shrink-0">
                 <div className="flex items-start justify-between">
@@ -73,8 +73,8 @@ export function ReviewQueueCard({
                 </div>
             </div>
 
-            {/* List */}
-            <div className="flex-1 overflow-y-auto px-2 pb-2 custom-scrollbar">
+            {/* List - Fills available space */}
+            <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-2 custom-scrollbar">
                 {isLoading ? (
                     <div className="space-y-3 px-4">
                         {[1, 2, 3, 4].map((i) => (
@@ -117,7 +117,7 @@ export function ReviewQueueCard({
                                         </div>
                                     </div>
 
-                                    {/* Actions that appear on hover/focus, or always visible on mobile if needed */}
+                                    {/* Actions */}
                                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity focus-within:opacity-100">
                                         <Button
                                             variant="ghost"
@@ -128,6 +128,7 @@ export function ReviewQueueCard({
                                             }}
                                             className="h-8 w-8 text-muted-foreground hover:text-foreground"
                                             title="Notes"
+                                            aria-label="Open notes"
                                         >
                                             <FileText className="h-4 w-4" />
                                         </Button>
@@ -143,11 +144,6 @@ export function ReviewQueueCard({
                                             Mark as Reviewed
                                         </Button>
                                     </div>
-
-                                    {/* Default state indicator (arrow) when not hovering */}
-                                    <div className="shrink-0 text-muted-foreground/30 group-hover:hidden md:flex hidden">
-                                        {/* Placeholder to keep layout stable if needed, or just hidden */}
-                                    </div>
                                 </div>
                             </div>
                         ))}
@@ -162,8 +158,8 @@ export function ReviewQueueCard({
                 )}
             </div>
 
-            {/* Sticky Footer */}
-            <div className="sticky bottom-0 border-t border-white/5 bg-black/40 backdrop-blur-md px-6 py-4 shrink-0">
+            {/* Sticky Footer - Now a sibling to the list */}
+            <div className="border-t border-white/5 bg-black/40 backdrop-blur-md px-6 py-4 shrink-0">
                 <div className="flex items-center justify-between gap-4">
                     <div className="text-sm text-muted-foreground hidden sm:block">
                         Due: <span className="text-foreground font-medium">{dueCount}</span>
