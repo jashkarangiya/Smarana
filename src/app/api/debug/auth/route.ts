@@ -24,6 +24,7 @@ export async function GET() {
         request: {
             hasCookieHeader: !!cookieHeader,
             hasNextAuthCookie,
+            cookieNames: cookieHeader.split(';').map(c => c.trim().split('=')[0]),
             host: headersList.get("host"),
             xForwardedHost: headersList.get("x-forwarded-host"),
         }
