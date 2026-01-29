@@ -11,11 +11,33 @@ export async function GET() {
     const cookieHeader = headersList.get("cookie") || ""
     const hasNextAuthCookie = cookieHeader.includes("next-auth.session-token") || cookieHeader.includes("__Secure-next-auth.session-token")
 
+    // Check Database Connection
+    let dbStatus = "Unknown"
+    let userCount = -1
+    let dbError = null
+
+    try {
+        // Simple query to test connection
+        userCount = await prisma.user.count()
+        dbStatus = "Connected"
+    } catch (e: any) {
+        dbStatus = "Failed"
+        dbError = e.message || String(e)
+        // console.error("Debug DB Error:", e) // Use a simpler error log or skip to avoid cluttering vercel logs if not needed
+    }
+
     return NextResponse.json({
         status: "Debug Info",
         timestamp: new Date().toISOString(),
-        hasSession: !!session,
-        user: session?.user || null,
+        auth: {
+            hasSession: !!session,
+            user: session?.user || null,
+        },
+        database: {
+            status: dbStatus,
+            userCount,
+            error: dbError
+        },
         env: {
             hasNextAuthSecret: !!process.env.NEXTAUTH_SECRET,
             nextAuthUrl: process.env.NEXTAUTH_URL,
