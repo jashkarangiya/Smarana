@@ -84,6 +84,41 @@ export function NavBar() {
     // Find specific actions from config
     const reviewAction = ACTIONS_NAV.find(a => a.title === "Review")
 
+    // Focused Review Mode
+    if (pathname === "/review") {
+        return (
+            <nav className="fixed top-0 left-0 right-0 z-50 px-4 py-3">
+                <div className="max-w-7xl mx-auto flex items-center justify-between">
+                    {/* Brand - Minimal */}
+                    <div className="flex items-center gap-2 opacity-50 hover:opacity-100 transition-opacity">
+                        <div className="w-8 h-8 rounded-lg overflow-hidden">
+                            <Image
+                                src="/logo.png"
+                                alt="Smarana"
+                                width={32}
+                                height={32}
+                                className="w-full h-full object-cover"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Exit Button */}
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="rounded-full bg-black/20 hover:bg-white/10 text-white/60 hover:text-red-400 border border-white/5 hover:border-red-500/20 transition-all font-medium"
+                        asChild
+                    >
+                        <Link href="/dashboard">
+                            <LogOut className="mr-2 h-4 w-4" />
+                            Exit Session
+                        </Link>
+                    </Button>
+                </div>
+            </nav>
+        )
+    }
+
     return (
         <nav className="fixed top-0 left-0 right-0 z-50 px-3 sm:px-4 py-3">
             <div className="max-w-7xl mx-auto">
@@ -140,7 +175,7 @@ export function NavBar() {
                                                 style={{ zIndex: -1 }}
                                             />
                                         )}
-                                        <link.icon className={`h-4 w-4 ${active ? "text-[#d6a24b]" : "opacity-70"}`} />
+                                        <link.icon className={`h-4 w-4 ${active ? "text-[#BB7331]" : "opacity-70"}`} />
                                         {link.title}
                                     </Link>
                                 )
@@ -157,7 +192,7 @@ export function NavBar() {
                                     <Button
                                         asChild
                                         size="sm"
-                                        className="hidden sm:flex rounded-full bg-[#d6a24b] text-black hover:bg-[#b8862f] h-9 px-4 font-semibold shadow-[0_0_15px_rgba(214,162,75,0.25)] hover:shadow-[0_0_20px_rgba(214,162,75,0.4)] transition-all"
+                                        className="hidden sm:flex rounded-full bg-[#BB7331] text-black hover:bg-[#b8862f] h-9 px-4 font-semibold shadow-[0_0_15px_rgba(214,162,75,0.25)] hover:shadow-[0_0_20px_rgba(214,162,75,0.4)] transition-all"
                                     >
                                         <Link href={reviewAction.href}>
                                             <reviewAction.icon className="mr-2 h-4 w-4" />
@@ -217,7 +252,7 @@ export function NavBar() {
                                                     <div className="text-left min-w-0 flex-1">
                                                         <p className="font-semibold text-white truncate">{session.user?.name}</p>
                                                         <div className="flex items-center gap-2 mt-1">
-                                                            <span className="text-xs font-bold text-[#d6a24b] bg-[#d6a24b]/10 px-1.5 py-0.5 rounded">
+                                                            <span className="text-xs font-bold text-[#BB7331] bg-[#BB7331]/10 px-1.5 py-0.5 rounded">
                                                                 LVL {stats?.level || 1}
                                                             </span>
                                                             <span className="text-xs text-white/50">@{session.user?.username}</span>
@@ -232,7 +267,7 @@ export function NavBar() {
                                             <div className="p-4 pb-2">
                                                 <Button
                                                     asChild
-                                                    className="w-full rounded-xl bg-[#d6a24b] text-black hover:bg-[#b8862f] h-11 font-semibold shadow-[0_0_15px_rgba(214,162,75,0.25)]"
+                                                    className="w-full rounded-xl bg-[#BB7331] text-black hover:bg-[#b8862f] h-11 font-semibold shadow-[0_0_15px_rgba(214,162,75,0.25)]"
                                                     onClick={() => setMobileMenuOpen(false)}
                                                 >
                                                     <Link href={reviewAction.href}>
@@ -255,13 +290,13 @@ export function NavBar() {
                                                         : 'text-white/60 hover:bg-white/5 hover:text-white'
                                                         }`}
                                                 >
-                                                    <link.icon className="h-5 w-5" />
+                                                    <link.icon className={`h-5 w-5 ${isActive(link.href) ? "text-[#BB7331]" : ""}`} />
                                                     <span className="font-medium">{link.title}</span>
                                                 </Link>
                                             ))}
 
                                             {/* Utility Links in Mobile */}
-                                            {UTILITY_NAV.map((link) => {
+                                            {UTILITY_NAV.filter(l => l.title !== "Profile").map((link) => {
                                                 const href = resolveHref(link.href)
                                                 return (
                                                     <Link
@@ -320,7 +355,7 @@ export function NavBar() {
                                 {/* Avatar with Progress Ring - Desktop */}
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild className="hidden lg:flex">
-                                        <button className="focus:outline-none focus-visible:ring-2 focus-visible:ring-[#d6a24b]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-full transition-transform active:scale-95">
+                                        <button className="focus:outline-none focus-visible:ring-2 focus-visible:ring-[#BB7331]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-full transition-transform active:scale-95">
                                             <AvatarWithProgress
                                                 progress={xpProgress}
                                                 image={session.user?.image}
@@ -349,7 +384,7 @@ export function NavBar() {
                                                 <div className="flex-1 min-w-0 overflow-hidden">
                                                     <p className="font-semibold text-white truncate">{session.user?.name}</p>
                                                     <div className="flex items-center gap-2 mt-0.5 overflow-hidden">
-                                                        <span className="text-[10px] font-bold text-[#d6a24b] bg-[#d6a24b]/10 px-1.5 py-0.5 rounded border border-[#d6a24b]/20 flex-shrink-0">
+                                                        <span className="text-[10px] font-bold text-[#BB7331] bg-[#BB7331]/10 px-1.5 py-0.5 rounded border border-[#BB7331]/20 flex-shrink-0">
                                                             LVL {stats?.level || 1}
                                                         </span>
                                                         <span className="text-[10px] text-white/50 truncate">@{session.user?.username}</span>
@@ -402,7 +437,7 @@ export function NavBar() {
                                     size="sm"
                                     className="rounded-full font-semibold h-9 px-5"
                                     style={{
-                                        background: 'linear-gradient(135deg, #d6a24b, #b8862f)',
+                                        background: 'linear-gradient(135deg, #BB7331, #b8862f)',
                                         boxShadow: '0 8px 24px rgba(214,162,75,0.3)'
                                     }}
                                     asChild

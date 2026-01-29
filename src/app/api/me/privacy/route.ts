@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { NextResponse } from "next/server"
+import { handleApiError } from "@/lib/api-error"
 
 export async function GET() {
     try {
@@ -31,8 +32,7 @@ export async function GET() {
         return NextResponse.json(user)
 
     } catch (error) {
-        console.error("GET privacy settings error:", error)
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })
+        return handleApiError(error)
     }
 }
 
@@ -78,7 +78,6 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: true })
 
     } catch (error) {
-        console.error("POST privacy settings error:", error)
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })
+        return handleApiError(error)
     }
 }

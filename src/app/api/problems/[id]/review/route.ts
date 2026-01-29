@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma"
 import { NextResponse } from "next/server"
 import { getNextReviewDate } from "@/lib/repetition"
 import { safeDecrypt } from "@/lib/encryption"
+import { handleApiError } from "@/lib/api-error"
 
 // XP values by difficulty
 const XP_REWARDS: Record<string, number> = {
@@ -163,7 +164,6 @@ export async function POST(
         })
 
     } catch (error) {
-        console.error("Review transaction failed:", error)
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })
+        return handleApiError(error)
     }
 }

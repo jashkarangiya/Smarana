@@ -2,6 +2,7 @@
 // Public API: https://codeforces.com/api/user.status?handle={username}
 
 import { PlatformProblem } from "./index"
+import { fetchWithTimeout, fetchWithRetry } from "@/lib/fetch-utils"
 
 interface CodeforcesSubmission {
     id: number
@@ -30,27 +31,14 @@ function getDifficultyFromRating(rating?: number): string {
     return "Hard"
 }
 
-// Helper for timeout
-async function fetchWithTimeout(url: string, options: RequestInit = {}, timeout = 10000): Promise<Response> {
-    const controller = new AbortController()
-    const id = setTimeout(() => controller.abort(), timeout)
-    try {
-        const response = await fetch(url, {
-            ...options,
-            signal: controller.signal
-        })
-        return response
-    } finally {
-        clearTimeout(id)
-    }
-}
-
 export async function fetchCodeforcesSolvedProblems(username: string): Promise<PlatformProblem[]> {
     if (!username) return []
 
     try {
-        const response = await fetchWithTimeout(
-            `https://codeforces.com/api/user.status?handle=${encodeURIComponent(username)}&from=1&count=100`
+        const response = await fetchWithRetry(
+            `https://codeforces.com/api/user.status?handle=${encodeURIComponent(username)}&from=1&count=100`,
+            {},
+            2
         )
 
         if (!response.ok) {

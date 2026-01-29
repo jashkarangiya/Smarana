@@ -7,25 +7,14 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import {
-    Brain,
-    CheckCircle2,
-    HelpCircle,
-    XCircle,
-    ExternalLink,
-    Keyboard,
-    Sparkles,
-    Trophy,
-    ArrowRight,
-    Clock,
-    Zap
-} from "lucide-react"
+import { Link as LinkIcon, ExternalLink, Keyboard, Sparkles, Trophy, ArrowRight, Clock, Zap, CheckCircle2, HelpCircle, XCircle, Brain } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { cn } from "@/lib/utils"
 import { useEmberTrail } from "@/components/ember-trail-provider"
 import { getTrailLevel } from "@/lib/easter-egg"
+import { AnimatePresence, motion } from "framer-motion"
 
 type Rating = "remembered" | "kinda" | "forgot"
 
@@ -208,148 +197,228 @@ export default function ReviewPage() {
     }
 
     return (
-        <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-3xl">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-4 sm:mb-6">
-                <div>
-                    <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
-                        <Brain className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
-                        Review Session
-                    </h1>
-                    <p className="text-muted-foreground text-xs sm:text-sm mt-1">
-                        {totalProblems} due • ~{estimatedTime} min
-                    </p>
-                </div>
-                <div className="flex items-center gap-4">
-                    <div className="text-right">
-                        <p className="text-xs sm:text-sm text-muted-foreground">Session XP</p>
-                        <p className="font-bold text-primary">{sessionXp}</p>
+        <div className="container mx-auto px-4 min-h-[calc(100vh-80px)] flex flex-col items-center justify-center max-w-2xl relative">
+            {/* Header / Meta */}
+            <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="w-full mb-8 flex items-end justify-between"
+            >
+                <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">Problem {currentIndex + 1} of {totalProblems}</p>
+                    <div className="flex items-center gap-2">
+                        <Badge variant="outline" className={cn("text-xs font-mono uppercase tracking-wider", getDifficultyColor(currentProblem.difficulty))}>
+                            {currentProblem.difficulty}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground/50">•</span>
+                        <span className="text-xs text-muted-foreground">Review #{currentProblem.reviewCount + 1}</span>
                     </div>
                 </div>
-            </div>
 
-            {/* Progress */}
-            <div className="mb-4 sm:mb-6">
-                <div className="flex items-center justify-between text-sm mb-2">
-                    <span className="text-muted-foreground">Progress</span>
-                    <span className="font-medium">{currentIndex + 1} / {totalProblems}</span>
+                <div className="text-right">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1 justify-end">
+                        <Sparkles className="h-3 w-3 text-[#BB7331]" />
+                        Session XP
+                    </div>
+                    <div className="text-2xl font-bold text-foreground tabular-nums leading-none">
+                        {sessionXp}
+                    </div>
                 </div>
-                <Progress value={((currentIndex) / totalProblems) * 100} className="h-2" />
-            </div>
+            </motion.div>
 
-            {/* Problem Card */}
-            <Card className="mb-4 sm:mb-6 overflow-hidden">
-                <CardContent className="p-0">
-                    {/* Problem Header */}
-                    <div className="p-4 sm:p-6 border-b">
-                        <div className="flex items-start justify-between gap-3 sm:gap-4">
-                            <div className="flex-1 min-w-0">
-                                <div className="flex flex-wrap items-center gap-2 mb-2">
-                                    <Badge
-                                        variant="outline"
-                                        className={`font-mono text-[10px] sm:text-xs uppercase ${getDifficultyColor(currentProblem.difficulty)}`}
-                                    >
-                                        {currentProblem.difficulty}
-                                    </Badge>
-                                    <span className="text-[10px] sm:text-xs text-muted-foreground">
-                                        Review #{currentProblem.reviewCount + 1}
-                                    </span>
-                                </div>
-                                <h2 className="text-lg sm:text-xl font-semibold mb-1 break-words">{currentProblem.title}</h2>
-                                <p className="text-xs sm:text-sm text-muted-foreground font-mono truncate">{(currentProblem as any).problemSlug || (currentProblem as any).leetcodeSlug}</p>
+            {/* Progress Bar - Subtle */}
+            <motion.div
+                initial={{ opacity: 0, scaleX: 0 }}
+                animate={{ opacity: 1, scaleX: 1 }}
+                className="fixed top-0 left-0 right-0 h-1 bg-white/5 z-50"
+            >
+                <motion.div
+                    className="h-full bg-[#BB7331]"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${((currentIndex) / totalProblems) * 100}%` }}
+                    transition={{ type: "spring", stiffness: 100, damping: 20 }}
+                />
+            </motion.div>
+
+            {/* Main Card */}
+            <AnimatePresence mode="wait">
+                <motion.div
+                    key={currentProblem.id}
+                    initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: -20 }}
+                    transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}
+                    className="w-full"
+                >
+                    <Card className="border-white/10 bg-black/40 backdrop-blur-xl shadow-2xl overflow-hidden relative group">
+                        {/* Card Glow Effect */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] to-transparent pointer-events-none" />
+
+                        <CardContent className="p-8 sm:p-10 relative z-10">
+                            {/* Title Block */}
+                            <div className="mb-8 text-center sm:text-left">
+                                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-3 leading-tight">
+                                    {currentProblem.title}
+                                </h1>
+                                <a
+                                    href={currentProblem.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-[#BB7331] transition-colors"
+                                >
+                                    <ExternalLink className="h-3.5 w-3.5" />
+                                    View on LeetCode
+                                </a>
                             </div>
-                            <a
-                                href={currentProblem.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="p-2 rounded-lg hover:bg-muted transition-colors shrink-0"
-                            >
-                                <ExternalLink className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
-                            </a>
-                        </div>
-                    </div>
 
-                    {/* Reveal / Rate Section */}
-                    <div className="p-4 sm:p-6">
-                        {!revealed ? (
-                            <div className="text-center py-6 sm:py-8">
-                                <p className="text-sm sm:text-base text-muted-foreground mb-4 sm:mb-6">
-                                    Can you recall the approach and key insights?
-                                </p>
-                                <Button onClick={handleReveal} size="lg" className="gap-2 w-full sm:w-auto">
-                                    <Keyboard className="h-4 w-4" />
-                                    Reveal <span className="hidden sm:inline">(Space)</span>
-                                </Button>
+                            {/* Interaction Area */}
+                            <div className="min-h-[200px] flex flex-col justify-center">
+                                <AnimatePresence mode="wait">
+                                    {!revealed ? (
+                                        <motion.div
+                                            key="reveal-state"
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            exit={{ opacity: 0, y: 10 }}
+                                            className="flex flex-col items-center justify-center space-y-6"
+                                        >
+                                            <p className="text-lg text-white/60 text-center max-w-md mx-auto">
+                                                Take a moment. Can you recall the optimal solution and time complexity?
+                                            </p>
+                                            <Button
+                                                onClick={handleReveal}
+                                                size="lg"
+                                                className="h-14 px-8 text-lg rounded-full bg-white text-black hover:bg-white/90 shadow-[0_0_30px_rgba(255,255,255,0.1)] transition-all hover:scale-105 active:scale-95"
+                                            >
+                                                <span className="mr-2">Reveal Answer</span>
+                                                <kbd className="hidden sm:inline-flex h-6 px-2 bg-black/10 rounded text-[10px] items-center text-black/60 font-sans border border-black/5">SPACE</kbd>
+                                            </Button>
+                                        </motion.div>
+                                    ) : (
+                                        <motion.div
+                                            key="rate-state"
+                                            initial={{ opacity: 0, scale: 0.95 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            className="w-full"
+                                        >
+                                            <div className="text-center mb-8">
+                                                <h3 className="text-xl font-medium text-white mb-2">How clearly did you remember?</h3>
+                                                <p className="text-sm text-white/40">Be honest - this schedules your next review.</p>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                                <RatingButton
+                                                    rating="forgot"
+                                                    label="Forgot"
+                                                    subLabel="Review soon"
+                                                    shortcut="1"
+                                                    icon={XCircle}
+                                                    color="text-rose-500"
+                                                    bgHover="hover:bg-rose-500/10"
+                                                    borderHover="hover:border-rose-500/50"
+                                                    onClick={() => handleRate("forgot")}
+                                                    disabled={rateMutation.isPending}
+                                                />
+                                                <RatingButton
+                                                    rating="kinda"
+                                                    label="Fuzzy"
+                                                    subLabel="Review later"
+                                                    shortcut="2"
+                                                    icon={HelpCircle}
+                                                    color="text-amber-500"
+                                                    bgHover="hover:bg-amber-500/10"
+                                                    borderHover="hover:border-amber-500/50"
+                                                    onClick={() => handleRate("kinda")}
+                                                    disabled={rateMutation.isPending}
+                                                />
+                                                <RatingButton
+                                                    rating="remembered"
+                                                    label="Easy"
+                                                    subLabel="Review in days"
+                                                    shortcut="3"
+                                                    icon={CheckCircle2}
+                                                    color="text-emerald-500"
+                                                    bgHover="hover:bg-emerald-500/10"
+                                                    borderHover="hover:border-emerald-500/50"
+                                                    onClick={() => handleRate("remembered")}
+                                                    disabled={rateMutation.isPending}
+                                                />
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
                             </div>
-                        ) : (
-                            <div className="space-y-4 sm:space-y-6">
-                                <div className="text-center py-2 sm:py-4">
-                                    <p className="text-sm sm:text-base text-muted-foreground">
-                                        How well did you remember this problem?
-                                    </p>
-                                </div>
+                        </CardContent>
+                    </Card>
+                </motion.div>
+            </AnimatePresence>
 
-                                {/* Rating Buttons */}
-                                <div className="grid grid-cols-3 gap-2 sm:gap-3">
-                                    <Button
-                                        onClick={() => handleRate("remembered")}
-                                        disabled={rateMutation.isPending}
-                                        variant="outline"
-                                        className={cn(
-                                            "h-auto py-3 sm:py-4 flex-col gap-1 sm:gap-2 border-2 transition-all",
-                                            "hover:border-emerald-500 hover:bg-emerald-500/10 active:scale-[0.98]"
-                                        )}
-                                    >
-                                        <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-500" />
-                                        <span className="font-semibold text-xs sm:text-sm">Remembered</span>
-                                        <span className="hidden sm:block text-xs text-muted-foreground">Press 1</span>
-                                    </Button>
-                                    <Button
-                                        onClick={() => handleRate("kinda")}
-                                        disabled={rateMutation.isPending}
-                                        variant="outline"
-                                        className={cn(
-                                            "h-auto py-3 sm:py-4 flex-col gap-1 sm:gap-2 border-2 transition-all",
-                                            "hover:border-amber-500 hover:bg-amber-500/10 active:scale-[0.98]"
-                                        )}
-                                    >
-                                        <HelpCircle className="h-5 w-5 sm:h-6 sm:w-6 text-amber-500" />
-                                        <span className="font-semibold text-xs sm:text-sm">Kinda</span>
-                                        <span className="hidden sm:block text-xs text-muted-foreground">Press 2</span>
-                                    </Button>
-                                    <Button
-                                        onClick={() => handleRate("forgot")}
-                                        disabled={rateMutation.isPending}
-                                        variant="outline"
-                                        className={cn(
-                                            "h-auto py-3 sm:py-4 flex-col gap-1 sm:gap-2 border-2 transition-all",
-                                            "hover:border-rose-500 hover:bg-rose-500/10 active:scale-[0.98]"
-                                        )}
-                                    >
-                                        <XCircle className="h-5 w-5 sm:h-6 sm:w-6 text-rose-500" />
-                                        <span className="font-semibold text-xs sm:text-sm">Forgot</span>
-                                        <span className="hidden sm:block text-xs text-muted-foreground">Press 3</span>
-                                    </Button>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </CardContent>
-            </Card>
-
-            {/* Keyboard Shortcuts Hint - Hide on mobile */}
-            <div className="hidden sm:flex items-center justify-center gap-4 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1">
-                    <kbd className="px-1.5 py-0.5 rounded bg-muted font-mono">Space</kbd>
-                    Reveal
-                </span>
-                <span className="flex items-center gap-1">
-                    <kbd className="px-1.5 py-0.5 rounded bg-muted font-mono">1</kbd>
-                    <kbd className="px-1.5 py-0.5 rounded bg-muted font-mono">2</kbd>
-                    <kbd className="px-1.5 py-0.5 rounded bg-muted font-mono">3</kbd>
-                    Rate
-                </span>
-            </div>
+            {/* Hint Footer */}
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+                className="mt-8 text-center"
+            >
+                <div className="inline-flex items-center gap-6 px-4 py-2 rounded-full bg-white/5 border border-white/5 text-xs text-white/30">
+                    <span className="flex items-center gap-1.5">
+                        <kbd className="font-sans bg-white/10 px-1.5 py-0.5 rounded text-white/70 min-w-[20px] text-center">Space</kbd> to reveal
+                    </span>
+                    <span className="w-px h-3 bg-white/10" />
+                    <span className="flex items-center gap-1.5">
+                        <kbd className="font-sans bg-white/10 px-1.5 py-0.5 rounded text-white/70 min-w-[20px] text-center">1</kbd>
+                        <kbd className="font-sans bg-white/10 px-1.5 py-0.5 rounded text-white/70 min-w-[20px] text-center">2</kbd>
+                        <kbd className="font-sans bg-white/10 px-1.5 py-0.5 rounded text-white/70 min-w-[20px] text-center">3</kbd>
+                        to rate
+                    </span>
+                </div>
+            </motion.div>
         </div>
+    )
+}
+
+function RatingButton({
+    rating,
+    label,
+    subLabel,
+    shortcut,
+    icon: Icon,
+    color,
+    bgHover,
+    borderHover,
+    onClick,
+    disabled
+}: {
+    rating: string
+    label: string
+    subLabel: string
+    shortcut: string
+    icon: any
+    color: string
+    bgHover: string
+    borderHover: string
+    onClick: () => void
+    disabled: boolean
+}) {
+    return (
+        <Button
+            variant="outline"
+            className={cn(
+                "h-auto py-6 sm:py-8 flex flex-col gap-3 relative border-white/10 bg-white/[0.02] transition-all duration-200 group hover:scale-[1.02]",
+                bgHover,
+                borderHover
+            )}
+            onClick={onClick}
+            disabled={disabled}
+        >
+            <div className="absolute top-2 right-2 opacity-30 group-hover:opacity-100 transition-opacity">
+                <kbd className="text-[10px] font-sans bg-black/40 px-1.5 py-0.5 rounded border border-white/10 text-white/70">{shortcut}</kbd>
+            </div>
+            <Icon className={cn("h-8 w-8 mb-1", color)} />
+            <div className="space-y-0.5">
+                <span className="block text-base sm:text-lg font-semibold text-white">{label}</span>
+                <span className="block text-xs text-white/40 group-hover:text-white/60">{subLabel}</span>
+            </div>
+        </Button>
     )
 }

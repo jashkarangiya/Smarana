@@ -234,6 +234,7 @@ model RevisionProblem {
   // Performance Indexes for Dashboard & Stats
   @@index([userId, nextReviewAt])
   @@index([userId, lastReviewedAt])
+  @@index([userId, firstSolvedAt])
 }
 
 model ReviewLog {

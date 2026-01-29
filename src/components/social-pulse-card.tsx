@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Users, Flame, Trophy, Activity, ArrowRight, UserPlus, Bell } from "lucide-react"
@@ -36,7 +37,7 @@ interface SocialPulseData {
     userStreak: number
 }
 
-export function SocialPulseCard() {
+export function SocialPulseCard({ className }: { className?: string }) {
     const [data, setData] = useState<SocialPulseData | null>(null)
     const [loading, setLoading] = useState(true)
 
@@ -131,8 +132,8 @@ export function SocialPulseCard() {
     const activeToday = data?.friends.filter(f => (f.stats?.reviewedToday || 0) > 0) || []
 
     return (
-        <Card className="overflow-hidden">
-            <CardHeader className="pb-2">
+        <Card className={cn("overflow-hidden flex flex-col min-h-0", className)}>
+            <CardHeader className="pb-3 shrink-0">
                 <div className="flex items-center justify-between">
                     <CardTitle className="text-base flex items-center gap-2">
                         <Activity className="h-4 w-4 text-primary" />
@@ -152,9 +153,9 @@ export function SocialPulseCard() {
                 </div>
             </CardHeader>
 
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 min-h-0 flex-1 overflow-y-auto px-5 pb-5 custom-scrollbar">
                 {/* Friend Requests Alert */}
-                {hasPending && (
+                {hasPending && data && (
                     <Link href="/friends" className="block">
                         <div className="flex items-center gap-3 p-2.5 rounded-lg bg-orange-500/10 border border-orange-500/20 hover:bg-orange-500/15 transition-colors">
                             <div className="h-8 w-8 rounded-full bg-orange-500/20 flex items-center justify-center">
@@ -171,7 +172,7 @@ export function SocialPulseCard() {
                 )}
 
                 {/* Friend Strip - Avatar Stack */}
-                {hasFriends && (
+                {hasFriends && data && (
                     <div className="flex items-center gap-2">
                         <div className="flex -space-x-2">
                             {data.friends.slice(0, 5).map((friend) => (
