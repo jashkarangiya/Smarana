@@ -358,10 +358,8 @@ export function NavBar() {
                                             </Link>
                                         </DropdownMenuItem>
 
-                                        {/* Utility Links in Dropdown */}
                                         {UTILITY_NAV.map((link) => {
                                             const href = resolveHref(link.href)
-                                            // Skip profile as it's already the header
                                             if (link.title === "Profile") return null
                                             return (
                                                 <DropdownMenuItem key={link.title} asChild className="rounded-lg cursor-pointer text-white/80 focus:text-white focus:bg-white/10 py-2.5">
@@ -373,14 +371,8 @@ export function NavBar() {
                                             )
                                         })}
 
-                                        {/* Also show MAIN_NAV in dropdown just in case? Or too redundant? 
-                                            Currently not showing MAIN_NAV in dropdown (kept sidebar/tabs for that). 
-                                            But let's include Insight/Resources if they aren't in tabs?
-                                            Tabs only show 3 items. MAIN_NAV has 5. We should probably show all MAIN_NAV in dropdown or ensure tabs are responsive.
-                                            For now, let's keep it clean and assume tabs + mobile.
-                                            But wait, "Insights" and "Resources" were manually in dropdown.
-                                            Let's add them back via config.
-                                         */}
+                                        <DropdownMenuSeparator className="my-1 bg-white/10" />
+
                                         {MAIN_NAV.filter(l => !['Dashboard', 'Problems', 'Schedule'].includes(l.title)).map(link => (
                                             <DropdownMenuItem key={link.title} asChild className="rounded-lg cursor-pointer text-white/80 focus:text-white focus:bg-white/10 py-2.5">
                                                 <Link href={link.href} className="flex items-center gap-2">

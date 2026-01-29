@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Progress } from "@/components/ui/progress"
-import { Heatmap } from "@/components/heatmap"
+
 import { DailyChallenge } from "@/components/daily-challenge"
 import { PomodoroTimer } from "@/components/pomodoro-timer"
 import { FriendsList } from "@/components/friends-list"
@@ -20,6 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Link from "next/link"
 import { toast } from "sonner"
 import { useMemo, useState } from "react"
+import { motion } from "framer-motion"
 
 export default function DashboardPage() {
     const { data: user } = useUser()
@@ -27,6 +28,9 @@ export default function DashboardPage() {
     const { data: dueProblems, isLoading: dueLoading } = useProblems("due")
     const { data: upcoming, isLoading: upcomingLoading } = useProblems("upcoming")
     const { mutate: sync, isPending: syncing } = useSync()
+
+    // Derived state
+    const totalDue = dueProblems?.length || 0
     const { mutate: review, isPending: reviewing } = useReviewProblem()
     const { mutate: undoReview } = useUndoReview()
 
@@ -81,12 +85,30 @@ export default function DashboardPage() {
         })
     }
 
-    const totalDue = dueProblems?.length || 0
+    const container = {
+        hidden: { opacity: 0 },
+        show: {
+            opacity: 1,
+            transition: {
+                staggerChildren: 0.1
+            }
+        }
+    }
+
+    const item = {
+        hidden: { opacity: 0, y: 20 },
+        show: { opacity: 1, y: 0 }
+    }
 
     return (
-        <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-6xl">
+        <motion.div
+            variants={container}
+            initial="hidden"
+            animate="show"
+            className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-6xl"
+        >
             {/* Hero Section */}
-            <div className="card-glow mb-6 sm:mb-8 p-5 sm:p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6">
+            <motion.div variants={item} className="card-glow mb-6 sm:mb-8 p-5 sm:p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6">
                 {/* Background Decor handled by card-glow */}
                 <div className="relative z-10 space-y-3 sm:space-y-4 max-w-xl">
                     <div className="space-y-1.5 sm:space-y-2">
@@ -138,41 +160,43 @@ export default function DashboardPage() {
                     </div>
                     <HeroMiniLeaderboard userStreak={stats?.streak || 0} />
                 </div>
-            </div>
+            </motion.div>
 
             {/* Quick Actions Bar */}
-            <div className="flex justify-end mb-4 sm:mb-6">
+            <motion.div variants={item} className="flex justify-end mb-4 sm:mb-6">
                 <Button onClick={() => sync()} disabled={syncing} variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground">
                     <RefreshCw className={`h-3.5 w-3.5 ${syncing ? "animate-spin" : ""}`} />
                     {syncing ? "Syncing..." : "Sync Platforms"}
                 </Button>
-            </div>
+            </motion.div>
 
             {/* Level & XP Card */}
-            <Card className="mb-4 sm:mb-6 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-primary/20 interactive-card">
-                <CardContent className="p-4 sm:p-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 mb-3 sm:mb-4">
-                        <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-                                <Star className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+            <motion.div variants={item}>
+                <Card className="mb-4 sm:mb-6 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-primary/20 interactive-card">
+                    <CardContent className="p-4 sm:p-6">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 mb-3 sm:mb-4">
+                            <div className="flex items-center gap-3">
+                                <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                                    <Star className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+                                </div>
+                                <div>
+                                    <p className="text-xl sm:text-2xl font-bold">Level {stats?.level || 1}</p>
+                                    <p className="text-xs sm:text-sm text-muted-foreground">{stats?.xp || 0} XP total</p>
+                                </div>
                             </div>
-                            <div>
-                                <p className="text-xl sm:text-2xl font-bold">Level {stats?.level || 1}</p>
-                                <p className="text-xs sm:text-sm text-muted-foreground">{stats?.xp || 0} XP total</p>
+                            <div className="text-left sm:text-right ml-13 sm:ml-0">
+                                <p className="text-xs sm:text-sm font-medium">{Math.round(stats?.xpProgress || 0)}% to Level {(stats?.level || 1) + 1}</p>
+                                <p className="text-xs text-muted-foreground">{stats?.xpForNextLevel ? stats.xpForNextLevel - (stats.xp || 0) : 500} XP needed</p>
                             </div>
                         </div>
-                        <div className="text-left sm:text-right ml-13 sm:ml-0">
-                            <p className="text-xs sm:text-sm font-medium">{Math.round(stats?.xpProgress || 0)}% to Level {(stats?.level || 1) + 1}</p>
-                            <p className="text-xs text-muted-foreground">{stats?.xpForNextLevel ? stats.xpForNextLevel - (stats.xp || 0) : 500} XP needed</p>
-                        </div>
-                    </div>
-                    <Progress value={stats?.xpProgress || 0} className="h-2" />
-                </CardContent>
-            </Card>
+                        <Progress value={stats?.xpProgress || 0} className="h-2" />
+                    </CardContent>
+                </Card>
+            </motion.div>
 
 
             {/* Stats Overview */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 mb-6 sm:mb-8">
+            <motion.div variants={item} className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 mb-6 sm:mb-8">
                 <StatsCard
                     title="Total Problems"
                     value={statsLoading ? "-" : String(stats?.total || 0)}
@@ -194,14 +218,14 @@ export default function DashboardPage() {
                     icon={<Flame className="h-4 w-4 text-orange-500" />}
                     highlight={(stats?.streak ?? 0) > 0}
                 />
-            </div>
+            </motion.div>
 
             {/* Main Content Area */}
-            <div className="grid lg:grid-cols-3 gap-4 sm:gap-8">
+            <motion.div variants={item} className="grid lg:grid-cols-3 gap-4 sm:gap-8">
 
                 {/* Main List: Due Problems */}
                 <div className="lg:col-span-2 space-y-6">
-                    <Card className="h-full border-muted bg-card/50">
+                    <Card className="h-full border-muted bg-card/50 hover-card">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                             <div className="space-y-1">
                                 <CardTitle className="flex items-center gap-2 text-xl">
@@ -319,7 +343,7 @@ export default function DashboardPage() {
                                     onComplete={() => handleReview(dueProblems[0].id, dueProblems[0].difficulty, dueProblems[0].title)}
                                 />
                             ) : (
-                                <Card>
+                                <Card className="hover-card">
                                     <CardContent className="p-6 text-center text-muted-foreground">
                                         All done for today!
                                     </CardContent>
@@ -331,7 +355,7 @@ export default function DashboardPage() {
                         </TabsContent>
 
                         <TabsContent value="upcoming" className="mt-0">
-                            <Card>
+                            <Card className="hover-card">
                                 <CardHeader>
                                     <CardTitle className="text-base flex items-center gap-2">
                                         <Calendar className="h-4 w-4" />
@@ -371,7 +395,7 @@ export default function DashboardPage() {
                     </Tabs>
 
                 </div>
-            </div>
+            </motion.div>
 
             {/* Notes Modal */}
             <ProblemNotesModal
@@ -380,13 +404,13 @@ export default function DashboardPage() {
                 isOpen={notesModal.isOpen}
                 onClose={() => setNotesModal({ isOpen: false, problemId: "", title: "" })}
             />
-        </div>
+        </motion.div>
     )
 }
 
 function StatsCard({ title, value, icon, highlight }: { title: string, value: string, icon: React.ReactNode, highlight?: boolean }) {
     return (
-        <Card className={highlight ? "border-orange-500/50 bg-orange-500/5" : ""}>
+        <Card className={`hover-card transition-colors ${highlight ? "border-orange-500/50 bg-orange-500/5" : ""}`}>
             <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center justify-between mb-1 sm:mb-2">
                     <p className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wide">{title}</p>
@@ -428,7 +452,7 @@ function MotivationalTip() {
     if (!tip) return null
 
     return (
-        <Card className="bg-gradient-to-br from-secondary/50 to-transparent border-dashed">
+        <Card className="hover-card bg-gradient-to-br from-secondary/50 to-transparent border-dashed">
             <CardContent className="p-4">
                 <div className="flex items-start gap-3">
                     <div className="p-2 rounded-lg bg-primary/10 shrink-0">

@@ -142,6 +142,16 @@
     box-shadow: 0 26px 70px rgba(0, 0, 0, 0.6);
   }
 
+  .hover-card {
+    @apply transition-all duration-200;
+  }
+
+  .hover-card:hover {
+    @apply bg-white/[0.02] border-white/20;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+
   /* Premium Button Press */
   .btn-premium {
     @apply relative overflow-hidden transition-all duration-300;
