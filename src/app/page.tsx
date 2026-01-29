@@ -101,25 +101,15 @@ export default function LandingPage() {
                 </div>
               </div>
               {/* Mock Content */}
-              <div className="p-4 sm:p-8 grid gap-4 sm:gap-8 md:grid-cols-[250px_1fr]">
-                {/* Sidebar Mock */}
-                <div className="hidden md:flex flex-col gap-4 border-r border-white/5 pr-6">
-                  <div className="h-8 w-32 bg-white/5 rounded-md" />
-                  <div className="space-y-2 mt-4">
-                    <div className="h-4 w-full bg-muted/10 rounded-sm" />
-                    <div className="h-4 w-3/4 bg-muted/10 rounded-sm" />
-                    <div className="h-4 w-5/6 bg-muted/10 rounded-sm" />
-                  </div>
-                </div>
-                {/* Main Content Mock */}
-                <div className="space-y-4 sm:space-y-6">
-                  <div className="flex gap-2 sm:gap-4">
-                    <div className="h-20 sm:h-32 flex-1 bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg sm:rounded-xl border border-primary/10" />
-                    <div className="h-20 sm:h-32 flex-1 bg-muted/5 rounded-lg sm:rounded-xl border border-white/5" />
-                    <div className="h-20 sm:h-32 flex-1 bg-muted/5 rounded-lg sm:rounded-xl border border-white/5 hidden sm:block" />
-                  </div>
-                  <div className="h-32 sm:h-64 bg-muted/5 rounded-lg sm:rounded-xl border border-white/5" />
-                </div>
+              {/* Dashboard Preview Image */}
+              <div className="relative aspect-[16/10] w-full bg-[#0c0c0c]">
+                <Image
+                  src="/dashboard-preview.png"
+                  alt="Smarana Dashboard"
+                  fill
+                  className="object-cover object-top"
+                  priority
+                />
               </div>
 
               {/* Overlay Gradient */}

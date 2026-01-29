@@ -13,6 +13,7 @@ export async function GET() {
 
     const user = await prisma.user.findUnique({
         where: { email: session.user.email },
+        include: { stats: true }
     })
 
     if (!user) {
@@ -30,7 +31,6 @@ export async function GET() {
     const hard = problems.filter(p => p.difficulty.toLowerCase() === "hard").length
 
     // Get review logs for last 365 days (for heatmap)
-    // Using string comparison for day (YYYY-MM-DD) works for ISO format
     const oneYearAgoDate = subDays(new Date(), 365)
     const oneYearAgoStr = format(oneYearAgoDate, "yyyy-MM-dd")
 
@@ -45,7 +45,6 @@ export async function GET() {
     // Build heatmap data (date string -> count)
     const heatmapData: Record<string, number> = {}
     reviewLogs.forEach(log => {
-        // log.day is already YYYY-MM-DD
         heatmapData[log.day] = log.count
     })
 
@@ -55,35 +54,8 @@ export async function GET() {
         isAfter(new Date(p.lastSolvedAt), today)
     ).length
 
-    // Calculate streak
-    let streak = 0
-    let checkDate = startOfDay(new Date())
-
-    const hasReviewToday = problems.some(p =>
-        isAfter(new Date(p.lastSolvedAt), checkDate)
-    )
-
-    if (hasReviewToday) {
-        streak = 1
-        checkDate = subDays(checkDate, 1)
-
-        for (let i = 0; i < 365; i++) {
-            const dayStart = checkDate
-            const dayEnd = startOfDay(subDays(checkDate, -1))
-
-            const hasReviewOnDay = problems.some(p => {
-                const solvedDate = new Date(p.lastSolvedAt)
-                return isAfter(solvedDate, dayStart) && !isAfter(solvedDate, dayEnd)
-            })
-
-            if (hasReviewOnDay) {
-                streak++
-                checkDate = subDays(checkDate, 1)
-            } else {
-                break
-            }
-        }
-    }
+    // Use pre-calculated streak from UserStats
+    const streak = user.stats?.currentStreak || 0
 
     // Calculate level from XP (500 XP per level)
     const level = Math.floor((user.xp || 0) / 500) + 1

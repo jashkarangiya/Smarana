@@ -101,17 +101,16 @@ export function NotificationsBell() {
     return (
         <DropdownMenu open={open} onOpenChange={setOpen}>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative">
-                    <Bell className="h-5 w-5" />
+                <div className="relative">
+                    <Button variant="navIcon" size="icon">
+                        <Bell className="h-5 w-5" />
+                    </Button>
                     {unreadCount > 0 && (
-                        <Badge
-                            variant="destructive"
-                            className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
-                        >
+                        <span className="absolute -top-1 -right-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold leading-none text-white ring-2 ring-black/60">
                             {unreadCount > 9 ? "9+" : unreadCount}
-                        </Badge>
+                        </span>
                     )}
-                </Button>
+                </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-80 md:w-96">
                 <div className="flex items-center justify-between px-2 py-2">
@@ -172,9 +171,8 @@ function NotificationItem({ notification }: { notification: Notification }) {
 
     return (
         <div
-            className={`flex gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
-                isUnread ? "bg-primary/5 hover:bg-primary/10" : "hover:bg-muted/50"
-            }`}
+            className={`flex gap-3 p-3 rounded-lg cursor-pointer transition-colors ${isUnread ? "bg-primary/5 hover:bg-primary/10" : "hover:bg-muted/50"
+                }`}
         >
             {notification.actor && (
                 <Avatar className="h-10 w-10">

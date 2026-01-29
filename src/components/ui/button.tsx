@@ -18,6 +18,8 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
+        navIcon:
+          "rounded-full border border-white/10 bg-white/[0.03] text-white/70 hover:bg-white/[0.06] hover:text-white hover:border-white/15 focus-visible:ring-2 focus-visible:ring-[#BB7331]/40 focus-visible:ring-offset-0 active:bg-white/[0.08]",
       },
       size: {
         default: "h-10 px-4 py-2",
