@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Heatmap } from "@/components/heatmap"
+import dynamic from "next/dynamic"
+const Heatmap = dynamic(() => import("@/components/heatmap").then(mod => mod.Heatmap), {
+    loading: () => <div className="h-[200px] w-full animate-pulse bg-muted/10 rounded-lg" />,
+    ssr: false
+})
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip as RechartsTooltip, Cell, PieChart, Pie } from "recharts"
 import { Activity, Calendar, Award, TrendingUp, Target, Flame } from "lucide-react"
 

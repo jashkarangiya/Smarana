@@ -24,12 +24,12 @@ export const MAIN_NAV: NavLink[] = [
     { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard, variant: "default" },
     { title: "Problems", href: "/problems", icon: ListTodo, variant: "default" },
     { title: "Schedule", href: "/schedule", icon: Calendar, variant: "default" },
-    { title: "Insights", href: "/insights", icon: Activity, variant: "default" },
-    { title: "Resources", href: "/resources", icon: BookOpen, variant: "default" },
 ]
 
 export const UTILITY_NAV: NavLink[] = [
     { title: "Settings", href: "/settings", icon: Settings, variant: "utility" },
+    { title: "Insights", href: "/insights", icon: Activity, variant: "utility" },
+    { title: "Resources", href: "/resources", icon: BookOpen, variant: "utility" },
     { title: "Profile", href: "/u/me", icon: Globe, variant: "utility" }, // href needs dynamic user replacement
 ]
 

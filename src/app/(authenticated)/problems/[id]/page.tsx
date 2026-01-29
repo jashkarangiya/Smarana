@@ -486,11 +486,12 @@ export default function ProblemDetailPage() {
                             Your Notes
                         </DialogTitle>
                     </DialogHeader>
-                    <Textarea
+                    <AutoResizeTextarea
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
                         placeholder="Key insights, approach, things to remember…"
-                        className="min-h-[60vh] resize-none bg-white/[0.03] border-white/10 text-white/90 p-4 leading-relaxed"
+                        className="min-h-[60vh] bg-white/[0.03] border-white/10 text-white/90 p-4 leading-relaxed"
+                        maxHeight={800}
                     />
                 </DialogContent>
             </Dialog>
@@ -504,11 +505,12 @@ export default function ProblemDetailPage() {
                             Solution Outline
                         </DialogTitle>
                     </DialogHeader>
-                    <Textarea
+                    <AutoResizeTextarea
                         value={solution}
                         onChange={(e) => setSolution(e.target.value)}
                         placeholder="1. Sort the array\n2. Use two pointers\n3. ..."
-                        className="min-h-[60vh] resize-none bg-white/[0.03] border-white/10 text-white/90 p-4 font-mono text-sm leading-relaxed"
+                        className="min-h-[60vh] bg-white/[0.03] border-white/10 text-white/90 p-4 font-mono text-sm leading-relaxed"
+                        maxHeight={800}
                     />
                 </DialogContent>
             </Dialog>

@@ -10,8 +10,17 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Flame, Trophy, Target, Calendar, UserPlus, UserCheck, Shield, Code2, BadgeCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { format } from "date-fns"
-import { Heatmap } from "@/components/heatmap" // Reuse existing heatmap component
-import { LeetCodeHeatmap } from "@/components/leetcode-heatmap"
+import dynamic from "next/dynamic"
+
+const Heatmap = dynamic(() => import("@/components/heatmap").then(mod => mod.Heatmap), {
+    loading: () => <div className="h-[200px] w-full animate-pulse bg-muted/10 rounded-lg" />,
+    ssr: false
+})
+
+const LeetCodeHeatmap = dynamic(() => import("@/components/leetcode-heatmap").then(mod => mod.LeetCodeHeatmap), {
+    loading: () => <div className="h-[200px] w-full animate-pulse bg-muted/10 rounded-lg" />,
+    ssr: false
+})
 import { LocalTime } from "@/components/local-time"
 import { ProfileEmberDot } from "@/components/profile-ember-dot"
 
