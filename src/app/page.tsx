@@ -104,7 +104,7 @@ export default function LandingPage() {
               {/* Dashboard Preview Image */}
               <div className="relative aspect-[16/10] w-full bg-[#0c0c0c]">
                 <Image
-                  src="/dashboard-preview.png"
+                  src="/image.png"
                   alt="Smarana Dashboard"
                   fill
                   className="object-cover object-top"
