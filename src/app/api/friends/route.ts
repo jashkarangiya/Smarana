@@ -58,8 +58,28 @@ export async function GET(req: Request) {
             })
         ])
 
+        // Compute reviewedToday for each friend
+        const today = new Date().toISOString().split('T')[0]
+
+        const friendsWithStats = await Promise.all(friends.map(async (f) => {
+            const todayLog = await prisma.reviewLog.findFirst({
+                where: {
+                    userId: f.friend.id,
+                    day: today
+                }
+            })
+
+            return {
+                ...f.friend,
+                stats: {
+                    ...f.friend.stats,
+                    reviewedToday: todayLog?.count || 0
+                }
+            }
+        }))
+
         return NextResponse.json({
-            friends: friends.map(f => f.friend),
+            friends: friendsWithStats,
             requests: receivedRequests.map(r => ({ ...r.sender, requestId: r.id, createdAt: r.createdAt })),
             sentRequestIds: sentRequests.map(r => r.receiverId)
         })

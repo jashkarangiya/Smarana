@@ -12,6 +12,7 @@ import { FriendsList } from "@/components/friends-list"
 import { ProblemNotesModal } from "@/components/problem-notes-modal"
 import { LeaderboardWidget } from "@/components/leaderboard-widget"
 import { SocialPulseCard } from "@/components/social-pulse-card"
+import { ReviewQueueCard } from "@/components/review-queue-card"
 import { HeroMiniLeaderboard } from "@/components/hero-mini-leaderboard"
 import { formatDistanceToNow } from "date-fns"
 import { Brain, CheckCircle2, Calendar, RefreshCw, ArrowUpRight, Flame, TrendingUp, Trophy, Star, Zap, Lightbulb, FileText, Share2, Timer, ArrowRight } from "lucide-react"
@@ -225,96 +226,13 @@ export default function DashboardPage() {
 
                 {/* Main List: Due Problems */}
                 <div className="lg:col-span-2 space-y-6">
-                    <Card className="h-full border-muted bg-card/50 hover-card">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                            <div className="space-y-1">
-                                <CardTitle className="flex items-center gap-2 text-xl">
-                                    <Brain className="h-5 w-5 text-primary" />
-                                    Review Queue
-                                </CardTitle>
-                                <CardDescription>
-                                    Top 5 problems due for review
-                                </CardDescription>
-                            </div>
-                            <Button variant="ghost" className="text-sm font-medium" asChild>
-                                <Link href="/review" className="flex items-center gap-1 text-primary">
-                                    View All <ArrowRight className="h-4 w-4" />
-                                </Link>
-                            </Button>
-                        </CardHeader>
-                        <CardContent className="p-0">
-                            {dueLoading ? (
-                                <div className="space-y-3 p-6">
-                                    <Skeleton className="h-16 w-full rounded-lg" />
-                                    <Skeleton className="h-16 w-full rounded-lg" />
-                                    <Skeleton className="h-16 w-full rounded-lg" />
-                                </div>
-                            ) : dueProblems && dueProblems.length > 0 ? (
-                                <div className="divide-y divide-border/40">
-                                    {dueProblems.slice(0, 5).map((problem: any) => (
-                                        <div
-                                            key={problem.id}
-                                            className="list-row group flex flex-col sm:flex-row sm:items-center justify-between p-4"
-                                        >
-                                            <div className="flex-1 min-w-0 mb-3 sm:mb-0">
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <a
-                                                        href={problem.url}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="font-semibold text-foreground hover:text-primary transition-colors flex items-center gap-1"
-                                                    >
-                                                        {problem.title}
-                                                        <ArrowUpRight className="h-3 w-3 opacity-50 group-hover:opacity-100" />
-                                                    </a>
-                                                    <span className={`text-[10px] px-2 py-0.5 rounded-full border uppercase font-bold tracking-wider ${getDifficultyColor(problem.difficulty)}`}>
-                                                        {problem.difficulty}
-                                                    </span>
-                                                </div>
-                                                <div className="text-xs text-muted-foreground flex gap-3">
-                                                    <span className="flex items-center gap-1">
-                                                        <Zap className="h-3 w-3 text-primary" />
-                                                        +{getXpForDifficulty(problem.difficulty)} XP
-                                                    </span>
-                                                    <span className="text-border">|</span>
-                                                    <span>Review #{problem.reviewCount + 1}</span>
-                                                </div>
-                                            </div>
-                                            <div className="flex gap-2 sm:ml-4 w-full sm:w-auto list-row-actions">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => setNotesModal({ isOpen: true, problemId: problem.id, title: problem.title })}
-                                                    className="shrink-0 h-8 w-8 text-muted-foreground hover:text-foreground"
-                                                    title="Notes & Solution"
-                                                >
-                                                    <FileText className="h-4 w-4" />
-                                                </Button>
-                                                <Button
-                                                    onClick={() => handleReview(problem.id, problem.difficulty, problem.title)}
-                                                    disabled={reviewing}
-                                                    size="sm"
-                                                    className="flex-1 sm:flex-initial h-8 px-3 text-xs"
-                                                >
-                                                    Mark Reviewed
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="flex flex-col items-center justify-center py-12 text-center">
-                                    <div className="h-12 w-12 rounded-full bg-secondary flex items-center justify-center mb-4">
-                                        <CheckCircle2 className="h-6 w-6 text-muted-foreground" />
-                                    </div>
-                                    <h3 className="font-semibold text-lg">All Caught Up!</h3>
-                                    <p className="text-muted-foreground max-w-xs mt-1">
-                                        No problems due for review. Great job!
-                                    </p>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
+                    <ReviewQueueCard
+                        problems={dueProblems || []}
+                        isLoading={dueLoading}
+                        onReview={handleReview}
+                        onNotes={(id, title) => setNotesModal({ isOpen: true, problemId: id, title })}
+                        isReviewing={reviewing}
+                    />
                 </div>
 
                 {/* Sidebar - Social Pulse Always Visible */}
