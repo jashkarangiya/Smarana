@@ -48,3 +48,6 @@ debug.log
 *.db-journal
 prisma/dev.db
 .env
+
+
+.github/*

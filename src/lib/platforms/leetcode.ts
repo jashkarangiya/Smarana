@@ -35,7 +35,7 @@ export async function fetchLeetCodeSolvedProblems(username: string): Promise<Pla
             },
             body: JSON.stringify({
                 query: recentSubmissionsQuery,
-                variables: { username, limit: 20 },
+                variables: { username, limit: 50 },
             }),
         }, 2)
 

@@ -15,6 +15,7 @@ export async function GET(req: Request) {
     }
 
     const { searchParams } = new URL(req.url)
+    const limit = searchParams.get("limit") ? parseInt(searchParams.get("limit")!) : undefined
     const filter = searchParams.get("filter") // 'today', 'due', 'upcoming'
 
     const user = await prisma.user.findUnique({
@@ -46,6 +47,7 @@ export async function GET(req: Request) {
     const problems = await prisma.revisionProblem.findMany({
         where: whereClause,
         orderBy: { nextReviewAt: "asc" },
+        take: limit,
     })
 
     // Decrypt sensitive fields for each problem

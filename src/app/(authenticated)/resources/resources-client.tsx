@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, BookOpen, Swords, GraduationCap, Search, PlusCircle } from "lucide-react";
+import { SuggestResourceDialog } from "@/components/suggest-resource-dialog";
 
 type ResourceCategory = "Interview" | "DSA Sheets" | "Competitive Programming";
 
@@ -140,12 +141,7 @@ export default function ResourcesClient() {
 
                 {/* Actions */}
                 <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                    <Button variant="outline" size="sm" className="shrink-0 bg-white/[0.03] border-white/10 hover:bg-white/[0.08] text-white/70 hover:text-white" asChild>
-                        <a href="mailto:hello@smarana.com?subject=New Resource Suggestion&body=I'd like to suggest a new resource:%0A%0A- Name:%20%0A- Link:%20%0A- Why it's good:%20">
-                            <PlusCircle className="mr-2 h-4 w-4 opacity-60" />
-                            Suggest
-                        </a>
-                    </Button>
+                    <SuggestResourceDialog />
 
                     {/* Search */}
                     <div className="relative w-full sm:w-[300px]">

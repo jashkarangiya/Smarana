@@ -1,11 +1,16 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { RevisionProblem, User } from "@prisma/client"
 
-export function useProblems(filter: 'solved-today' | 'due' | 'upcoming' | 'all' = 'all') {
+export function useProblems(filter: string = 'all', limit?: number, rawFilters?: string) {
     return useQuery<RevisionProblem[]>({
-        queryKey: ["problems", filter],
+        queryKey: ["problems", filter, limit, rawFilters],
         queryFn: async () => {
-            const res = await fetch(`/api/problems?filter=${filter}`)
+            const queryParams = new URLSearchParams()
+            if (filter && filter !== "all") queryParams.set("filter", filter)
+            if (limit) queryParams.append("limit", limit.toString())
+            if (rawFilters) queryParams.set("filters", rawFilters)
+
+            const res = await fetch(`/api/problems?${queryParams.toString()}`)
             if (!res.ok) throw new Error("Failed to fetch problems")
             return res.json()
         },

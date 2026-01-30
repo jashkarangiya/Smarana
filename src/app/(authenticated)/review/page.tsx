@@ -32,9 +32,9 @@ import { useSearchParams } from "next/navigation"
 
 export default function ReviewPage() {
     const searchParams = useSearchParams()
-    const limit = searchParams.get("limit") ? parseInt(searchParams.get("limit")!) : null
+    const limit = searchParams.get("limit") ? parseInt(searchParams.get("limit")!) : undefined
 
-    const { data: allDueProblems, isLoading } = useProblems("due")
+    const { data: problems = [], isLoading } = useProblems("due", limit)
     const { data: stats } = useStats()
     const queryClient = useQueryClient()
     const { triggerReviewEmber } = useEmberTrail()
@@ -45,7 +45,9 @@ export default function ReviewPage() {
     const [sessionXp, setSessionXp] = useState(0)
     const [reviewedCount, setReviewedCount] = useState(0)
 
-    const problems = limit && allDueProblems ? allDueProblems.slice(0, limit) : (allDueProblems || [])
+    // const problems = limit && allDueProblems ? allDueProblems.slice(0, limit) : (allDueProblems || [])
+    // Direct from API now
+
     const currentProblem = problems[currentIndex]
     const totalProblems = problems.length
     const estimatedTime = Math.ceil(totalProblems * 2) // ~2 min per problem
@@ -197,43 +199,45 @@ export default function ReviewPage() {
     }
 
     return (
-        <div className="container mx-auto px-4 min-h-[calc(100vh-80px)] flex flex-col items-center justify-center max-w-2xl relative">
+        <div className="mx-auto px-4 w-full max-w-5xl min-h-[calc(100svh-100px)] flex flex-col pt-6 pb-2">
             {/* Header / Meta */}
-            <motion.div
+            <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="w-full mb-8 flex items-end justify-between"
+                className="flex items-start justify-between gap-6 mb-8 shrink-0"
             >
-                <div className="space-y-1">
-                    <p className="text-sm font-medium text-muted-foreground">Problem {currentIndex + 1} of {totalProblems}</p>
+                <div className="space-y-2">
+                    <p className="text-sm text-white/60">
+                        Problem <span className="text-white/80 font-medium">{currentIndex + 1}</span> of{" "}
+                        <span className="text-white/80 font-medium">{totalProblems}</span>
+                    </p>
+
                     <div className="flex items-center gap-2">
-                        <Badge variant="outline" className={cn("text-xs font-mono uppercase tracking-wider", getDifficultyColor(currentProblem.difficulty))}>
+                        <Badge variant="outline" className={cn("rounded-full border px-2.5 py-0.5 text-[10px] uppercase font-bold tracking-wider", getDifficultyColor(currentProblem.difficulty))}>
                             {currentProblem.difficulty}
                         </Badge>
-                        <span className="text-xs text-muted-foreground/50">•</span>
-                        <span className="text-xs text-muted-foreground">Review #{currentProblem.reviewCount + 1}</span>
+                        <span className="text-xs text-white/20">•</span>
+                        <span className="text-xs text-white/50">Review #{currentProblem.reviewCount + 1}</span>
                     </div>
                 </div>
 
                 <div className="text-right">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1 justify-end">
+                    <p className="text-sm text-white/50 flex items-center justify-end gap-2 mb-1">
                         <Sparkles className="h-3 w-3 text-[#BB7331]" />
                         Session XP
-                    </div>
-                    <div className="text-2xl font-bold text-foreground tabular-nums leading-none">
-                        {sessionXp}
-                    </div>
+                    </p>
+                    <p className="text-3xl font-semibold text-white/90 leading-none tabular-nums">{sessionXp}</p>
                 </div>
-            </motion.div>
+            </motion.header>
 
             {/* Progress Bar - Subtle */}
             <motion.div
                 initial={{ opacity: 0, scaleX: 0 }}
                 animate={{ opacity: 1, scaleX: 1 }}
-                className="fixed top-0 left-0 right-0 h-1 bg-white/5 z-50"
+                className="fixed top-0 left-0 right-0 h-0.5 bg-white/5 z-50 pointer-events-none"
             >
                 <motion.div
-                    className="h-full bg-[#BB7331]"
+                    className="h-full bg-[#BB7331] shadow-[0_0_10px_rgba(187,115,49,0.5)]"
                     initial={{ width: 0 }}
                     animate={{ width: `${((currentIndex) / totalProblems) * 100}%` }}
                     transition={{ type: "spring", stiffness: 100, damping: 20 }}
@@ -241,135 +245,148 @@ export default function ReviewPage() {
             </motion.div>
 
             {/* Main Card */}
-            <AnimatePresence mode="wait">
-                <motion.div
-                    key={currentProblem.id}
-                    initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95, y: -20 }}
-                    transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}
-                    className="w-full"
-                >
-                    <Card className="border-white/10 bg-black/40 backdrop-blur-xl shadow-2xl overflow-hidden relative group">
-                        {/* Card Glow Effect */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] to-transparent pointer-events-none" />
+            <div className="flex-1 flex flex-col min-h-0 relative">
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={currentProblem.id}
+                        initial={{ opacity: 0, scale: 0.98, y: 10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.98, y: -10 }}
+                        transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}
+                        className="flex-1 flex flex-col"
+                    >
+                        <Card className="flex-1 flex flex-col relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] shadow-[0_10px_40px_rgba(0,0,0,0.55)]">
+                            {/* orange bloom */}
+                            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(187,115,49,0.12),transparent_55%)]" />
 
-                        <CardContent className="p-8 sm:p-10 relative z-10">
-                            {/* Title Block */}
-                            <div className="mb-8 text-center sm:text-left">
-                                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-3 leading-tight">
-                                    {currentProblem.title}
-                                </h1>
-                                <a
-                                    href={currentProblem.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-[#BB7331] transition-colors"
-                                >
-                                    <ExternalLink className="h-3.5 w-3.5" />
-                                    View on LeetCode
-                                </a>
-                            </div>
+                            <CardContent className="flex-1 flex flex-col justify-center p-8 sm:p-12 relative z-10 w-full max-w-4xl mx-auto">
+                                {/* Title Block */}
+                                <div className="mb-10 text-center">
+                                    <h1 className="text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight text-white/90 mb-4 leading-tight">
+                                        {currentProblem.title}
+                                    </h1>
+                                    <a
+                                        href={currentProblem.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-2 text-sm text-white/50 hover:text-[#BB7331] transition-colors py-1 px-3 rounded-full hover:bg-white/5"
+                                    >
+                                        <ExternalLink className="h-3.5 w-3.5" />
+                                        View on LeetCode
+                                    </a>
+                                </div>
 
-                            {/* Interaction Area */}
-                            <div className="min-h-[200px] flex flex-col justify-center">
-                                <AnimatePresence mode="wait">
-                                    {!revealed ? (
-                                        <motion.div
-                                            key="reveal-state"
-                                            initial={{ opacity: 0 }}
-                                            animate={{ opacity: 1 }}
-                                            exit={{ opacity: 0, y: 10 }}
-                                            className="flex flex-col items-center justify-center space-y-6"
-                                        >
-                                            <p className="text-lg text-white/60 text-center max-w-md mx-auto">
-                                                Take a moment. Can you recall the optimal solution and time complexity?
-                                            </p>
-                                            <Button
-                                                onClick={handleReveal}
-                                                size="lg"
-                                                className="h-14 px-8 text-lg rounded-full bg-white text-black hover:bg-white/90 shadow-[0_0_30px_rgba(255,255,255,0.1)] transition-all hover:scale-105 active:scale-95"
+                                {/* Interaction Area */}
+                                <div className="min-h-[200px] flex flex-col justify-center items-center w-full">
+                                    <AnimatePresence mode="wait">
+                                        {!revealed ? (
+                                            <motion.div
+                                                key="reveal-state"
+                                                initial={{ opacity: 0 }}
+                                                animate={{ opacity: 1 }}
+                                                exit={{ opacity: 0, y: 10, position: "absolute" }}
+                                                className="flex flex-col items-center justify-center space-y-8"
                                             >
-                                                <span className="mr-2">Reveal Answer</span>
-                                                <kbd className="hidden sm:inline-flex h-6 px-2 bg-black/10 rounded text-[10px] items-center text-black/60 font-sans border border-black/5">SPACE</kbd>
-                                            </Button>
-                                        </motion.div>
-                                    ) : (
-                                        <motion.div
-                                            key="rate-state"
-                                            initial={{ opacity: 0, scale: 0.95 }}
-                                            animate={{ opacity: 1, scale: 1 }}
-                                            className="w-full"
-                                        >
-                                            <div className="text-center mb-8">
-                                                <h3 className="text-xl font-medium text-white mb-2">How clearly did you remember?</h3>
-                                                <p className="text-sm text-white/40">Be honest - this schedules your next review.</p>
-                                            </div>
+                                                <p className="text-lg sm:text-xl text-white/55 text-center max-w-lg mx-auto leading-relaxed font-light">
+                                                    Take a moment. Can you recall the optimal solution and time complexity?
+                                                </p>
+                                                <Button
+                                                    onClick={handleReveal}
+                                                    className="
+                                                        h-14 rounded-2xl px-8 font-medium text-base
+                                                        bg-[#BB7331] text-black
+                                                        hover:bg-[#BB7331]/90
+                                                        hover:shadow-[0_0_0_4px_rgba(187,115,49,0.14)]
+                                                        active:scale-[0.98]
+                                                        transition-all duration-200
+                                                    "
+                                                >
+                                                    Reveal Answer
+                                                    <kbd className="ml-3 rounded-lg px-2 py-1 text-[10px] font-semibold bg-black/20 text-black/70 border border-black/10">
+                                                        SPACE
+                                                    </kbd>
+                                                </Button>
+                                            </motion.div>
+                                        ) : (
+                                            <motion.div
+                                                key="rate-state"
+                                                initial={{ opacity: 0, scale: 0.95 }}
+                                                animate={{ opacity: 1, scale: 1 }}
+                                                className="w-full max-w-2xl"
+                                            >
+                                                <div className="text-center mb-8">
+                                                    <h3 className="text-lg font-medium text-white/90 mb-1">How clearly did you remember?</h3>
+                                                    <p className="text-sm text-white/40">Be honest - this determines your review schedule.</p>
+                                                </div>
 
-                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                                <RatingButton
-                                                    rating="forgot"
-                                                    label="Forgot"
-                                                    subLabel="Review soon"
-                                                    shortcut="1"
-                                                    icon={XCircle}
-                                                    color="text-rose-500"
-                                                    bgHover="hover:bg-rose-500/10"
-                                                    borderHover="hover:border-rose-500/50"
-                                                    onClick={() => handleRate("forgot")}
-                                                    disabled={rateMutation.isPending}
-                                                />
-                                                <RatingButton
-                                                    rating="kinda"
-                                                    label="Fuzzy"
-                                                    subLabel="Review later"
-                                                    shortcut="2"
-                                                    icon={HelpCircle}
-                                                    color="text-amber-500"
-                                                    bgHover="hover:bg-amber-500/10"
-                                                    borderHover="hover:border-amber-500/50"
-                                                    onClick={() => handleRate("kinda")}
-                                                    disabled={rateMutation.isPending}
-                                                />
-                                                <RatingButton
-                                                    rating="remembered"
-                                                    label="Easy"
-                                                    subLabel="Review in days"
-                                                    shortcut="3"
-                                                    icon={CheckCircle2}
-                                                    color="text-emerald-500"
-                                                    bgHover="hover:bg-emerald-500/10"
-                                                    borderHover="hover:border-emerald-500/50"
-                                                    onClick={() => handleRate("remembered")}
-                                                    disabled={rateMutation.isPending}
-                                                />
-                                            </div>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </motion.div>
-            </AnimatePresence>
+                                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                                    <RatingButton
+                                                        rating="forgot"
+                                                        label="Forgot"
+                                                        subLabel="Review soon"
+                                                        shortcut="1"
+                                                        icon={XCircle}
+                                                        color="text-rose-500"
+                                                        iconBg="bg-rose-500/10"
+                                                        borderColor="border-rose-500/20"
+                                                        hoverColor="hover:border-rose-500/50 hover:bg-rose-500/5"
+                                                        onClick={() => handleRate("forgot")}
+                                                        disabled={rateMutation.isPending}
+                                                    />
+                                                    <RatingButton
+                                                        rating="kinda"
+                                                        label="Fuzzy"
+                                                        subLabel="Review later"
+                                                        shortcut="2"
+                                                        icon={HelpCircle}
+                                                        color="text-amber-500"
+                                                        iconBg="bg-amber-500/10"
+                                                        borderColor="border-amber-500/20"
+                                                        hoverColor="hover:border-amber-500/50 hover:bg-amber-500/5"
+                                                        onClick={() => handleRate("kinda")}
+                                                        disabled={rateMutation.isPending}
+                                                    />
+                                                    <RatingButton
+                                                        rating="remembered"
+                                                        label="Easy"
+                                                        subLabel="Review in days"
+                                                        shortcut="3"
+                                                        icon={CheckCircle2}
+                                                        color="text-emerald-500"
+                                                        iconBg="bg-emerald-500/10"
+                                                        borderColor="border-emerald-500/20"
+                                                        hoverColor="hover:border-emerald-500/50 hover:bg-emerald-500/5"
+                                                        onClick={() => handleRate("remembered")}
+                                                        disabled={rateMutation.isPending}
+                                                    />
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </motion.div>
+                </AnimatePresence>
+            </div>
 
             {/* Hint Footer */}
             <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.5 }}
-                className="mt-8 text-center"
+                className="mt-6 text-center shrink-0"
             >
-                <div className="inline-flex items-center gap-6 px-4 py-2 rounded-full bg-white/5 border border-white/5 text-xs text-white/30">
-                    <span className="flex items-center gap-1.5">
-                        <kbd className="font-sans bg-white/10 px-1.5 py-0.5 rounded text-white/70 min-w-[20px] text-center">Space</kbd> to reveal
+                <div className="mx-auto inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.03] px-5 py-2.5 text-xs text-white/60 backdrop-blur-md shadow-lg">
+                    <span className="flex items-center gap-1.5 border-r border-white/10 pr-3 mr-1">
+                        <kbd className="rounded-md bg-white/5 border border-white/10 px-2 py-1 text-white/70 min-w-[24px] text-center font-sans">Space</kbd>
+                        <span>to reveal</span>
                     </span>
-                    <span className="w-px h-3 bg-white/10" />
                     <span className="flex items-center gap-1.5">
-                        <kbd className="font-sans bg-white/10 px-1.5 py-0.5 rounded text-white/70 min-w-[20px] text-center">1</kbd>
-                        <kbd className="font-sans bg-white/10 px-1.5 py-0.5 rounded text-white/70 min-w-[20px] text-center">2</kbd>
-                        <kbd className="font-sans bg-white/10 px-1.5 py-0.5 rounded text-white/70 min-w-[20px] text-center">3</kbd>
-                        to rate
+                        <kbd className="rounded-md bg-white/5 border border-white/10 px-2 py-1 text-white/70 min-w-[20px] text-center font-sans">1</kbd>
+                        <kbd className="rounded-md bg-white/5 border border-white/10 px-2 py-1 text-white/70 min-w-[20px] text-center font-sans">2</kbd>
+                        <kbd className="rounded-md bg-white/5 border border-white/10 px-2 py-1 text-white/70 min-w-[20px] text-center font-sans">3</kbd>
+                        <span>to rate</span>
                     </span>
                 </div>
             </motion.div>
@@ -384,8 +401,9 @@ function RatingButton({
     shortcut,
     icon: Icon,
     color,
-    bgHover,
-    borderHover,
+    iconBg,
+    borderColor,
+    hoverColor,
     onClick,
     disabled
 }: {
@@ -395,8 +413,9 @@ function RatingButton({
     shortcut: string
     icon: any
     color: string
-    bgHover: string
-    borderHover: string
+    iconBg: string
+    borderColor: string
+    hoverColor: string
     onClick: () => void
     disabled: boolean
 }) {
@@ -404,9 +423,9 @@ function RatingButton({
         <Button
             variant="outline"
             className={cn(
-                "h-auto py-6 sm:py-8 flex flex-col gap-3 relative border-white/10 bg-white/[0.02] transition-all duration-200 group hover:scale-[1.02]",
-                bgHover,
-                borderHover
+                "h-auto py-6 sm:py-8 flex flex-col gap-3 relative bg-white/[0.02] transition-all duration-200 group hover:scale-[1.02]",
+                borderColor,
+                hoverColor
             )}
             onClick={onClick}
             disabled={disabled}
@@ -414,9 +433,13 @@ function RatingButton({
             <div className="absolute top-2 right-2 opacity-30 group-hover:opacity-100 transition-opacity">
                 <kbd className="text-[10px] font-sans bg-black/40 px-1.5 py-0.5 rounded border border-white/10 text-white/70">{shortcut}</kbd>
             </div>
-            <Icon className={cn("h-8 w-8 mb-1", color)} />
+
+            <div className={cn("p-3 rounded-xl mb-1 transition-colors", iconBg, "group-hover:bg-opacity-80")}>
+                <Icon className={cn("h-6 w-6", color)} />
+            </div>
+
             <div className="space-y-0.5">
-                <span className="block text-base sm:text-lg font-semibold text-white">{label}</span>
+                <span className="block text-base sm:text-lg font-semibold text-white/90">{label}</span>
                 <span className="block text-xs text-white/40 group-hover:text-white/60">{subLabel}</span>
             </div>
         </Button>

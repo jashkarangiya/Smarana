@@ -68,7 +68,7 @@ export function ReviewQueueCard({
                         </p>
                     </div>
                     <Button variant="ghost" className="text-[#BB7331] hover:text-[#BB7331] hover:bg-[#BB7331]/10 h-8 text-xs" asChild>
-                        <Link href="/review">View all →</Link>
+                        <Link href="/problems?filter=due">View all →</Link>
                     </Button>
                 </div>
             </div>
@@ -83,7 +83,7 @@ export function ReviewQueueCard({
                     </div>
                 ) : problems && problems.length > 0 ? (
                     <div className="space-y-1">
-                        {problems.map((p) => (
+                        {problems.slice(0, 5).map((p) => (
                             <div
                                 key={p.id}
                                 className="w-full rounded-xl px-4 py-3 text-left transition-all
@@ -147,6 +147,15 @@ export function ReviewQueueCard({
                                 </div>
                             </div>
                         ))}
+                        {problems.length > 5 && (
+                            <div className="pt-2 text-center">
+                                <Button variant="link" size="sm" className="text-muted-foreground text-xs" asChild>
+                                    <Link href="/problems?filter=due">
+                                        + {problems.length - 5} more items (view all)
+                                    </Link>
+                                </Button>
+                            </div>
+                        )}
                     </div>
                 ) : (
                     <div className="flex flex-col items-center justify-center h-full text-center p-6 text-muted-foreground">

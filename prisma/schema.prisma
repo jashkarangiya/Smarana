@@ -127,6 +127,7 @@ model User {
   notifications        Notification[]
   actorNotifications   Notification[] @relation("NotificationActor")
   platformVerifications PlatformVerification[]
+  suggestions          ResourceSuggestion[]
 
   @@index([usernameLower])
 }
@@ -364,3 +365,26 @@ model PlatformVerification {
   @@unique([userId, platform])
   @@index([verificationToken])
 }
+
+model ResourceSuggestion {
+  id            String   @id @default(cuid())
+
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title         String
+  url           String
+  urlNormalized String   @unique // prevents duplicates across all users
+  category      String   // SHEET | PLAYLIST | ARTICLE | TOOL | COURSE
+  note          String?  // optional: why it's useful / what it covers
+
+  status        String   @default("PENDING") // PENDING | APPROVED | REJECTED
+  adminNote     String?
+  reviewedAt    DateTime?
+
+  createdAt     DateTime @default(now())
+
+  @@index([status, createdAt])
+  @@index([userId, createdAt])
+}
+

@@ -357,10 +357,11 @@ export default function LandingPage() {
             <div className="space-y-4">
               <h4 className="font-medium text-white/90">Resources</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="/blog" className="hover:text-primary transition-colors">Blog</Link></li>
-                <li><Link href="/about" className="hover:text-primary transition-colors">About Us</Link></li>
-                <li><Link href="/how-it-works" className="hover:text-primary transition-colors">How It Works</Link></li>
-                <li><Link href="/roadmap" className="hover:text-primary transition-colors">Roadmap</Link></li>
+                <li><Link href="/about" className="hover:text-primary transition-colors">About</Link></li>
+                <li><Link href="/team" className="hover:text-primary transition-colors">Team</Link></li>
+                <li><Link href="/contact" className="hover:text-primary transition-colors">Contact</Link></li>
+                <li><Link href="/faq" className="hover:text-primary transition-colors">FAQ</Link></li>
+                <li><Link href="/changelog" className="hover:text-primary transition-colors">Changelog</Link></li>
               </ul>
             </div>
 
