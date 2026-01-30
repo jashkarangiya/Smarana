@@ -48,7 +48,7 @@ export async function GET(
                         problemsTracked: true,
                         reviewsThisWeek: true,
                         leetcodeActivity: true,
-                        // unlockedAchievements: true,
+                        unlockedAchievements: true,
                     }
                 },
                 leetcodeUsername: true,
