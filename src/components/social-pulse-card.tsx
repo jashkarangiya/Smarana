@@ -95,164 +95,124 @@ export function SocialPulseCard({ className }: { className?: string }) {
     const hasPending = data && data.pendingRequests.length > 0
     const topThree = data?.friends.slice(0, 3) || []
 
-    // Empty state - no friends
-    if (!hasFriends && !hasPending) {
-        return (
-            <Card className="overflow-hidden border-dashed">
-                <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                        <CardTitle className="text-base flex items-center gap-2">
-                            <Users className="h-4 w-4 text-primary" />
-                            Social Pulse
-                        </CardTitle>
-                    </div>
-                </CardHeader>
-                <CardContent className="text-center py-6 space-y-4">
-                    <div className="mx-auto w-12 h-12 rounded-full bg-muted flex items-center justify-center">
-                        <UserPlus className="h-6 w-6 text-muted-foreground" />
-                    </div>
-                    <div>
-                        <p className="text-sm font-medium">Find your study buddies</p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                            Connect with friends to compete and stay motivated
-                        </p>
-                    </div>
-                    <Button asChild size="sm" variant="outline">
-                        <Link href="/friends">
-                            <UserPlus className="h-4 w-4 mr-2" />
-                            Find Friends
-                        </Link>
-                    </Button>
-                </CardContent>
-            </Card>
-        )
-    }
+    // Empty state is now handled inside sections to keep layout stable
 
     // Get recent activity (friends who reviewed today)
     const activeToday = data?.friends.filter(f => (f.stats?.reviewedToday || 0) > 0) || []
 
     return (
-        <Card className={cn("overflow-hidden flex flex-col min-h-0", className)}>
-            <CardHeader className="pb-3 shrink-0">
-                <div className="flex items-center justify-between">
-                    <CardTitle className="text-base flex items-center gap-2">
-                        <Activity className="h-4 w-4 text-primary" />
-                        Social Pulse
-                        {hasPending && (
-                            <span className="relative flex h-2 w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
-                            </span>
-                        )}
-                    </CardTitle>
-                    <Button variant="ghost" size="sm" className="text-xs h-7 px-2" asChild>
-                        <Link href="/friends">
-                            View all <ArrowRight className="h-3 w-3 ml-1" />
-                        </Link>
-                    </Button>
+        <Card className={cn("flex flex-col h-full min-h-0 overflow-hidden", className)}>
+            <CardHeader className="pb-3 shrink-0 flex flex-row items-center justify-between space-y-0">
+                <div className="flex items-center gap-2">
+                    <Activity className="h-4 w-4 text-[#BB7331]" />
+                    <span className="font-semibold text-base">Social Pulse</span>
                 </div>
+                <Button variant="ghost" size="sm" className="text-xs h-7 px-2" asChild>
+                    <Link href="/friends">
+                        View all <ArrowRight className="h-3 w-3 ml-1" />
+                    </Link>
+                </Button>
             </CardHeader>
 
-            <CardContent className="space-y-4 min-h-0 flex-1 overflow-y-auto px-5 pb-5 custom-scrollbar">
+            <CardContent className="space-y-6 min-h-0 flex-1 overflow-y-auto px-5 pb-5 custom-scrollbar">
                 {/* Friend Requests Alert */}
                 {hasPending && data && (
                     <Link href="/friends" className="block">
-                        <div className="flex items-center gap-3 p-2.5 rounded-lg bg-orange-500/10 border border-orange-500/20 hover:bg-orange-500/15 transition-colors">
-                            <div className="h-8 w-8 rounded-full bg-orange-500/20 flex items-center justify-center">
-                                <Bell className="h-4 w-4 text-orange-500" />
+                        <div className="flex items-center gap-3 p-2.5 rounded-lg bg-[#BB7331]/10 border border-[#BB7331]/20 hover:bg-[#BB7331]/15 transition-colors">
+                            <div className="h-8 w-8 rounded-full bg-[#BB7331]/20 flex items-center justify-center">
+                                <Bell className="h-4 w-4 text-[#BB7331]" />
                             </div>
                             <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium">
                                     {data.pendingRequests.length} pending request{data.pendingRequests.length > 1 ? 's' : ''}
                                 </p>
                             </div>
-                            <ArrowRight className="h-4 w-4 text-orange-500" />
+                            <ArrowRight className="h-4 w-4 text-[#BB7331]" />
                         </div>
                     </Link>
                 )}
 
-                {/* Friend Strip - Avatar Stack */}
-                {hasFriends && data && (
-                    <div className="flex items-center gap-2">
-                        <div className="flex -space-x-2">
-                            {data.friends.slice(0, 5).map((friend) => (
+                {/* Streak Leaderboard - Top 3 */}
+                <section className="space-y-2">
+                    <div className="flex items-center gap-2 text-xs font-medium text-white/50">
+                        <Trophy className="h-3.5 w-3.5" />
+                        Streak Leaderboard
+                    </div>
+
+                    {hasFriends && topThree.length > 0 ? (
+                        <div className="space-y-1">
+                            {topThree.map((friend, index) => (
                                 <Link href={`/u/${friend.username}`} key={friend.id}>
-                                    <Avatar className="h-9 w-9 border-2 border-background hover:z-10 hover:scale-110 transition-transform cursor-pointer">
-                                        <AvatarImage src={friend.image} />
-                                        <AvatarFallback className="text-xs">
-                                            {friend.name?.[0]}
-                                        </AvatarFallback>
-                                    </Avatar>
+                                    <div className="group flex items-center gap-2.5 p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                                        <div className={`w-5 text-center font-bold text-xs ${index === 0 ? "text-yellow-500" :
+                                            index === 1 ? "text-gray-400" :
+                                                "text-amber-600"
+                                            }`}>
+                                            #{index + 1}
+                                        </div>
+                                        <Avatar className="h-7 w-7">
+                                            <AvatarImage src={friend.image} />
+                                            {/* eslint-disable-next-line react/no-children-prop */}
+                                            <AvatarFallback children={friend.name?.[0]} className="text-xs" />
+                                        </Avatar>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">
+                                                {friend.name}
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <Flame className="h-3.5 w-3.5 text-orange-500" />
+                                            <span className="text-sm font-bold tabular-nums">
+                                                {friend.stats?.currentStreak || 0}
+                                            </span>
+                                        </div>
+                                    </div>
                                 </Link>
                             ))}
                         </div>
-                        {data.friends.length > 5 && (
-                            <span className="text-xs text-muted-foreground ml-1">
-                                +{data.friends.length - 5} more
-                            </span>
-                        )}
-                    </div>
-                )}
-
-                {/* Streak Leaderboard - Top 3 */}
-                {topThree.length > 0 && (
-                    <div className="space-y-1.5">
-                        <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground mb-2">
-                            <Trophy className="h-3.5 w-3.5 text-yellow-500" />
-                            Streak Leaderboard
+                    ) : (
+                        <div className="rounded-lg border border-dashed border-white/5 bg-white/5 p-4 text-center">
+                            <p className="text-sm font-medium text-white/70">No leaderboard yet</p>
+                            <p className="text-xs text-white/30 mt-0.5">Add friends to see rankings.</p>
+                            <Button variant="link" size="sm" className="h-auto p-0 mt-2 text-xs text-[#BB7331]" asChild>
+                                <Link href="/friends">Add Friends</Link>
+                            </Button>
                         </div>
-                        {topThree.map((friend, index) => (
-                            <Link href={`/u/${friend.username}`} key={friend.id}>
-                                <div className="group flex items-center gap-2.5 p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                                    <div className={`w-5 text-center font-bold text-xs ${index === 0 ? "text-yellow-500" :
-                                        index === 1 ? "text-gray-400" :
-                                            "text-amber-600"
-                                        }`}>
-                                        #{index + 1}
-                                    </div>
-                                    <Avatar className="h-7 w-7">
-                                        <AvatarImage src={friend.image} />
-                                        <AvatarFallback className="text-xs">{friend.name?.[0]}</AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">
-                                            {friend.name}
-                                        </p>
-                                    </div>
-                                    <div className="flex items-center gap-1">
-                                        <Flame className="h-3.5 w-3.5 text-orange-500" />
-                                        <span className="text-sm font-bold tabular-nums">
-                                            {friend.stats?.currentStreak || 0}
-                                        </span>
-                                    </div>
-                                </div>
-                            </Link>
-                        ))}
-                    </div>
-                )}
+                    )}
+                </section>
 
                 {/* Recent Activity */}
-                {activeToday.length > 0 && (
-                    <div className="space-y-2 pt-2 border-t border-border/50">
-                        <div className="text-xs font-medium text-muted-foreground">
-                            🔥 Active Today
-                        </div>
+                <section className="space-y-2">
+                    <div className="flex items-center gap-2 text-xs font-medium text-white/50">
+                        <Flame className="h-3.5 w-3.5" />
+                        Active Today
+                    </div>
+
+                    {activeToday.length > 0 ? (
                         <div className="space-y-1.5">
-                            {activeToday.slice(0, 2).map((friend) => (
-                                <div key={friend.id} className="text-xs text-muted-foreground flex items-center gap-2">
-                                    <Avatar className="h-5 w-5">
-                                        <AvatarImage src={friend.image} />
-                                        <AvatarFallback className="text-[10px]">{friend.name?.[0]}</AvatarFallback>
-                                    </Avatar>
-                                    <span>
-                                        <span className="font-medium text-foreground">{friend.name?.split(' ')[0]}</span>
-                                        {' '}reviewed {friend.stats?.reviewedToday} today
-                                    </span>
-                                </div>
+                            {activeToday.slice(0, 3).map((friend) => (
+                                <Link href={`/u/${friend.username}`} key={friend.id} className="block group">
+                                    <div className="text-xs text-muted-foreground flex items-center gap-2 p-2 rounded-lg group-hover:bg-white/5 transition-colors">
+                                        <Avatar className="h-6 w-6">
+                                            <AvatarImage src={friend.image} />
+                                            {/* eslint-disable-next-line react/no-children-prop */}
+                                            <AvatarFallback children={friend.name?.[0]} className="text-[10px]" />
+                                        </Avatar>
+                                        <span className="truncate">
+                                            <span className="font-medium text-foreground">{friend.name?.split(' ')[0]}</span>
+                                            {' '}reviewed <span className="text-[#BB7331]">{friend.stats?.reviewedToday}</span> problems
+                                        </span>
+                                    </div>
+                                </Link>
                             ))}
                         </div>
-                    </div>
-                )}
+                    ) : (
+                        <div className="rounded-lg border border-dashed border-white/5 bg-white/5 p-4 text-center">
+                            <p className="text-sm font-medium text-white/70">No activity yet</p>
+                            <p className="text-xs text-white/30 mt-0.5">Friend activity will show up here.</p>
+                        </div>
+                    )}
+                </section>
             </CardContent>
         </Card>
     )

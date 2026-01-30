@@ -9,7 +9,6 @@ interface PasswordStrengthProps {
 export function PasswordStrength({ password }: PasswordStrengthProps) {
     const checks = [
         { label: "At least 8 characters", valid: password.length >= 8 },
-        { label: "12+ characters (recommended)", valid: password.length >= 12 },
         { label: "Contains lowercase letter", valid: /[a-z]/.test(password) },
         { label: "Contains uppercase letter", valid: /[A-Z]/.test(password) },
         { label: "Contains number", valid: /[0-9]/.test(password) },
@@ -17,14 +16,13 @@ export function PasswordStrength({ password }: PasswordStrengthProps) {
     ]
 
     const strength = checks.filter(c => c.valid).length
-    const score = (strength / 6) * 100
+    const score = (strength / 5) * 100
 
     let color = "bg-red-500"
     let label = "Weak"
-    if (strength >= 2) { color = "bg-orange-500"; label = "Fair" }
+    if (strength >= 3) { color = "bg-orange-500"; label = "Fair" }
     if (strength >= 4) { color = "bg-amber-500"; label = "Good" }
-    if (strength >= 5) { color = "bg-emerald-500"; label = "Strong" }
-    if (strength === 6) { color = "bg-emerald-500"; label = "Strong" }
+    if (strength === 5) { color = "bg-emerald-500"; label = "Strong" }
 
     return (
         <div className="space-y-3">

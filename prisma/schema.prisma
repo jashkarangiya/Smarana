@@ -270,6 +270,9 @@ model UserStats {
   // Stores raw submission calendar: { "timestamp_seconds": count }
   leetcodeActivity String?
 
+  // Gamification
+  unlockedAchievements String[] @default([])
+
   updatedAt       DateTime @updatedAt
 }
 

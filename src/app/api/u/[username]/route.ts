@@ -12,10 +12,15 @@ export async function GET(
         const session = await getServerSession(authOptions)
         const viewerId = session?.user?.id
 
+        console.log(`[API] Fetching profile for username: ${username}`)
+
         // 1. Fetch target user with privacy settings + stats
         const user = await prisma.user.findFirst({
             where: {
-                usernameLower: username.toLowerCase()
+                OR: [
+                    { usernameLower: username.toLowerCase() },
+                    { username: { equals: username, mode: 'insensitive' } }
+                ]
             },
             select: {
                 id: true,
@@ -43,6 +48,7 @@ export async function GET(
                         problemsTracked: true,
                         reviewsThisWeek: true,
                         leetcodeActivity: true,
+                        // unlockedAchievements: true,
                     }
                 },
                 leetcodeUsername: true,
@@ -138,6 +144,7 @@ export async function GET(
                     currentStreak: canViewStreak ? (user.stats?.currentStreak || 0) : null,
                     longestStreak: canViewStreak ? (user.stats?.longestStreak || 0) : null,
                     leetcodeActivity: canViewPlatforms ? (user.stats?.leetcodeActivity || null) : null,
+                    unlockedAchievements: user.stats?.unlockedAchievements || [],
                 },
                 leetcodeUsername: canViewPlatforms ? user.leetcodeUsername : null,
                 codeforcesUsername: canViewPlatforms ? user.codeforcesUsername : null,

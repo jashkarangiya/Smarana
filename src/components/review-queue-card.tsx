@@ -1,5 +1,5 @@
 
-import { Card } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -54,8 +54,7 @@ export function ReviewQueueCard({
     }
 
     return (
-        <Card className={cn("h-full flex flex-col min-h-0 overflow-hidden border-muted bg-card/50 hover-card", className)}>
-            {/* Header */}
+        <Card className={cn("flex flex-col h-full min-h-0 overflow-hidden border-muted bg-card/50 hover-card", className)}>
             <div className="px-6 pt-6 pb-4 shrink-0">
                 <div className="flex items-start justify-between">
                     <div>
@@ -73,8 +72,7 @@ export function ReviewQueueCard({
                 </div>
             </div>
 
-            {/* List - Fills available space */}
-            <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-2 custom-scrollbar">
+            <CardContent className="flex-1 min-h-0 overflow-y-auto px-2 pb-2 custom-scrollbar">
                 {isLoading ? (
                     <div className="space-y-3 px-4">
                         {[1, 2, 3, 4].map((i) => (
@@ -83,7 +81,7 @@ export function ReviewQueueCard({
                     </div>
                 ) : problems && problems.length > 0 ? (
                     <div className="space-y-1">
-                        {problems.slice(0, 5).map((p) => (
+                        {problems.map((p) => (
                             <div
                                 key={p.id}
                                 className="w-full rounded-xl px-4 py-3 text-left transition-all
@@ -147,28 +145,23 @@ export function ReviewQueueCard({
                                 </div>
                             </div>
                         ))}
-                        {problems.length > 5 && (
-                            <div className="pt-2 text-center">
-                                <Button variant="link" size="sm" className="text-muted-foreground text-xs" asChild>
-                                    <Link href="/problems?filter=due">
-                                        + {problems.length - 5} more items (view all)
-                                    </Link>
-                                </Button>
-                            </div>
-                        )}
                     </div>
                 ) : (
-                    <div className="flex flex-col items-center justify-center h-full text-center p-6 text-muted-foreground">
-                        <div className="h-12 w-12 rounded-full bg-secondary/50 flex items-center justify-center mb-4">
-                            <Brain className="h-6 w-6 opacity-50" />
+                    <div className="grid h-full place-items-center py-10 text-center">
+                        <div className="space-y-2">
+                            <div className="mx-auto h-12 w-12 rounded-full bg-white/5 grid place-items-center">
+                                <Brain className="h-6 w-6 text-white/40" />
+                            </div>
+                            <p className="text-white/80 font-medium">All caught up!</p>
+                            <p className="text-sm text-white/45 max-w-[28ch] mx-auto">
+                                No problems are due right now.
+                            </p>
                         </div>
-                        <p>All caught up!</p>
                     </div>
                 )}
-            </div>
+            </CardContent>
 
-            {/* Sticky Footer - Now a sibling to the list */}
-            <div className="border-t border-white/5 bg-black/40 backdrop-blur-md px-6 py-4 shrink-0">
+            <div className="mt-auto border-t border-white/5 bg-black/40 backdrop-blur-md px-6 py-4 shrink-0">
                 <div className="flex items-center justify-between gap-4">
                     <div className="text-sm text-muted-foreground hidden sm:block">
                         Due: <span className="text-foreground font-medium">{dueCount}</span>

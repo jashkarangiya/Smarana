@@ -225,16 +225,29 @@ export default function DashboardPage() {
 
             {/* Bottom Grid - Fills remaining height */}
             <motion.div variants={item} className="mt-2 flex-1 min-h-0">
-                <div className="h-full grid gap-4 lg:grid-cols-[1.7fr_1fr] lg:items-stretch lg:min-h-[600px]">
+                <div className="h-full grid gap-4 lg:grid-cols-[1.7fr_1fr] lg:gap-6 lg:items-stretch lg:min-h-[600px]">
                     {/* Main List: Due Problems */}
-                    <div className="h-full min-h-0">
+                    <div className="relative min-h-0 hidden lg:block">
+                        <div className="absolute inset-0">
+                            <ReviewQueueCard
+                                problems={dueProblems || []}
+                                isLoading={dueLoading}
+                                onReview={handleReview}
+                                onNotes={(id, title) => setNotesModal({ isOpen: true, problemId: id, title })}
+                                isReviewing={reviewing}
+                                className="h-full w-full"
+                            />
+                        </div>
+                    </div>
+                    {/* Mobile View (Standard Flow) */}
+                    <div className="lg:hidden min-h-[500px]">
                         <ReviewQueueCard
                             problems={dueProblems || []}
                             isLoading={dueLoading}
                             onReview={handleReview}
                             onNotes={(id, title) => setNotesModal({ isOpen: true, problemId: id, title })}
                             isReviewing={reviewing}
-                            className="h-full"
+                            className="h-full w-full"
                         />
                     </div>
 

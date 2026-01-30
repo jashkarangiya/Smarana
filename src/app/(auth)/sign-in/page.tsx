@@ -5,6 +5,7 @@ import { useSearchParams, usePathname } from "next/navigation"
 import { useState, useEffect, Suspense } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { PasswordInput } from "@/components/ui/password-input"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Logo } from "@/components/logo"
@@ -54,17 +55,18 @@ const SignUpSchema = z.object({
     message: "Passwords do not match",
     path: ["confirmPassword"]
 }).refine((d) => {
-    // Strength check: must pass 4+ of the 5 criteria
+    // Strength check: must pass 3+ of the 4 complexity criteria (excluding length which is already checked)
     const checks = [
-        d.password.length >= 12,
         /[a-z]/.test(d.password),
         /[A-Z]/.test(d.password),
         /[0-9]/.test(d.password),
         /[^A-Za-z0-9]/.test(d.password),
     ]
-    return checks.filter(Boolean).length >= 4
+    // Base requirement is 8 chars (checked above).
+    // Require at least 3 complexity types for "Strong enough"
+    return checks.filter(Boolean).length >= 3
 }, {
-    message: "Password strength too weak - try a longer passphrase or add variety",
+    message: "Password too weak - include uppercase, number, or symbol",
     path: ["password"]
 })
 
@@ -263,7 +265,7 @@ function AuthPageContent() {
                                         <Link href="/forgot-password">Forgot password?</Link>
                                     </Button>
                                     <Label htmlFor="signin-pw" className="text-sm">Password</Label>
-                                    <Input id="signin-pw" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="h-10 sm:h-11" />
+                                    <PasswordInput id="signin-pw" required value={password} onChange={(e) => setPassword(e.target.value)} className="h-10 sm:h-11" />
                                 </div>
                                 <Button type="submit" className="w-full h-10 sm:h-11" disabled={signingIn}>
                                     {signingIn ? "Signing in..." : "Sign In"}
@@ -361,10 +363,9 @@ function AuthPageContent() {
 
                                 <div className="space-y-1.5 sm:space-y-2">
                                     <Label htmlFor="reg-pw" className="text-sm">Password</Label>
-                                    <Input
+                                    <PasswordInput
                                         id="reg-pw"
-                                        type="password"
-                                        placeholder="Min 8 chars"
+                                        placeholder="At least 8 characters"
                                         required
                                         value={formData.password}
                                         onChange={(e) => setFormData(p => ({ ...p, password: e.target.value }))}
@@ -376,9 +377,8 @@ function AuthPageContent() {
 
                                 <div className="space-y-1.5 sm:space-y-2">
                                     <Label htmlFor="reg-confirm-pw" className="text-sm">Confirm Password</Label>
-                                    <Input
+                                    <PasswordInput
                                         id="reg-confirm-pw"
-                                        type="password"
                                         placeholder="Confirm password"
                                         required
                                         value={formData.confirmPassword}

@@ -70,7 +70,7 @@ export function DailyChallenge({ problem, onComplete, isCompleted = false }: Dai
     }
 
     return (
-        <Card className={`relative overflow-hidden transition-all duration-300 ${isCompleted ? "border-emerald-500/50 bg-emerald-500/5" : "border-primary/30 bg-gradient-to-br from-primary/5 via-transparent to-amber-500/5"}`}>
+        <Card className={`relative overflow-hidden transition-all duration-300 flex flex-col min-h-[180px] ${isCompleted ? "border-emerald-500/50 bg-emerald-500/5" : "border-primary/30 bg-gradient-to-br from-primary/5 via-transparent to-amber-500/5"}`}>
             {/* Shimmer effect */}
             {!isCompleted && (
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -skew-x-12 animate-shimmer pointer-events-none" />
@@ -91,19 +91,19 @@ export function DailyChallenge({ problem, onComplete, isCompleted = false }: Dai
                 </div>
             </CardHeader>
 
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 flex-1 flex flex-col justify-between">
                 <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                         <a
                             href={problem.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="font-semibold hover:text-primary transition-colors flex items-center gap-1 group"
+                            className="font-semibold hover:text-primary transition-colors flex items-center gap-1 group text-lg"
                         >
                             {problem.title}
                             <ArrowUpRight className="h-3.5 w-3.5 opacity-50 group-hover:opacity-100 transition-opacity" />
                         </a>
-                        <div className="flex items-center gap-2 mt-1">
+                        <div className="flex items-center gap-2 mt-2">
                             <span className={`text-[10px] px-2 py-0.5 rounded-full border uppercase font-bold tracking-wider ${getDifficultyColor(problem.difficulty)}`}>
                                 {problem.difficulty}
                             </span>
@@ -113,19 +113,19 @@ export function DailyChallenge({ problem, onComplete, isCompleted = false }: Dai
                     <div className="text-right">
                         <div className="flex items-center gap-1 text-primary">
                             <Zap className="h-4 w-4" />
-                            <span className="font-bold">+{getBonusXp(problem.difficulty)}</span>
+                            <span className="font-bold text-lg">+{getBonusXp(problem.difficulty)}</span>
                         </div>
-                        <span className="text-[10px] text-muted-foreground">BONUS XP</span>
+                        <span className="text-[10px] text-muted-foreground font-medium tracking-wide">BONUS XP</span>
                     </div>
                 </div>
 
                 {isCompleted ? (
-                    <div className="flex items-center justify-center gap-2 py-3 rounded-lg bg-emerald-500/10 text-emerald-500 font-medium">
+                    <div className="flex items-center justify-center gap-2 py-3 mt-auto rounded-lg bg-emerald-500/10 text-emerald-500 font-medium">
                         <span className="text-lg">🎉</span>
                         Challenge Completed!
                     </div>
                 ) : (
-                    <Button onClick={onComplete} className="w-full" size="lg">
+                    <Button onClick={onComplete} className="w-full mt-auto bg-[#BB7331] hover:bg-[#b8862f] text-black font-semibold shadow-[0_0_15px_rgba(187,115,49,0.2)]" size="lg">
                         Complete Challenge
                     </Button>
                 )}

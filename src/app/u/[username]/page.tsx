@@ -23,6 +23,8 @@ const LeetCodeHeatmap = dynamic(() => import("@/components/leetcode-heatmap").th
 })
 import { LocalTime } from "@/components/local-time"
 import { ProfileEmberDot } from "@/components/profile-ember-dot"
+import { AchievementsList } from "@/components/achievements-list"
+
 
 interface UserProfile {
     isPrivate: boolean
@@ -45,6 +47,7 @@ interface UserProfile {
             currentStreak: number | null
             longestStreak: number | null
             leetcodeActivity: string | null
+            unlockedAchievements: string[]
         }
         leetcodeUsername: string | null
         codeforcesUsername: string | null
@@ -229,6 +232,14 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
                             </div>
                         </CardContent>
                     </Card>
+
+                    {/* Achievements Section */}
+                    <div className="lg:col-span-2">
+                        <AchievementsList
+                            unlockedIds={user.stats.unlockedAchievements || []}
+                            isSelf={profile.isSelf}
+                        />
+                    </div>
 
                     {/* Maybe recent achievements here later */}
                 </div>

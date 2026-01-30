@@ -5,13 +5,8 @@ import { NextResponse } from "next/server"
 import { getNextReviewDate } from "@/lib/repetition"
 import { safeDecrypt } from "@/lib/encryption"
 import { handleApiError } from "@/lib/api-error"
-
-// XP values by difficulty
-const XP_REWARDS: Record<string, number> = {
-    easy: 10,
-    medium: 25,
-    hard: 50,
-}
+import { calculateReviewXP } from "@/lib/xp"
+import { ACHIEVEMENTS, AchievementContext } from "@/lib/achievements"
 
 export async function POST(
     req: Request,
@@ -24,10 +19,11 @@ export async function POST(
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { rating } = await req.json().catch(() => ({ rating: 3 })) // Default to 'Good' if not provided
+    const { rating } = await req.json().catch(() => ({ rating: 3 }))
 
     const user = await prisma.user.findUnique({
         where: { email: session.user.email },
+        include: { stats: true } // Need stats for context
     })
 
     if (!user) {
@@ -43,40 +39,25 @@ export async function POST(
     }
 
     const now = new Date()
-    // Normalize to midnight for daily logging
-    const today = new Date(now)
-    today.setHours(0, 0, 0, 0)
+    const todayKey = now.toISOString().split('T')[0]
 
+    // Check if this is the first review of the day
+    const existingLog = await prisma.reviewLog.findUnique({
+        where: { userId_day: { userId: user.id, day: todayKey } }
+    })
+    const isFirstOfDay = !existingLog
+
+    // 1. Calculate XP
+    const xpEarned = calculateReviewXP(problem.difficulty, Number(rating), isFirstOfDay)
+
+    // 2. Queue Repetition Logic
     const newReviewCount = problem.reviewCount + 1
-
-    // Calculate next interval based on rating (optional: pass rating to getNextReviewDate)
-    // For now assuming getNextReviewDate handles simple increment, or we just pass count
-    // Ideally getNextReviewDate should accept quality.
     const nextDate = getNextReviewDate(newReviewCount, now)
-
-    // Calculate new interval (days between now and nextDate)
     const newInterval = Math.ceil((nextDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-
-    // Calculate XP reward
-    const baseXp = XP_REWARDS[problem.difficulty.toLowerCase()] || 10
-    // Bonus for streak or perfect rating? Keep simple for now.
-    const xpEarned = baseXp
 
     try {
         const result = await prisma.$transaction(async (tx) => {
-            // 1. Log the immutable event
-            await tx.reviewEvent.create({
-                data: {
-                    userId: user.id,
-                    problemId: problem.id,
-                    rating: Number(rating) || 3,
-                    interval: newInterval,
-                    xpEarned: xpEarned,
-                    reviewedAt: now,
-                }
-            })
-
-            // 2. Update the problem
+            // A. Update Problem
             const updatedProblem = await tx.revisionProblem.update({
                 where: { id: problem.id },
                 data: {
@@ -88,82 +69,138 @@ export async function POST(
                 },
             })
 
-            // 3. Update User XP
-            await tx.user.update({
-                where: { id: user.id },
-                data: { xp: { increment: xpEarned } },
-            })
-
-            // 4. Update Daily Log (Aggregated)
-            // Use UTC YYYY-MM-DD for consistency
-            const dayKey = now.toISOString().split('T')[0]
-
-            await tx.reviewLog.upsert({
-                where: {
-                    userId_day: {
-                        userId: user.id,
-                        day: dayKey,
-                    },
-                },
-                update: {
-                    count: { increment: 1 },
-                    xpEarned: { increment: xpEarned },
-                },
-                create: {
+            // B. Log Event
+            await tx.reviewEvent.create({
+                data: {
                     userId: user.id,
-                    day: dayKey,
-                    // createdAt will default to now()
-                    count: 1,
+                    problemId: problem.id,
+                    rating: Number(rating) || 3,
+                    interval: newInterval,
                     xpEarned: xpEarned,
-                },
+                    reviewedAt: now,
+                }
             })
 
-            // 5. Update User Stats (Totals & Streak)
-            // Note: Streak logic usually requires checking yesterday's log. 
-            // For MVP transaction speed, we might just increment totals here 
-            // and have a background job or separate check for strict streak calculation.
-            // Or simple check:
+            // C. Update/Create Daily Log
+            await tx.reviewLog.upsert({
+                where: { userId_day: { userId: user.id, day: todayKey } },
+                create: { userId: user.id, day: todayKey, count: 1, xpEarned },
+                update: { count: { increment: 1 }, xpEarned: { increment: xpEarned } }
+            })
 
-            const stats = await tx.userStats.findUnique({ where: { userId: user.id } })
+            // D. Update User Stats & Check Achievements
+            // Fetch fresh stats or use loaded (reload recommended inside tx for strictness if high concurrency, but usually fine)
+            // We need aggregate counts for achievements
+            // Ideally we maintain counters on UserStats to avoid counting *everything* every time.
 
-            let newStreak = stats?.currentStreak || 0
-            const lastReviewed = stats?.lastReviewedAt ? new Date(stats.lastReviewedAt) : null
-
-            // If last review was yesterday (UTC), increment streak. 
-            // If today, keep same. 
-            // If older, reset to 1.
-
-            // Simple approach: we trust the 'dayKey' helps us here? 
-            // Logic is complex to do inside transaction without reading logs.
-            // Let's just update lastReviewedAt and totalReviews for now. 
-            // Real streak calc is better done in a dedicated service or simplified.
-
-            await tx.userStats.upsert({
+            // Increment counters first
+            const stats = await tx.userStats.upsert({
                 where: { userId: user.id },
                 create: {
                     userId: user.id,
                     totalReviews: 1,
                     lastReviewedAt: now,
-                    currentStreak: 1
+                    currentStreak: 1,
+                    longestStreak: 1,
+                    reviewsThisWeek: 1
                 },
                 update: {
                     totalReviews: { increment: 1 },
                     lastReviewedAt: now,
-                    // We leave streak management to a separate robust logic or "Daily Challenge" check
+                    reviewsThisWeek: { increment: 1 }
                 }
             })
 
-            return updatedProblem
+            // Streak Logic (Lightweight)
+            // If last review was yesterday (UTC), increment streak. If today, no change. Else reset.
+            // Using `existingLog` check combined with `stats.lastReviewedAt` 
+            // `existingLog` tells us if we already reviewed TODAY.
+            let currentStreak = stats.currentStreak
+            if (!existingLog) {
+                // First review of today. Check if we reviewed yesterday.
+                const yesterday = new Date(now)
+                yesterday.setDate(yesterday.getDate() - 1)
+                const yesterdayKey = yesterday.toISOString().split('T')[0]
+
+                const yesterdayLog = await tx.reviewLog.findUnique({
+                    where: { userId_day: { userId: user.id, day: yesterdayKey } }
+                })
+
+                if (yesterdayLog) {
+                    currentStreak += 1
+                } else {
+                    currentStreak = 1 // Reset if missed yesterday
+                }
+
+                // Update streak in DB
+                await tx.userStats.update({
+                    where: { userId: user.id },
+                    data: {
+                        currentStreak,
+                        longestStreak: Math.max(stats.longestStreak, currentStreak)
+                    }
+                })
+            }
+
+            // E. Achievement Context
+            // We need a few counts. 
+            // OPTIMIZATION: In a real app, we'd carry these in UserStats. 
+            // For now, fast counts are acceptable.
+            const problemsTracked = await tx.revisionProblem.count({ where: { userId: user.id } })
+            const friendsCount = await tx.friendship.count({ where: { userId: user.id } })
+
+            const ctx: AchievementContext = {
+                totalReviews: stats.totalReviews + 1, // +1 because we effectively just did one
+                currentStreak: !existingLog && currentStreak === stats.currentStreak ? currentStreak : (existingLog ? stats.currentStreak : 1), // Handle the fact we just updated or not
+                longestStreak: Math.max(stats.longestStreak, currentStreak),
+                problemsTracked,
+                friendsCount,
+            }
+
+            // Check for new unlocks
+            const unlockedNow: string[] = []
+            let achievementBonusXP = 0
+            const currentlyUnlocked = new Set(stats.unlockedAchievements)
+
+            for (const ach of ACHIEVEMENTS) {
+                if (!currentlyUnlocked.has(ach.id)) {
+                    if (ach.isUnlocked(ctx)) {
+                        unlockedNow.push(ach.id)
+                        achievementBonusXP += ach.xpReward
+                    }
+                }
+            }
+
+            // F. Final User Update (Base XP + Achievement XP)
+            const totalXpGain = xpEarned + achievementBonusXP
+            await tx.user.update({
+                where: { id: user.id },
+                data: { xp: { increment: totalXpGain } }
+            })
+
+            if (unlockedNow.length > 0) {
+                await tx.userStats.update({
+                    where: { userId: user.id },
+                    data: {
+                        unlockedAchievements: { push: unlockedNow }
+                    }
+                })
+            }
+
+            return { updatedProblem, xpEarned, achievementBonusXP, unlockedAchievements: unlockedNow }
         })
 
         return NextResponse.json({
-            ...result,
-            notes: safeDecrypt(result.notes),
-            solution: safeDecrypt(result.solution),
-            xpEarned
+            problem: result.updatedProblem,
+            xpEarned: result.xpEarned,
+            achievementBonusXP: result.achievementBonusXP,
+            newAchievements: result.unlockedAchievements, // Frontend can show toasts
+            notes: safeDecrypt(result.updatedProblem.notes || ""),
+            solution: safeDecrypt(result.updatedProblem.solution || ""),
         })
 
     } catch (error) {
         return handleApiError(error)
     }
 }
+
