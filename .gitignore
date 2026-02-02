@@ -49,5 +49,10 @@ debug.log
 prisma/dev.db
 .env
 
+# extension build artifacts
+extension/node_modules
+extension/dist
+extension/*.zip
+
 
 

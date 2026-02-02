@@ -1,0 +1,45 @@
+{
+  "manifest_version": 3,
+  "name": "Smarana",
+  "version": "0.1.0",
+  "description": "Review your solved coding problems with spaced repetition",
+  "permissions": ["storage"],
+  "host_permissions": [
+    "https://smarana.vercel.app/*",
+    "http://localhost:3000/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://leetcode.com/problems/*",
+        "https://*.leetcode.com/problems/*",
+        "https://codeforces.com/contest/*/problem/*",
+        "https://codeforces.com/problemset/problem/*",
+        "https://www.codeforces.com/contest/*/problem/*",
+        "https://www.codeforces.com/problemset/problem/*",
+        "https://atcoder.jp/contests/*/tasks/*",
+        "https://www.codechef.com/problems/*",
+        "https://codechef.com/problems/*"
+      ],
+      "js": ["content.js"],
+      "css": ["content.css"]
+    }
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

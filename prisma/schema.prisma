@@ -129,6 +129,11 @@ model User {
   platformVerifications PlatformVerification[]
   suggestions          ResourceSuggestion[]
 
+  // Extension
+  showSolutionInExtension Boolean @default(true)
+  extensionTokens         ExtensionToken[]
+  extensionAuthCodes      ExtensionAuthCode[]
+
   @@index([usernameLower])
 }
 
@@ -389,5 +394,36 @@ model ResourceSuggestion {
 
   @@index([status, createdAt])
   @@index([userId, createdAt])
+}
+
+// Extension authentication - device-style token auth
+model ExtensionToken {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken  String    @unique
+  refreshToken String    @unique
+  expiresAt    DateTime
+  createdAt    DateTime  @default(now())
+  lastUsedAt   DateTime?
+
+  @@index([userId])
+  @@index([accessToken])
+  @@index([refreshToken])
+}
+
+// One-time authorization codes for extension connect flow
+model ExtensionAuthCode {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  code      String    @unique
+  state     String    // State from extension for verification
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([code])
+  @@index([expiresAt])
 }
 

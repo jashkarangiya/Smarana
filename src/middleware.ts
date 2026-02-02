@@ -40,8 +40,13 @@ export async function middleware(req: NextRequest) {
             // Better: Just apply strict CSRF to browser-initiated mutation paths.
 
             // If it's the cron path, we skip CSRF check here and let the route handler check the secret.
-            if (path.startsWith("/api/cron") || path.startsWith("/api/sync")) {
-                // pass
+            // Extension routes use Bearer token auth instead of cookies, so they're exempt from CSRF.
+            if (
+                path.startsWith("/api/cron") ||
+                path.startsWith("/api/sync") ||
+                path.startsWith("/api/extension")
+            ) {
+                // pass - these routes handle their own authentication
             } else {
                 return NextResponse.json({ error: "Forbidden: CSRF check failed" }, { status: 403 });
             }
