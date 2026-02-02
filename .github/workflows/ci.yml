@@ -55,10 +55,16 @@ jobs:
       - run: npm ci
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
+      - name: Build App
+        run: npm run build
+        env:
+           # Build needs minimal env to pass, usually not DB unless typegen
+           NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
       - name: Run Playwright tests
         run: npx playwright test
         env:
           CI: true
+          # Database URL required for the running app
           DATABASE_URL: ${{ secrets.DATABASE_URL }} 
           NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
-          # Mock/Test env vars as needed. Ideally use a service container for DB if integration testing.
+          CRON_SECRET: "test-secret"
