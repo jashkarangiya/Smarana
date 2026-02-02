@@ -3,7 +3,7 @@
 import * as React from "react";
 import { toast } from "sonner";
 import { unlockEgg, isEggUnlocked } from "@/lib/easter-egg";
-import { EasterEggModal } from "@/components/easter-egg-modal";
+import { EasterEggModal } from "@/components/features/gamification/easter-egg-modal";
 
 interface EasterEggContextValue {
     triggerUnlock: () => void;

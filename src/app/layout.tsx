@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import { Providers } from "@/components/providers";
-import { NavBar } from "@/components/nav-bar";
-import { EmberTrailProvider } from "@/components/ember-trail-provider";
+import { Providers } from "@/components/layout/providers";
+import { NavBar } from "@/components/layout/nav-bar";
+import { EmberTrailProvider } from "@/components/features/gamification/ember-trail-provider";
 
 const inter = Inter({
   subsets: ["latin"],

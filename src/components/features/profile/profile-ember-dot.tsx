@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useEmberTrail } from "./ember-trail-provider"
+import { useEmberTrail } from "@/components/features/gamification/ember-trail-provider"
 
 export function ProfileEmberDot() {
     const { trailLevel, triggerProfileEmber } = useEmberTrail()

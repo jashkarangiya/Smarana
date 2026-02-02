@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { SettingsNav } from "@/components/settings-nav"
+import { SettingsNav } from "@/components/layout/settings-nav"
 import { ArrowLeft, Copy, User } from "lucide-react"
 
 const PAGE_DETAILS: Record<string, { title: string; subtitle: string }> = {

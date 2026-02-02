@@ -31,11 +31,11 @@ import {
     CommandShortcut,
 } from "@/components/ui/command"
 import { useRouter } from "next/navigation"
-import { Button } from "./ui/button"
+import { Button } from "@/components/ui/button"
 import { useQuery } from "@tanstack/react-query"
 import { useDebouncedCallback } from "use-debounce"
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
-import { useEasterEgg } from "./ember-trail-provider"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useEasterEgg } from "@/components/features/gamification/ember-trail-provider"
 
 type UserHit = { username: string; name?: string | null; image?: string | null }
 type ProblemHit = { id: string; title: string; difficulty: string; platform: string }

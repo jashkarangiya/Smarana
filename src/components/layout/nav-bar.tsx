@@ -26,9 +26,9 @@ import { motion } from "framer-motion"
 import { useState, useRef, useCallback } from "react"
 import { CommandMenu } from "./command-menu"
 import { NotificationsBell } from "./notifications-bell"
-import { PomodoroSheet } from "./pomodoro-sheet"
+import { PomodoroSheet } from "@/components/features/pomodoro/pomodoro-sheet"
 import { usePomodoro } from "@/hooks/use-pomodoro"
-import { useEasterEgg } from "./ember-trail-provider"
+import { useEasterEgg } from "@/components/features/gamification/ember-trail-provider"
 import { MAIN_NAV, UTILITY_NAV, ACTIONS_NAV } from "@/config/navigation"
 
 export function NavBar() {

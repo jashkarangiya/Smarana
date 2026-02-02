@@ -12,7 +12,7 @@ import Link from "next/link"
 import { toast } from "sonner"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { cn } from "@/lib/utils"
-import { useEmberTrail } from "@/components/ember-trail-provider"
+import { useEmberTrail } from "@/components/features/gamification/ember-trail-provider"
 import { getTrailLevel } from "@/lib/easter-egg"
 import { AnimatePresence, motion } from "framer-motion"
 

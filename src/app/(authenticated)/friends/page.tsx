@@ -1,4 +1,4 @@
-import { FriendsList } from "@/components/friends-list"
+import { FriendsList } from "@/components/features/social/friends-list"
 import { Separator } from "@/components/ui/separator"
 
 export default function FriendsPage() {

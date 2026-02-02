@@ -17,8 +17,8 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { Switch } from "@/components/ui/switch"
-import { PlatformConnector } from "@/components/platform-connector"
-import { AvatarUpload } from "@/components/avatar-upload"
+import { PlatformConnector } from "@/components/features/profile/platform-connector"
+import { AvatarUpload } from "@/components/features/profile/avatar-upload"
 import { cn } from "@/lib/utils"
 import {
     Select,

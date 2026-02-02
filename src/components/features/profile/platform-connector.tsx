@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Check, Loader2, Link2, Trash2, ChevronRight, BadgeCheck, ShieldCheck } from "lucide-react"
 import { toast } from "sonner"
 import Image from "next/image"
-import { VerifyPlatformModal } from "@/components/verify-platform-modal"
+import { VerifyPlatformModal } from "@/components/features/profile/verify-platform-modal"
 
 // Platform configurations with URL patterns and SVG icons
 const PLATFORM_CONFIG = [

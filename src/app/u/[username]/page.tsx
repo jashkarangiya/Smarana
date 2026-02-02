@@ -12,18 +12,18 @@ import { Button } from "@/components/ui/button"
 import { format } from "date-fns"
 import dynamic from "next/dynamic"
 
-const Heatmap = dynamic(() => import("@/components/heatmap").then(mod => mod.Heatmap), {
+const Heatmap = dynamic(() => import("@/components/features/gamification/heatmap").then(mod => mod.Heatmap), {
     loading: () => <div className="h-[200px] w-full animate-pulse bg-muted/10 rounded-lg" />,
     ssr: false
 })
 
-const LeetCodeHeatmap = dynamic(() => import("@/components/leetcode-heatmap").then(mod => mod.LeetCodeHeatmap), {
+const LeetCodeHeatmap = dynamic(() => import("@/components/features/gamification/leetcode-heatmap").then(mod => mod.LeetCodeHeatmap), {
     loading: () => <div className="h-[200px] w-full animate-pulse bg-muted/10 rounded-lg" />,
     ssr: false
 })
-import { LocalTime } from "@/components/local-time"
-import { ProfileEmberDot } from "@/components/profile-ember-dot"
-import { AchievementsList } from "@/components/achievements-list"
+import { LocalTime } from "@/components/shared/local-time"
+import { ProfileEmberDot } from "@/components/features/profile/profile-ember-dot"
+import { AchievementsList } from "@/components/features/gamification/achievements-list"
 
 
 interface UserProfile {

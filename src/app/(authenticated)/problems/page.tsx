@@ -19,10 +19,10 @@ import {
 import { useMemo, useState, useEffect } from "react"
 import Link from "next/link"
 import { useSearchParams, useRouter } from "next/navigation"
-import { EmptyState } from "@/components/empty-state"
+import { EmptyState } from "@/components/shared/empty-state"
 import { cn } from "@/lib/utils"
 // New imports
-import { ProblemsFilterDialog } from "@/components/problems-filter-dialog"
+import { ProblemsFilterDialog } from "@/components/features/problems/problems-filter-dialog"
 import { FilterGroup, FilterRule } from "@/types/filters"
 
 const DEFAULT_FILTERS: FilterGroup = {

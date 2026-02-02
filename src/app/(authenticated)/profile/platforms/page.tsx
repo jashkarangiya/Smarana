@@ -1,7 +1,7 @@
 "use client"
 
 import { useStats, useSync } from "@/hooks/use-problems"
-import { PlatformConnector } from "@/components/platform-connector"
+import { PlatformConnector } from "@/components/features/profile/platform-connector"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { RefreshCw } from "lucide-react"

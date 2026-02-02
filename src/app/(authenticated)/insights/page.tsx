@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import dynamic from "next/dynamic"
-const Heatmap = dynamic(() => import("@/components/heatmap").then(mod => mod.Heatmap), {
+const Heatmap = dynamic(() => import("@/components/features/gamification/heatmap").then(mod => mod.Heatmap), {
     loading: () => <div className="h-[200px] w-full animate-pulse bg-muted/10 rounded-lg" />,
     ssr: false
 })

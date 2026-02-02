@@ -3,7 +3,7 @@
 import * as React from "react"
 import { toast } from "sonner"
 import { getTrailLevel, setTrailLevel, isTrailComplete } from "@/lib/easter-egg"
-import { EmberTrailModal } from "@/components/ember-trail-modal"
+import { EmberTrailModal } from "@/components/features/gamification/ember-trail-modal"
 
 interface EmberTrailContextValue {
     trailLevel: number
