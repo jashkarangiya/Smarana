@@ -105,8 +105,8 @@ body {
 }
 
 .user-avatar {
-    width: 48px;
-    height: 48px;
+    width: 56px;
+    height: 56px;
     border-radius: 50%;
     background: var(--dark-card);
     display: flex;
@@ -114,11 +114,24 @@ body {
     justify-content: center;
     margin-bottom: 8px;
     border: 2px solid var(--ember-orange);
+    overflow: hidden;
 }
 
 .user-avatar svg {
     width: 24px;
     height: 24px;
+    color: var(--ember-orange);
+}
+
+.user-avatar .avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.user-avatar .avatar-initials {
+    font-size: 18px;
+    font-weight: 600;
     color: var(--ember-orange);
 }
 

@@ -12,6 +12,8 @@ export const STORAGE_KEYS = {
 export interface StoredUser {
     username: string | null
     email: string | null
+    image: string | null
+    name: string | null
 }
 
 export interface StoredTokens {

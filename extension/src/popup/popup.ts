@@ -53,19 +53,26 @@ function renderNotConnected(container: HTMLElement) {
 
 function renderConnected(
     container: HTMLElement,
-    user?: { username: string | null; email: string | null }
+    user?: { username: string | null; email: string | null; image: string | null; name: string | null }
 ) {
-    const displayName = user?.username || user?.email || "User"
+    const displayName = user?.name || user?.username || user?.email?.split("@")[0] || "User"
     const email = user?.email || ""
+    const avatarUrl = user?.image
+
+    // Generate avatar HTML - show image if available, otherwise show initials
+    let avatarHtml = ""
+    if (avatarUrl) {
+        avatarHtml = `<img src="${escapeHtml(avatarUrl)}" alt="${escapeHtml(displayName)}" class="avatar-img">`
+    } else {
+        const initials = getInitials(displayName)
+        avatarHtml = `<span class="avatar-initials">${escapeHtml(initials)}</span>`
+    }
 
     container.innerHTML = `
         <div class="connected">
             <div class="user-info">
                 <div class="user-avatar">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
+                    ${avatarHtml}
                 </div>
                 <span class="user-name">${escapeHtml(displayName)}</span>
                 ${email ? `<span class="user-email">${escapeHtml(email)}</span>` : ""}
@@ -192,6 +199,14 @@ function escapeHtml(text: string): string {
     const div = document.createElement("div")
     div.textContent = text
     return div.innerHTML
+}
+
+function getInitials(name: string): string {
+    const parts = name.trim().split(/\s+/)
+    if (parts.length >= 2) {
+        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+    }
+    return name.slice(0, 2).toUpperCase()
 }
 
 // Listen for auth success from background

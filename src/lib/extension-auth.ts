@@ -223,6 +223,8 @@ export async function exchangeAuthCode(code: string) {
                 select: {
                     username: true,
                     email: true,
+                    image: true,
+                    name: true,
                 },
             },
         },
@@ -254,6 +256,8 @@ export async function exchangeAuthCode(code: string) {
         user: {
             username: codeRecord.user.username,
             email: codeRecord.user.email,
+            image: codeRecord.user.image,
+            name: codeRecord.user.name,
         },
     }
 }

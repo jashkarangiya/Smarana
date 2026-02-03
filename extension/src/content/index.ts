@@ -1,7 +1,8 @@
 import { getProblemContext, type ProblemContext } from "../lib/platform"
 import { onUrlChange } from "../lib/url-watcher"
-import { getAuthStatus, getProblem, connect } from "../lib/messaging"
+import { getAuthStatus, getProblem, saveProblem, connect } from "../lib/messaging"
 import { SmaranaOverlay } from "./overlay"
+import type { ProblemData } from "../lib/api"
 
 console.log("[Smarana] Content script loaded")
 
@@ -66,11 +67,6 @@ async function checkCurrentPage() {
 /**
  * Fetch problem data and render the overlay
  */
-import type { ProblemData } from "../lib/api"
-
-/**
- * Fetch problem data and render the overlay
- */
 async function fetchAndRenderProblem(context: ProblemContext) {
     if (!overlay) return
 
@@ -113,7 +109,23 @@ async function fetchAndRenderProblem(context: ProblemContext) {
             smaranaUrl: response.smaranaUrl!
         }
 
-        overlay.setProblem(context, problemData, () => fetchAndRenderProblem(context))
+        // Create save handler
+        const handleSave = async (notes: string, solution: string): Promise<boolean> => {
+            try {
+                const result = await saveProblem(context.platform, context.slug, notes, solution)
+                return result.success
+            } catch (error) {
+                console.error("[Smarana] Save error:", error)
+                return false
+            }
+        }
+
+        overlay.setProblem(
+            context,
+            problemData,
+            () => fetchAndRenderProblem(context),
+            handleSave
+        )
     } catch (error) {
         console.error("[Smarana] Error fetching problem:", error)
         overlay.setError(

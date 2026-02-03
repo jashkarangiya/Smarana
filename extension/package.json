@@ -5,8 +5,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite build --watch --mode development",
-    "build": "vite build",
+    "dev": "vite build --watch --mode development & vite build -c vite.content.config.ts --watch --mode development",
+    "build": "vite build && vite build -c vite.content.config.ts",
     "zip": "cd dist && zip -r ../smarana-extension.zip .",
     "clean": "rm -rf dist"
   },

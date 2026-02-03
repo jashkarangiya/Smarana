@@ -1,12 +1,19 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { validateExtensionToken } from "@/lib/extension-auth"
-import { safeDecrypt } from "@/lib/encryption"
+import { safeDecrypt, safeEncrypt } from "@/lib/encryption"
 import { z } from "zod"
 
 const querySchema = z.object({
     platform: z.enum(["leetcode", "codeforces", "atcoder", "codechef"]),
     slug: z.string().min(1, "Slug is required"),
+})
+
+const saveSchema = z.object({
+    platform: z.enum(["leetcode", "codeforces", "atcoder", "codechef"]),
+    slug: z.string().min(1, "Slug is required"),
+    notes: z.string().optional(),
+    solution: z.string().optional(),
 })
 
 /**
@@ -125,6 +132,82 @@ export async function GET(request: Request) {
         console.error("Extension problem fetch error:", error)
         return NextResponse.json(
             { error: "Failed to fetch problem data" },
+            { status: 500 }
+        )
+    }
+}
+
+/**
+ * POST /api/extension/problem
+ *
+ * Saves notes and/or solution for a problem from the extension.
+ * Requires Bearer token authentication.
+ */
+export async function POST(request: Request) {
+    try {
+        // Validate extension token
+        const auth = await validateExtensionToken(request)
+
+        if (!auth) {
+            return NextResponse.json(
+                { error: "Unauthorized - Invalid or expired token" },
+                { status: 401 }
+            )
+        }
+
+        const body = await request.json()
+        const validation = saveSchema.safeParse(body)
+
+        if (!validation.success) {
+            return NextResponse.json(
+                { error: validation.error.issues[0].message },
+                { status: 400 }
+            )
+        }
+
+        const { platform, slug, notes, solution } = validation.data
+
+        // Find the problem
+        const problem = await prisma.revisionProblem.findUnique({
+            where: {
+                userId_platform_problemSlug: {
+                    userId: auth.userId,
+                    platform,
+                    problemSlug: slug,
+                },
+            },
+        })
+
+        if (!problem) {
+            return NextResponse.json(
+                { error: "Problem not found. Please add it to Smarana first." },
+                { status: 404 }
+            )
+        }
+
+        // Update notes and/or solution
+        const updateData: { notes?: string; solution?: string } = {}
+
+        if (notes !== undefined) {
+            updateData.notes = safeEncrypt(notes) || ""
+        }
+
+        if (solution !== undefined) {
+            updateData.solution = safeEncrypt(solution) || ""
+        }
+
+        if (Object.keys(updateData).length > 0) {
+            await prisma.revisionProblem.update({
+                where: { id: problem.id },
+                data: updateData,
+            })
+        }
+
+        return NextResponse.json({ success: true })
+    } catch (error) {
+        console.error("Extension problem save error:", error)
+        return NextResponse.json(
+            { error: "Failed to save problem data" },
             { status: 500 }
         )
     }

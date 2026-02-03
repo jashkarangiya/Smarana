@@ -50,6 +50,8 @@ export interface AuthTokens {
     user?: {
         username: string | null
         email: string | null
+        image: string | null
+        name: string | null
     }
 }
 
@@ -140,4 +142,44 @@ export function generateState(): string {
     const array = new Uint8Array(16)
     crypto.getRandomValues(array)
     return Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join("")
+}
+
+export interface SaveProblemRequest {
+    platform: string
+    slug: string
+    notes?: string
+    solution?: string
+}
+
+export interface SaveProblemResponse {
+    success: boolean
+    error?: string
+}
+
+/**
+ * Save notes and/or solution for a problem
+ */
+export async function saveProblem(
+    accessToken: string,
+    data: SaveProblemRequest
+): Promise<SaveProblemResponse> {
+    const response = await fetch(`${API_BASE_URL}/api/extension/problem`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(data),
+    })
+
+    if (response.status === 401) {
+        throw new Error("TOKEN_EXPIRED")
+    }
+
+    if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || "Failed to save problem")
+    }
+
+    return response.json()
 }

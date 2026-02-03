@@ -1,5 +1,5 @@
 import type { Platform } from "./platform"
-import type { ProblemData } from "./api"
+import type { ProblemData, SaveProblemResponse } from "./api"
 
 import type { ProblemResponse as ApiProblemResponse } from "./api"
 
@@ -7,6 +7,7 @@ import type { ProblemResponse as ApiProblemResponse } from "./api"
 export type MessageType =
     | { type: "GET_AUTH_STATUS" }
     | { type: "GET_PROBLEM"; platform: Platform; slug: string }
+    | { type: "SAVE_PROBLEM"; platform: Platform; slug: string; notes?: string; solution?: string }
     | { type: "CONNECT" }
     | { type: "DISCONNECT" }
 
@@ -16,6 +17,8 @@ export type AuthStatusResponse = {
     user?: {
         username: string | null
         email: string | null
+        image: string | null
+        name: string | null
     }
 }
 
@@ -30,6 +33,7 @@ export type MessageResponse =
     | AuthStatusResponse
     | ProblemResponse
     | ConnectResponse
+    | SaveProblemResponse
     | { success: boolean; error?: string }
 
 /**
@@ -59,6 +63,18 @@ export function getAuthStatus(): Promise<AuthStatusResponse> {
  */
 export function getProblem(platform: Platform, slug: string): Promise<ProblemResponse> {
     return sendMessage<ProblemResponse>({ type: "GET_PROBLEM", platform, slug })
+}
+
+/**
+ * Save notes and/or solution for a problem
+ */
+export function saveProblem(
+    platform: Platform,
+    slug: string,
+    notes?: string,
+    solution?: string
+): Promise<SaveProblemResponse> {
+    return sendMessage<SaveProblemResponse>({ type: "SAVE_PROBLEM", platform, slug, notes, solution })
 }
 
 /**

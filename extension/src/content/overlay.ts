@@ -6,13 +6,21 @@ const EMBER_ORANGE = "#BB7331"
 const SMARANA_URL = "https://smarana.vercel.app"
 const LOGO_URL = chrome.runtime.getURL("icons/icon48.png")
 
+type OverlayCallbacks = {
+    onConnect?: () => void
+    onRefresh?: () => void
+    onSave?: (notes: string, solution: string) => Promise<boolean>
+}
+
 export class SmaranaOverlay {
     private host: HTMLElement
     private shadow: ShadowRoot
     private app: HTMLElement
     private isExpanded: boolean = false
+    private isEditing: boolean = false
     private currentContext: ProblemContext | null = null
     private currentData: any = null
+    private callbacks: OverlayCallbacks = {}
 
     // Default position (top-left by default, but updated by dragging)
     private pos = { x: 16, y: 16 }
@@ -26,7 +34,7 @@ export class SmaranaOverlay {
             z-index: 2147483647 !important;
             left: 16px !important;
             top: 16px !important;
-            visibility: hidden !important; 
+            visibility: hidden !important;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
             filter: drop-shadow(0 4px 24px rgba(0, 0, 0, 0.4));
         `
@@ -70,30 +78,43 @@ export class SmaranaOverlay {
     setLoading(context: ProblemContext) {
         this.currentContext = context
         this.currentData = null
+        this.isEditing = false
         this.renderState("loading")
     }
 
     setNotConnected(context: ProblemContext, onConnect: () => void) {
         this.currentContext = context
         this.currentData = { onConnect }
+        this.callbacks.onConnect = onConnect
+        this.isEditing = false
         this.renderState("not-connected")
     }
 
     setNotTracked(context: ProblemContext) {
         this.currentContext = context
         this.currentData = null
+        this.isEditing = false
         this.renderState("not-tracked")
     }
 
-    setProblem(context: ProblemContext, problem: ProblemData, onRefresh: () => void) {
+    setProblem(
+        context: ProblemContext,
+        problem: ProblemData,
+        onRefresh: () => void,
+        onSave?: (notes: string, solution: string) => Promise<boolean>
+    ) {
         this.currentContext = context
         this.currentData = { problem, onRefresh }
+        this.callbacks.onRefresh = onRefresh
+        this.callbacks.onSave = onSave
+        this.isEditing = false
         this.renderState("problem")
     }
 
     setError(context: ProblemContext, message: string, onRetry: () => void) {
         this.currentContext = context
         this.currentData = { message, onRetry }
+        this.isEditing = false
         this.renderState("error")
     }
 
@@ -142,7 +163,11 @@ export class SmaranaOverlay {
         if (state === "loading") content = this.getLoadingContent()
         else if (state === "not-connected") content = this.getNotConnectedContent()
         else if (state === "not-tracked") content = this.getNotTrackedContent()
-        else if (state === "problem") content = this.getProblemContent(data.problem)
+        else if (state === "problem") {
+            content = this.isEditing
+                ? this.getEditContent(data.problem)
+                : this.getProblemContent(data.problem)
+        }
         else if (state === "error") content = this.getErrorContent(data.message)
 
         this.app.innerHTML = `
@@ -175,6 +200,7 @@ export class SmaranaOverlay {
         const closeBtn = this.app.querySelector(".close-btn")
         closeBtn?.addEventListener("click", () => {
             this.isExpanded = false
+            this.isEditing = false
             this.renderBubble(state, data)
         })
 
@@ -184,26 +210,84 @@ export class SmaranaOverlay {
         }
 
         if (state === "problem" && data?.problem) {
-            // Solution toggle
-            const toggleBtn = this.app.querySelector(".solution-toggle")
-            const solutionContent = this.app.querySelector(".solution-content") as HTMLElement
-            if (toggleBtn && solutionContent) {
-                toggleBtn.addEventListener("click", () => {
-                    const isHidden = solutionContent.style.display === "none"
-                    solutionContent.style.display = isHidden ? "block" : "none"
-                    toggleBtn.textContent = isHidden ? "Hide" : "Reveal"
-                })
-            }
-
-            // Refresh
-            if (data.onRefresh) {
-                this.app.querySelector(".refresh-btn")?.addEventListener("click", data.onRefresh)
+            if (this.isEditing) {
+                this.setupEditHandlers(data.problem)
+            } else {
+                this.setupProblemHandlers(data)
             }
         }
 
         if (state === "error" && data?.onRetry) {
             this.app.querySelector(".retry-btn")?.addEventListener("click", data.onRetry)
         }
+    }
+
+    private setupProblemHandlers(data: any) {
+        // Solution toggle
+        const toggleBtn = this.app.querySelector(".solution-toggle")
+        const solutionContent = this.app.querySelector(".solution-content") as HTMLElement
+        if (toggleBtn && solutionContent) {
+            toggleBtn.addEventListener("click", () => {
+                const isHidden = solutionContent.style.display === "none"
+                solutionContent.style.display = isHidden ? "block" : "none"
+                toggleBtn.textContent = isHidden ? "Hide" : "Reveal"
+            })
+        }
+
+        // Edit button
+        const editBtn = this.app.querySelector(".edit-btn")
+        if (editBtn && this.callbacks.onSave) {
+            editBtn.addEventListener("click", () => {
+                this.isEditing = true
+                this.renderPanel("problem", data)
+            })
+        }
+
+        // Refresh
+        if (data.onRefresh) {
+            this.app.querySelector(".refresh-btn")?.addEventListener("click", data.onRefresh)
+        }
+    }
+
+    private setupEditHandlers(problem: ProblemData) {
+        const notesInput = this.app.querySelector(".edit-notes") as HTMLTextAreaElement
+        const solutionInput = this.app.querySelector(".edit-solution") as HTMLTextAreaElement
+        const saveBtn = this.app.querySelector(".save-btn")
+        const cancelBtn = this.app.querySelector(".cancel-edit-btn")
+
+        cancelBtn?.addEventListener("click", () => {
+            this.isEditing = false
+            this.renderPanel("problem", this.currentData)
+        })
+
+        saveBtn?.addEventListener("click", async () => {
+            if (!this.callbacks.onSave) return
+
+            const notes = notesInput?.value || ""
+            const solution = solutionInput?.value || ""
+
+            // Show saving state
+            saveBtn.textContent = "Saving..."
+            ;(saveBtn as HTMLButtonElement).disabled = true
+
+            const success = await this.callbacks.onSave(notes, solution)
+
+            if (success) {
+                // Update the problem data
+                if (this.currentData?.problem) {
+                    this.currentData.problem.notes = notes
+                    this.currentData.problem.solution = solution
+                }
+                this.isEditing = false
+                this.renderPanel("problem", this.currentData)
+            } else {
+                saveBtn.textContent = "Save"
+                ;(saveBtn as HTMLButtonElement).disabled = false
+                // Show error state briefly
+                saveBtn.classList.add("error")
+                setTimeout(() => saveBtn.classList.remove("error"), 2000)
+            }
+        })
     }
 
     // --- Draggable Logic ---
@@ -351,13 +435,23 @@ export class SmaranaOverlay {
 
         const solutionDisplay = "none"
 
+        // Show edit button only if onSave callback is provided
+        const editButton = this.callbacks.onSave
+            ? `<button class="btn btn-ghost edit-btn" title="Edit notes & solution">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+            </button>`
+            : ""
+
         return `
             <div class="problem-content">
                 <div class="problem-info-header">
                     <span class="difficulty" style="color: ${diffColor}">${problem.difficulty}</span>
                     <span class="review-count">Repetition ${problem.reviewCount}</span>
                 </div>
-            
+
                 <div class="status-badge ${reviewStatus.class}">
                     ${reviewStatus.icon}
                     <span>${reviewStatus.text}</span>
@@ -380,13 +474,38 @@ export class SmaranaOverlay {
 
                 <div class="panel-footer">
                     <a href="${problem.smaranaUrl}" target="_blank" class="btn btn-primary open-btn">Open in Smarana</a>
-                     <button class="btn btn-ghost refresh-btn" title="Refresh">
+                    ${editButton}
+                    <button class="btn btn-ghost refresh-btn" title="Refresh">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M23 4v6h-6"></path>
                             <path d="M1 20v-6h6"></path>
                             <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
                         </svg>
                     </button>
+                </div>
+            </div>
+        `
+    }
+
+    private getEditContent(problem: ProblemData): string {
+        const notesValue = problem.notes || ""
+        const solutionValue = problem.solution || ""
+
+        return `
+            <div class="edit-content">
+                <div class="edit-section">
+                    <label class="edit-label">Notes</label>
+                    <textarea class="edit-notes" placeholder="Add your notes here...">${this.escapeHtml(notesValue)}</textarea>
+                </div>
+
+                <div class="edit-section">
+                    <label class="edit-label">Solution</label>
+                    <textarea class="edit-solution" placeholder="Paste your solution code here...">${this.escapeHtml(solutionValue)}</textarea>
+                </div>
+
+                <div class="panel-footer">
+                    <button class="btn btn-primary save-btn">Save</button>
+                    <button class="btn btn-ghost cancel-edit-btn">Cancel</button>
                 </div>
             </div>
         `

@@ -1,6 +1,7 @@
 import {
     exchangeCode,
     fetchProblem,
+    saveProblem as apiSaveProblem,
     refreshToken as apiRefreshToken,
     generateState,
     getConnectUrl,
@@ -114,6 +115,36 @@ async function handleMessage(message: MessageType): Promise<MessageResponse> {
                     return {
                         found: false,
                         problem: null,
+                        error: "NOT_AUTHENTICATED",
+                    }
+                }
+                throw error
+            }
+        }
+
+        case "SAVE_PROBLEM": {
+            const accessToken = await getValidAccessToken()
+
+            if (!accessToken) {
+                return {
+                    success: false,
+                    error: "NOT_AUTHENTICATED",
+                }
+            }
+
+            try {
+                const response = await apiSaveProblem(accessToken, {
+                    platform: message.platform,
+                    slug: message.slug,
+                    notes: message.notes,
+                    solution: message.solution,
+                })
+                return response
+            } catch (error) {
+                if (error instanceof Error && error.message === "TOKEN_EXPIRED") {
+                    await clearStorage()
+                    return {
+                        success: false,
                         error: "NOT_AUTHENTICATED",
                     }
                 }
