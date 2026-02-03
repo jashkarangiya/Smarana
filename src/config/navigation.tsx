@@ -9,6 +9,7 @@ import {
     Plus,
     Globe,
     Timer,
+    Trophy,
     type LucideIcon
 } from "lucide-react"
 
@@ -29,6 +30,7 @@ export const MAIN_NAV: NavLink[] = [
 export const UTILITY_NAV: NavLink[] = [
     { title: "Settings", href: "/settings", icon: Settings, variant: "utility" },
     { title: "Insights", href: "/insights", icon: Activity, variant: "utility" },
+    { title: "Contests", href: "/contests", icon: Trophy, variant: "utility" },
     { title: "Resources", href: "/resources", icon: BookOpen, variant: "utility" },
     { title: "Profile", href: "/u/me", icon: Globe, variant: "utility" }, // href needs dynamic user replacement
 ]

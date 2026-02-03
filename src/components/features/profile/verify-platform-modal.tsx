@@ -219,9 +219,9 @@ export function VerifyPlatformModal({
                             {/* Instructions */}
                             {instructions && (
                                 <div className="rounded-lg border p-4 space-y-3 bg-muted/50">
-                                    <p className="text-sm font-medium">
+                                    <div className="text-sm font-medium">
                                         Add to your <Badge variant="secondary">{instructions.field}</Badge>:
-                                    </p>
+                                    </div>
                                     <ol className="text-sm text-muted-foreground space-y-1.5 list-decimal list-inside">
                                         {instructions.steps.map((step, i) => (
                                             <li key={i}>{step}</li>

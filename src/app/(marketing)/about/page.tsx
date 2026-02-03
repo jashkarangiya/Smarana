@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-    title: "About • Smaarna",
+    title: "About",
     description: "Why Smarana exists and how it helps you retain coding patterns with spaced repetition.",
 };
 

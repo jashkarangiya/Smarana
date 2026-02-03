@@ -8,35 +8,43 @@ export interface ProblemContext {
 /**
  * Detects the current platform and problem slug from a URL
  */
+// Detects the current platform and problem slug from a URL
 export function getProblemContext(url: string): ProblemContext | null {
-    // LeetCode: leetcode.com/problems/<slug>/...
-    const lc = url.match(/leetcode\.com\/problems\/([^\/?#]+)(?:\/|$)/i)
-    if (lc) {
-        return { platform: "leetcode", slug: lc[1].toLowerCase() }
+    const u = new URL(url)
+
+    // LeetCode
+    if (u.hostname.includes("leetcode.com")) {
+        const m = u.pathname.match(/\/problems\/([^/]+)/)
+        if (m) return { platform: "leetcode", slug: m[1] }
     }
 
-    // Codeforces contest: codeforces.com/contest/<id>/problem/<index>
-    const cf1 = url.match(/codeforces\.com\/contest\/(\d+)\/problem\/([A-Z0-9]+)/i)
-    if (cf1) {
-        return { platform: "codeforces", slug: `${cf1[1]}-${cf1[2].toUpperCase()}` }
+    // Codeforces
+    if (u.hostname.includes("codeforces.com")) {
+        // /problemset/problem/1705/C
+        const m1 = u.pathname.match(/\/problemset\/problem\/(\d+)\/([A-Z0-9]+)/i)
+        if (m1) return { platform: "codeforces", slug: `${m1[1]}-${m1[2]}`.toUpperCase() } // Normalize slug
+
+        // /contest/1705/problem/C
+        const m2 = u.pathname.match(/\/contest\/(\d+)\/problem\/([A-Z0-9]+)/i)
+        if (m2) return { platform: "codeforces", slug: `${m2[1]}-${m2[2]}`.toUpperCase() }
+
+        // gym?
+        const m3 = u.pathname.match(/\/gym\/(\d+)\/problem\/([A-Z0-9]+)/i)
+        if (m3) return { platform: "codeforces", slug: `${m3[1]}-${m3[2]}`.toUpperCase() }
     }
 
-    // Codeforces problemset: codeforces.com/problemset/problem/<id>/<index>
-    const cf2 = url.match(/codeforces\.com\/problemset\/problem\/(\d+)\/([A-Z0-9]+)/i)
-    if (cf2) {
-        return { platform: "codeforces", slug: `${cf2[1]}-${cf2[2].toUpperCase()}` }
+    // AtCoder
+    if (u.hostname.includes("atcoder.jp")) {
+        // /contests/<contest_id>/tasks/<problem_id>
+        const m = u.pathname.match(/\/contests\/([^/]+)\/tasks\/([^/]+)/)
+        if (m) return { platform: "atcoder", slug: m[2] }
     }
 
-    // AtCoder: atcoder.jp/contests/<contestId>/tasks/<taskId>
-    const ac = url.match(/atcoder\.jp\/contests\/([^\/?#]+)\/tasks\/([^\/?#]+)/i)
-    if (ac) {
-        return { platform: "atcoder", slug: `${ac[1]}-${ac[2]}` }
-    }
-
-    // CodeChef: codechef.com/problems/<code>
-    const cc = url.match(/codechef\.com\/problems\/([^\/?#]+)/i)
-    if (cc) {
-        return { platform: "codechef", slug: cc[1].toUpperCase() }
+    // CodeChef
+    if (u.hostname.includes("codechef.com")) {
+        // /problems/<problem_code>
+        const m = u.pathname.match(/\/problems\/([^/]+)/)
+        if (m) return { platform: "codechef", slug: m[1] }
     }
 
     return null

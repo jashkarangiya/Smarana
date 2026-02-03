@@ -1,5 +1,5 @@
 // Script to generate proper icon sizes from the logo
-// Run with: node generate-icons.js
+// Run with: node generate-icons.cjs
 
 const sharp = require('sharp');
 const path = require('path');

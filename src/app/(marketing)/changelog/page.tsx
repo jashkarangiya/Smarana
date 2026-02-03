@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { Badge } from "@/components/ui/badge";
 
 export const metadata: Metadata = {
-    title: "Changelog • Smarana",
+    title: "Changelog",
     description: "Updates and improvements to Smarana.",
 };
 

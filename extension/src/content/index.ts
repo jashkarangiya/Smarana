@@ -1,14 +1,17 @@
 import { getProblemContext, type ProblemContext } from "../lib/platform"
 import { onUrlChange } from "../lib/url-watcher"
-import { getAuthStatus, getProblem, saveProblem, connect } from "../lib/messaging"
+import { getProblem, saveProblem, connect } from "../lib/messaging"
 import { SmaranaOverlay } from "./overlay"
 import type { ProblemData } from "../lib/api"
+import { getAuth, onAuthChanged } from "../lib/auth-store"
 
 console.log("[Smarana] Content script loaded")
 
 let currentContext: ProblemContext | null = null
 let cleanupUrlWatcher: (() => void) | null = null
+let cleanupAuth: (() => void) | null = null
 let overlay: SmaranaOverlay | null = null
+let currentAbort: AbortController | null = null
 
 /**
  * Initialize the content script
@@ -21,6 +24,25 @@ async function init() {
     cleanupUrlWatcher = onUrlChange(async () => {
         await checkCurrentPage()
     })
+
+    // Watch for Auth changes
+    cleanupAuth = onAuthChanged((auth) => {
+        console.log("[Smarana] Auth changed:", auth ? "Logged In" : "Logged Out")
+
+        // If we are currently on a problem page, update the UI
+        const context = getProblemContext(location.href)
+        // If we're not on a tracked page, or overlay isn't active, do nothing
+        if (!context || !overlay) return
+
+        if (!auth) {
+            // Logged out -> Immediately show connect
+            if (currentAbort) currentAbort.abort()
+            overlay.showConnect(context)
+        } else {
+            // Logged in -> Immediately fetch
+            fetchAndRenderProblem(context, auth)
+        }
+    })
 }
 
 /**
@@ -31,6 +53,7 @@ async function checkCurrentPage() {
 
     // If we're not on a problem page, remove the overlay
     if (!context) {
+        console.log("[Smarana] No problem context found for URL:", location.href)
         if (currentContext) {
             console.log("[Smarana] Left problem page, removing overlay")
             overlay?.destroy()
@@ -40,73 +63,59 @@ async function checkCurrentPage() {
         return
     }
 
-    // If we're on the same problem, no need to update
-    if (
-        currentContext &&
-        currentContext.platform === context.platform &&
-        currentContext.slug === context.slug
-    ) {
-        return
-    }
-
     console.log("[Smarana] Detected problem:", context)
     currentContext = context
 
     // Create overlay if not exists
     if (!overlay) {
+        console.log("[Smarana] Creating new overlay instance")
         overlay = new SmaranaOverlay()
     }
 
-    // Show loading state
-    overlay.setLoading(context)
+    // Check Auth
+    const auth = await getAuth()
+    if (!auth) {
+        console.log("[Smarana] Not authenticated, showing connect UI")
+        overlay.showConnect(context)
+        return
+    }
 
-    // Fetch and render problem data
-    await fetchAndRenderProblem(context)
+    // Authenticated -> Fetch
+    await fetchAndRenderProblem(context, auth)
 }
 
-/**
- * Fetch problem data and render the overlay
- */
-async function fetchAndRenderProblem(context: ProblemContext) {
+async function fetchAndRenderProblem(context: ProblemContext, auth: any) {
     if (!overlay) return
 
+    if (currentAbort) currentAbort.abort()
+    currentAbort = new AbortController()
+
+    console.log("[Smarana] Fetching problem data...", context)
+    overlay.setLoading(context) // Show loading state on the overlay
+
     try {
-        const authStatus = await getAuthStatus()
+        const data = await getProblem(context.platform, context.slug)
+        console.log("[Smarana] Problem data received:", data)
 
-        if (!authStatus.isAuthenticated) {
-            overlay.setNotConnected(context, handleConnect)
-            return
-        }
-
-        // Fetch problem data
-        const response = await getProblem(context.platform, context.slug)
-
-        if (response.error === "NOT_AUTHENTICATED") {
-            overlay.setNotConnected(context, handleConnect)
-            return
-        }
-
-        if (!response.tracked) {
+        if (!data.tracked) {
             overlay.setNotTracked(context)
             return
         }
 
-        // Map flat response to ProblemData
-        // We know these fields exist because tracked is true
         const problemData: ProblemData = {
-            id: response.id!,
-            title: response.title!,
-            difficulty: response.difficulty!,
-            platform: response.platform,
-            slug: response.slug,
-            notes: response.notes!,
-            url: response.url!,
-            solution: response.solution || null,
-            nextReviewAt: response.nextReviewAt || null,
-            reviewCount: response.reviewCount || 0,
-            interval: response.interval || 0,
-            lastReviewedAt: response.lastReviewedAt || null,
-            smaranaUrl: response.smaranaUrl!
+            id: data.id!,
+            title: data.title!,
+            difficulty: data.difficulty!,
+            platform: data.platform,
+            slug: data.slug,
+            notes: data.notes || "",
+            url: data.url!,
+            solution: data.solution || null,
+            nextReviewAt: data.nextReviewAt || null,
+            reviewCount: data.reviewCount || 0,
+            interval: data.interval || 0,
+            lastReviewedAt: data.lastReviewedAt || null,
+            smaranaUrl: data.smaranaUrl!
         }
 
         // Create save handler
@@ -120,62 +129,26 @@ async function fetchAndRenderProblem(context: ProblemContext) {
             }
         }
 
-        overlay.setProblem(
-            context,
-            problemData,
-            () => fetchAndRenderProblem(context),
-            handleSave
-        )
-    } catch (error) {
-        console.error("[Smarana] Error fetching problem:", error)
-        overlay.setError(
-            context,
-            error instanceof Error ? error.message : "Failed to load",
-            () => fetchAndRenderProblem(context)
-        )
+        const handleRefresh = () => fetchAndRenderProblem(context, auth)
+
+        overlay.setProblem(context, problemData, handleRefresh, handleSave)
+    } catch (err: any) {
+        if (err.name === "AbortError") return
+
+        console.error("[Smarana] Error fetching problem:", err)
+
+        // If 401/403, we could optimize to showConnect, but auth listener should handle it if store updates.
+        // For now just show error.
+        overlay.setError(context, "Failed to load problem data.", () => fetchAndRenderProblem(context, auth))
     }
 }
 
-/**
- * Handle the connect button click
- */
-async function handleConnect() {
-    if (!overlay || !currentContext) return
-
-    overlay.setLoading(currentContext)
-
-    try {
-        await connect()
-        // The connect flow will open a new tab
-        // When the user completes it, the background script will notify us
-    } catch (error) {
-        console.error("[Smarana] Connect error:", error)
-        if (overlay && currentContext) {
-            overlay.setNotConnected(currentContext, handleConnect)
-        }
-    }
-}
-
-/**
- * Listen for auth success from background
- */
-chrome.runtime.onMessage.addListener((message) => {
-    if (message.type === "AUTH_SUCCESS") {
-        console.log("[Smarana] Auth success received")
-        // Re-check the current page to fetch problem data
-        if (currentContext && overlay) {
-            fetchAndRenderProblem(currentContext)
-        }
-    }
-})
-
-// Initialize when the page loads
+// Initialize immediately
 init()
 
-// Clean up on unload
-window.addEventListener("beforeunload", () => {
-    if (cleanupUrlWatcher) {
-        cleanupUrlWatcher()
-    }
+// Clean up
+window.addEventListener("unload", () => {
+    if (cleanupUrlWatcher) cleanupUrlWatcher()
+    if (cleanupAuth) cleanupAuth()
     overlay?.destroy()
 })

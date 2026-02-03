@@ -1,12 +1,18 @@
 {
   "manifest_version": 3,
-  "name": "Smarana",
+  "name": "Smarana — Recall Overlay",
   "version": "0.1.0",
   "description": "Review your solved coding problems with spaced repetition",
   "permissions": ["storage", "tabs"],
   "host_permissions": [
     "https://smarana.vercel.app/*",
     "http://localhost:3000/*"
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["icons/*"],
+      "matches": ["<all_urls>"]
+    }
   ],
   "content_scripts": [
     {

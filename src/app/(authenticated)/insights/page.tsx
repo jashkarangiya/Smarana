@@ -7,6 +7,10 @@ const Heatmap = dynamic(() => import("@/components/features/gamification/heatmap
     loading: () => <div className="h-[200px] w-full animate-pulse bg-muted/10 rounded-lg" />,
     ssr: false
 })
+const ContestRatingChart = dynamic(() => import("@/components/features/insights/contest-rating-chart").then(mod => mod.ContestRatingChart), {
+    loading: () => <div className="h-[300px] w-full animate-pulse bg-muted/10 rounded-lg md:col-span-7" />,
+    ssr: false
+})
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip as RechartsTooltip, Cell, PieChart, Pie } from "recharts"
 import { Activity, Calendar, Award, TrendingUp, Target, Flame } from "lucide-react"
 
@@ -216,6 +220,11 @@ export default function InsightsPage() {
                         </div>
                     </CardContent>
                 </Card>
+            </div>
+
+            {/* Contest Performance */}
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-7">
+                <ContestRatingChart />
             </div>
         </div>
     )

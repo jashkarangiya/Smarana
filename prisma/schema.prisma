@@ -427,3 +427,58 @@ model ExtensionAuthCode {
   @@index([expiresAt])
 }
 
+// Contest metadata from platforms
+model Contest {
+  id          String    @id @default(cuid())
+  platform    String    // "leetcode" | "codeforces" | "atcoder" | "codechef"
+  contestId   String    // Platform's contest identifier
+  name        String
+  startTime   DateTime
+  endTime     DateTime?
+  duration    Int?      // Duration in minutes
+  url         String
+  phase       String    @default("BEFORE") // "BEFORE" | "CODING" | "FINISHED"
+  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime  @default(now())
+
+  reminders   ContestReminder[]
+
+  @@unique([platform, contestId])
+  @@index([platform, startTime])
+  @@index([startTime])
+}
+
+// User contest reminders
+model ContestReminder {
+  id          String    @id @default(cuid())
+  userId      String
+  contestId   String
+  contest     Contest   @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  notifyAt    DateTime  // When to send the reminder
+  notified    Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+
+  @@unique([userId, contestId])
+  @@index([userId, notifyAt])
+  @@index([notifyAt, notified])
+}
+
+// User contest participation results
+model ContestResult {
+  id          String    @id @default(cuid())
+  userId      String
+  platform    String    // "leetcode" | "codeforces" | "atcoder" | "codechef"
+  contestId   String    // Platform's contest identifier
+  contestName String?
+  rank        Int?
+  oldRating   Int?
+  newRating   Int?
+  delta       Int?      // Rating change
+  attendedAt  DateTime
+  createdAt   DateTime  @default(now())
+
+  @@unique([userId, platform, contestId])
+  @@index([userId, platform, attendedAt])
+  @@index([userId, attendedAt])
+}
+

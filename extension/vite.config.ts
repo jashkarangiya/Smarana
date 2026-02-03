@@ -1,6 +1,6 @@
 import { defineConfig } from "vite"
 import { resolve } from "path"
-import { copyFileSync, existsSync, readFileSync, writeFileSync } from "fs"
+import { existsSync, readFileSync, writeFileSync } from "fs"
 
 export default defineConfig({
     // Use relative paths for Chrome extension compatibility
@@ -14,8 +14,11 @@ export default defineConfig({
                 popup: resolve(__dirname, "src/popup/popup.html"),
             },
             output: {
+                // Use ES modules for background (service worker supports it)
+                format: "es",
                 entryFileNames: "[name].js",
-                chunkFileNames: "chunks/[name]-[hash].js",
+                // Don't create chunks - inline everything
+                manualChunks: () => undefined,
                 assetFileNames: (assetInfo) => {
                     if (assetInfo.name === "popup.css") {
                         return "popup.css"

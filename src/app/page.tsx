@@ -66,7 +66,7 @@ export default function LandingPage() {
             {/* Subheading */}
             <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-xl mx-auto leading-relaxed px-2">
               Dedicated to helping you retain algorithm patterns through spaced repetition,
-              synced with your LeetCode progress.
+              synced with your favorite coding platforms.
             </p>
 
             {/* CTA */}
@@ -127,7 +127,7 @@ export default function LandingPage() {
             </div>
             <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-8 max-w-5xl mx-auto">
               {[
-                { step: "01", title: "Solve Problems", desc: "Solve problems on LeetCode. We automatically sync your progress." },
+                { step: "01", title: "Solve Problems", desc: "Solve problems on LeetCode, Codeforces, AtCoder, or CodeChef. We sync your progress." },
                 { step: "02", title: "Smart Scheduling", desc: "We calculate the optimal time for you to review based on forgetting curves." },
                 { step: "03", title: "Review & Retain", desc: "Review problems with our guidance to lock patterns into long-term memory." }
               ].map((s, i) => (
@@ -161,8 +161,8 @@ export default function LandingPage() {
                 />
                 <FeatureCard
                   icon={<Sparkles className="h-4 w-4 sm:h-5 sm:w-5" />}
-                  title="LeetCode Sync"
-                  description="Automatically import your solved problems and track your progress."
+                  title="Platform Sync"
+                  description="Automatically import your solved problems from LeetCode, Codeforces, and more."
                 />
                 <FeatureCard
                   icon={<BookOpen className="h-4 w-4 sm:h-5 sm:w-5" />}
@@ -253,8 +253,8 @@ export default function LandingPage() {
                 answer="Spaced repetition is a learning technique that schedules reviews at increasing intervals. When you solve a problem, we calculate the optimal time to review it based on your performance, ensuring you review just before you're likely to forget."
               />
               <FAQItem
-                question="Do I need a LeetCode account?"
-                answer="While Smarana works best with LeetCode sync, you can also manually add problems from any platform. The LeetCode integration automatically imports your solved problems and keeps your progress in sync."
+                question="Which platforms are supported?"
+                answer="Smarana supports LeetCode, Codeforces, AtCoder, and CodeChef. Connect your account to automatically sync your solved problems, or manually add problems from any source."
               />
               <FAQItem
                 question="Is Smarana free?"
@@ -262,7 +262,7 @@ export default function LandingPage() {
               />
               <FAQItem
                 question="How is this different from Anki?"
-                answer="Unlike Anki, Smarana is specifically designed for coding problems. It integrates with LeetCode, provides code-specific review interfaces, tracks your actual solutions, and understands the unique challenges of remembering algorithms and data structures."
+                answer="Unlike Anki, Smarana is specifically designed for coding problems. It integrates with major competitive programming platforms, provides code-specific review interfaces, tracks your solutions, and understands the unique challenges of remembering algorithms."
               />
             </div>
           </div>
@@ -371,6 +371,7 @@ export default function LandingPage() {
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><Link href="/problems" className="hover:text-primary transition-colors">All Problems</Link></li>
                 <li><Link href="/review" className="hover:text-primary transition-colors">Review Session</Link></li>
+                <li><Link href="/extension" className="hover:text-primary transition-colors">Browser Extension</Link></li>
               </ul>
             </div>
 

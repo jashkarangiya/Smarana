@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Mail, Github, Linkedin } from "lucide-react";
 
 export const metadata: Metadata = {
-    title: "Contact • Smarana",
+    title: "Contact",
     description: "Get in touch with the Smarana team.",
 };
 

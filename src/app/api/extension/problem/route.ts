@@ -7,6 +7,7 @@ import { z } from "zod"
 const querySchema = z.object({
     platform: z.enum(["leetcode", "codeforces", "atcoder", "codechef"]),
     slug: z.string().min(1, "Slug is required"),
+    url: z.string().optional(), // Optional URL for fallback matching
 })
 
 const saveSchema = z.object({
@@ -39,6 +40,7 @@ export async function GET(request: Request) {
         const queryParams = {
             platform: searchParams.get("platform"),
             slug: searchParams.get("slug"),
+            url: searchParams.get("url") || undefined,
         }
 
         const validation = querySchema.safeParse(queryParams)
@@ -50,7 +52,7 @@ export async function GET(request: Request) {
             )
         }
 
-        const { platform, slug } = validation.data
+        const { platform, slug, url } = validation.data
 
         // Fetch user preferences for solution visibility
         const user = await prisma.user.findUnique({
@@ -64,8 +66,8 @@ export async function GET(request: Request) {
             return NextResponse.json({ error: "User not found" }, { status: 404 })
         }
 
-        // Find the problem by platform and slug
-        const problem = await prisma.revisionProblem.findUnique({
+        // Find the problem by platform and slug (primary lookup)
+        let problem = await prisma.revisionProblem.findUnique({
             where: {
                 userId_platform_problemSlug: {
                     userId: auth.userId,
@@ -86,6 +88,29 @@ export async function GET(request: Request) {
                 lastReviewedAt: true,
             },
         })
+
+        // Fallback: try to find by URL if slug lookup failed
+        if (!problem && url) {
+            problem = await prisma.revisionProblem.findFirst({
+                where: {
+                    userId: auth.userId,
+                    platform,
+                    url: { contains: url },
+                },
+                select: {
+                    id: true,
+                    title: true,
+                    difficulty: true,
+                    url: true,
+                    notes: true,
+                    solution: true,
+                    nextReviewAt: true,
+                    reviewCount: true,
+                    interval: true,
+                    lastReviewedAt: true,
+                },
+            })
+        }
 
         // Not tracked in Smarana yet → return a clean empty shape
         if (!problem) {

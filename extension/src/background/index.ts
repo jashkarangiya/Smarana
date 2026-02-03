@@ -50,6 +50,7 @@ async function getValidAccessToken(): Promise<string | null> {
         }
     }
 
+    console.log("[Smarana] Valid token found")
     return tokens.accessToken
 }
 
@@ -95,8 +96,9 @@ async function handleMessage(message: MessageType): Promise<MessageResponse> {
 
             if (!accessToken) {
                 return {
-                    found: false,
-                    problem: null,
+                    tracked: false,
+                    platform: message.platform,
+                    slug: message.slug,
                     error: "NOT_AUTHENTICATED",
                 }
             }
@@ -113,8 +115,9 @@ async function handleMessage(message: MessageType): Promise<MessageResponse> {
                     // Token refresh failed, clear storage
                     await clearStorage()
                     return {
-                        found: false,
-                        problem: null,
+                        tracked: false,
+                        platform: message.platform,
+                        slug: message.slug,
                         error: "NOT_AUTHENTICATED",
                     }
                 }

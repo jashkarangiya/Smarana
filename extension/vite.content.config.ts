@@ -5,13 +5,19 @@ export default defineConfig({
     base: "./",
     build: {
         outDir: "dist",
-        emptyOutDir: false, // Don't clear dist, as we are appending to main build
+        emptyOutDir: false,
+        lib: {
+            entry: resolve(__dirname, "src/content/index.ts"),
+            name: "SmaranaContent",
+            fileName: () => "content.js",
+            formats: ["iife"],
+        },
         rollupOptions: {
-            input: resolve(__dirname, "src/content/index.ts"),
             output: {
-                format: "iife", // IIFE format bundles dependencies inline
+                format: "iife",
                 entryFileNames: "content.js",
-                inlineDynamicImports: true,
+                inlineDynamicImports: true, // Forces everything into one file
+                extend: true,
                 assetFileNames: (assetInfo) => {
                     if (assetInfo.name?.endsWith(".css")) {
                         return "content.css"
@@ -21,7 +27,10 @@ export default defineConfig({
             },
         },
         minify: false,
-        sourcemap: true,
+        sourcemap: false, // Disable sourcemap for now to simplify
+        commonjsOptions: {
+            include: [/node_modules/],
+        },
     },
     resolve: {
         alias: {

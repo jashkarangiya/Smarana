@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/accordion"
 
 export const metadata: Metadata = {
-    title: "FAQ • Smarana",
+    title: "FAQ",
     description: "Frequently asked questions about Smarana.",
 };
 

@@ -1,4 +1,5 @@
-import { getAuthStatus, connect, disconnect } from "../lib/messaging"
+import { connect } from "../lib/messaging"
+import { getAuth, clearAuth, onAuthChanged } from "../lib/auth-store"
 
 const DASHBOARD_URL = "https://smarana.vercel.app/dashboard"
 const SETTINGS_URL = "https://smarana.vercel.app/profile"
@@ -8,10 +9,10 @@ async function init() {
     if (!content) return
 
     try {
-        const status = await getAuthStatus()
+        const auth = await getAuth()
 
-        if (status.isAuthenticated) {
-            renderConnected(content, status.user)
+        if (auth) {
+            renderConnected(content, auth.user)
         } else {
             renderNotConnected(content)
         }
@@ -187,8 +188,8 @@ async function handleDisconnect() {
     `
 
     try {
-        await disconnect()
-        renderNotConnected(content)
+        await clearAuth()
+        // renderNotConnected will be called by onAuthChanged listener
     } catch (error) {
         console.error("[Smarana Popup] Disconnect error:", error)
         init()
@@ -209,11 +210,9 @@ function getInitials(name: string): string {
     return name.slice(0, 2).toUpperCase()
 }
 
-// Listen for auth success from background
-chrome.runtime.onMessage.addListener((message) => {
-    if (message.type === "AUTH_SUCCESS") {
-        init()
-    }
+// Listen for auth changes (syncs with overlay/background)
+onAuthChanged((auth) => {
+    init()
 })
 
 // Initialize on load
