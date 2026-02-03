@@ -1,8 +1,10 @@
 import { defineConfig } from "vite"
 import { resolve } from "path"
-import { copyFileSync, existsSync, mkdirSync, renameSync } from "fs"
+import { copyFileSync, existsSync, readFileSync, writeFileSync } from "fs"
 
 export default defineConfig({
+    // Use relative paths for Chrome extension compatibility
+    base: "./",
     build: {
         outDir: "dist",
         emptyOutDir: true,
@@ -42,12 +44,17 @@ export default defineConfig({
             name: "fix-popup-html-location",
             closeBundle() {
                 // Move popup.html from src/popup/ subdirectory to root of dist
+                // and fix the relative paths
                 const srcPath = resolve(__dirname, "dist/src/popup/popup.html")
                 const destPath = resolve(__dirname, "dist/popup.html")
 
                 if (existsSync(srcPath)) {
-                    copyFileSync(srcPath, destPath)
-                    console.log("Copied popup.html to dist root")
+                    let html = readFileSync(srcPath, "utf-8")
+                    // Fix paths from ../../ to ./
+                    html = html.replace(/src="\.\.\/\.\.\//g, 'src="./')
+                    html = html.replace(/href="\.\.\/\.\.\//g, 'href="./')
+                    writeFileSync(destPath, html)
+                    console.log("Copied popup.html to dist root with fixed paths")
                 }
             },
         },

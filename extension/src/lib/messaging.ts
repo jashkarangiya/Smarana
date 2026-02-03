@@ -1,6 +1,8 @@
 import type { Platform } from "./platform"
 import type { ProblemData } from "./api"
 
+import type { ProblemResponse as ApiProblemResponse } from "./api"
+
 // Message types for communication between content script and background
 export type MessageType =
     | { type: "GET_AUTH_STATUS" }
@@ -17,11 +19,7 @@ export type AuthStatusResponse = {
     }
 }
 
-export type ProblemResponse = {
-    found: boolean
-    problem: ProblemData | null
-    error?: string
-}
+export type ProblemResponse = ApiProblemResponse
 
 export type ConnectResponse = {
     success: boolean

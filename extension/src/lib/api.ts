@@ -13,6 +13,7 @@ export interface ProblemData {
     platform: string
     slug: string
     notes: string
+    url: string
     solution: string | null
     nextReviewAt: string | null
     reviewCount: number
@@ -22,8 +23,24 @@ export interface ProblemData {
 }
 
 export interface ProblemResponse {
-    found: boolean
-    problem: ProblemData | null
+    tracked: boolean
+    platform: string
+    slug: string
+
+    // Problem fields (present if tracked is true)
+    id?: string
+    title?: string
+    difficulty?: string
+    url?: string
+    notes?: string
+    solution?: string | null
+    nextReviewAt?: string | null
+    reviewCount?: number
+    interval?: number
+    lastReviewedAt?: string | null
+    smaranaUrl?: string
+
+    error?: string // For potential error handling
 }
 
 export interface AuthTokens {

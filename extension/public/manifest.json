@@ -3,7 +3,7 @@
   "name": "Smarana",
   "version": "0.1.0",
   "description": "Review your solved coding problems with spaced repetition",
-  "permissions": ["storage"],
+  "permissions": ["storage", "tabs"],
   "host_permissions": [
     "https://smarana.vercel.app/*",
     "http://localhost:3000/*"

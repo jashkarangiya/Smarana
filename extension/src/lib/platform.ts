@@ -10,7 +10,7 @@ export interface ProblemContext {
  */
 export function getProblemContext(url: string): ProblemContext | null {
     // LeetCode: leetcode.com/problems/<slug>/...
-    const lc = url.match(/leetcode\.com\/problems\/([^\/?#]+)/i)
+    const lc = url.match(/leetcode\.com\/problems\/([^\/?#]+)(?:\/|$)/i)
     if (lc) {
         return { platform: "leetcode", slug: lc[1].toLowerCase() }
     }

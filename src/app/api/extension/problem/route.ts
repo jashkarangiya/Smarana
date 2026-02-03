@@ -50,7 +50,6 @@ export async function GET(request: Request) {
             where: { id: auth.userId },
             select: {
                 showSolutionInExtension: true,
-                username: true,
             },
         })
 
@@ -71,8 +70,6 @@ export async function GET(request: Request) {
                 id: true,
                 title: true,
                 difficulty: true,
-                platform: true,
-                problemSlug: true,
                 url: true,
                 notes: true,
                 solution: true,
@@ -83,10 +80,19 @@ export async function GET(request: Request) {
             },
         })
 
+        // Not tracked in Smarana yet → return a clean empty shape
         if (!problem) {
             return NextResponse.json({
-                found: false,
-                problem: null,
+                tracked: false,
+                platform,
+                slug,
+                title: null,
+                difficulty: null,
+                url: null,
+                notes: "",
+                solution: null,
+                // Additional fields to match the shape if needed on frontend
+                smaranaUrl: null,
             })
         }
 
@@ -100,21 +106,20 @@ export async function GET(request: Request) {
         const smaranaUrl = `${process.env.NEXTAUTH_URL || "https://smarana.app"}/problems/${problem.id}`
 
         return NextResponse.json({
-            found: true,
-            problem: {
-                id: problem.id,
-                title: problem.title,
-                difficulty: problem.difficulty,
-                platform: problem.platform,
-                slug: problem.problemSlug,
-                notes: decryptedNotes || "",
-                solution: decryptedSolution,
-                nextReviewAt: problem.nextReviewAt?.toISOString() || null,
-                reviewCount: problem.reviewCount,
-                interval: problem.interval,
-                lastReviewedAt: problem.lastReviewedAt?.toISOString() || null,
-                smaranaUrl,
-            },
+            tracked: true,
+            platform,
+            slug,
+            id: problem.id,
+            title: problem.title,
+            difficulty: problem.difficulty,
+            url: problem.url,
+            notes: decryptedNotes || "",
+            solution: decryptedSolution,
+            nextReviewAt: problem.nextReviewAt?.toISOString() || null,
+            reviewCount: problem.reviewCount,
+            interval: problem.interval,
+            lastReviewedAt: problem.lastReviewedAt?.toISOString() || null,
+            smaranaUrl,
         })
     } catch (error) {
         console.error("Extension problem fetch error:", error)

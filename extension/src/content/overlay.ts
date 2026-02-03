@@ -1,617 +1,463 @@
 import type { ProblemData } from "../lib/api"
-import { getDifficultyColor, getPlatformName, type Platform } from "../lib/platform"
+import { getDifficultyColor, getPlatformName, type Platform, type ProblemContext } from "../lib/platform"
+import { OVERLAY_CSS } from "./overlay-css"
 
-const OVERLAY_ID = "smarana-overlay"
 const EMBER_ORANGE = "#BB7331"
-const DARK_BG = "#1a1a1a"
-const DARK_CARD = "#252525"
+const SMARANA_URL = "https://smarana.vercel.app"
+const LOGO_URL = chrome.runtime.getURL("icons/icon48.png")
 
-export type OverlayState =
-    | { type: "loading" }
-    | { type: "not-connected"; onConnect: () => void }
-    | { type: "not-tracked"; platform: string; slug: string }
-    | { type: "problem"; problem: ProblemData }
-    | { type: "error"; message: string }
+export class SmaranaOverlay {
+    private host: HTMLElement
+    private shadow: ShadowRoot
+    private app: HTMLElement
+    private isExpanded: boolean = false
+    private currentContext: ProblemContext | null = null
+    private currentData: any = null
 
-let currentState: OverlayState | null = null
-let isCollapsed = false
+    // Default position (top-left by default, but updated by dragging)
+    private pos = { x: 16, y: 16 }
 
-/**
- * Create the overlay container if it doesn't exist
- */
-export function createOverlay(): void {
-    if (document.getElementById(OVERLAY_ID)) {
-        return
+    constructor() {
+        this.host = document.createElement("div")
+        this.host.id = "smarana-root"
+        // Initial style hidden to prevent flash before position load
+        this.host.style.cssText = `
+            position: fixed !important;
+            z-index: 2147483647 !important;
+            left: 16px !important;
+            top: 16px !important;
+            visibility: hidden !important; 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+            filter: drop-shadow(0 4px 24px rgba(0, 0, 0, 0.4));
+        `
+
+        this.shadow = this.host.attachShadow({ mode: "closed" })
+
+        const style = document.createElement("style")
+        style.textContent = OVERLAY_CSS
+        this.shadow.appendChild(style)
+
+        this.app = document.createElement("div")
+        this.app.className = "smarana-app"
+        this.shadow.appendChild(this.app)
+
+        document.documentElement.appendChild(this.host)
+
+        this.loadPosition()
     }
 
-    const overlay = document.createElement("div")
-    overlay.id = OVERLAY_ID
-    overlay.innerHTML = getOverlayHTML({ type: "loading" })
+    private async loadPosition() {
+        try {
+            const result = await chrome.storage.local.get(["smarana_overlay_pos"])
+            if (result.smarana_overlay_pos) {
+                this.pos = result.smarana_overlay_pos
+            }
+        } catch (e) {
+            console.error("[Smarana] Failed to load position", e)
+        }
 
-    // Add styles
-    const styles = document.createElement("style")
-    styles.textContent = getOverlayStyles()
-    overlay.appendChild(styles)
-
-    document.body.appendChild(overlay)
-
-    // Make it draggable
-    makeDraggable(overlay)
-}
-
-/**
- * Update the overlay content
- */
-export function updateOverlay(state: OverlayState): void {
-    const overlay = document.getElementById(OVERLAY_ID)
-    if (!overlay) {
-        createOverlay()
-        return updateOverlay(state)
+        this.updatePosition()
+        this.host.style.visibility = "visible"
     }
 
-    currentState = state
-
-    // Find the content container
-    const content = overlay.querySelector(".smarana-content")
-    if (content) {
-        content.innerHTML = getContentHTML(state)
-        attachEventListeners(overlay, state)
+    private updatePosition() {
+        this.host.style.left = `${this.pos.x}px`
+        this.host.style.top = `${this.pos.y}px`
     }
-}
 
-/**
- * Remove the overlay from the page
- */
-export function removeOverlay(): void {
-    const overlay = document.getElementById(OVERLAY_ID)
-    if (overlay) {
-        overlay.remove()
+    // --- Public API ---
+
+    setLoading(context: ProblemContext) {
+        this.currentContext = context
+        this.currentData = null
+        this.renderState("loading")
     }
-    currentState = null
-}
 
-/**
- * Toggle collapsed state
- */
-function toggleCollapsed(): void {
-    isCollapsed = !isCollapsed
-    const overlay = document.getElementById(OVERLAY_ID)
-    if (overlay) {
-        overlay.classList.toggle("smarana-collapsed", isCollapsed)
+    setNotConnected(context: ProblemContext, onConnect: () => void) {
+        this.currentContext = context
+        this.currentData = { onConnect }
+        this.renderState("not-connected")
     }
-}
 
-/**
- * Get the full overlay HTML structure
- */
-function getOverlayHTML(state: OverlayState): string {
-    return `
-        <div class="smarana-header">
-            <div class="smarana-logo">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${EMBER_ORANGE}" stroke-width="2">
-                    <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
-                    <path d="M2 17l10 5 10-5"></path>
-                    <path d="M2 12l10 5 10-5"></path>
-                </svg>
-                <span>Smarana</span>
-            </div>
-            <button class="smarana-toggle" aria-label="Toggle overlay">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M18 15l-6-6-6 6"></path>
-                </svg>
-            </button>
-        </div>
-        <div class="smarana-content">
-            ${getContentHTML(state)}
-        </div>
-    `
-}
-
-/**
- * Get the content HTML based on state
- */
-function getContentHTML(state: OverlayState): string {
-    switch (state.type) {
-        case "loading":
-            return `
-                <div class="smarana-loading">
-                    <div class="smarana-spinner"></div>
-                    <span>Loading...</span>
-                </div>
-            `
-
-        case "not-connected":
-            return `
-                <div class="smarana-empty">
-                    <p>Connect to see your notes and track this problem</p>
-                    <button class="smarana-btn smarana-btn-primary smarana-connect-btn">
-                        Connect Smarana
-                    </button>
-                </div>
-            `
-
-        case "not-tracked":
-            return `
-                <div class="smarana-empty">
-                    <p>This problem is not in your Smarana list</p>
-                    <a href="https://smarana.app/add" target="_blank" class="smarana-btn smarana-btn-secondary">
-                        Add to Smarana
-                    </a>
-                </div>
-            `
-
-        case "problem":
-            return getProblemHTML(state.problem)
-
-        case "error":
-            return `
-                <div class="smarana-error">
-                    <span>${state.message}</span>
-                </div>
-            `
-
-        default:
-            return ""
+    setNotTracked(context: ProblemContext) {
+        this.currentContext = context
+        this.currentData = null
+        this.renderState("not-tracked")
     }
-}
 
-/**
- * Get the HTML for a tracked problem
- */
-function getProblemHTML(problem: ProblemData): string {
-    const diffColor = getDifficultyColor(problem.difficulty)
-    const reviewStatus = getReviewStatus(problem)
+    setProblem(context: ProblemContext, problem: ProblemData, onRefresh: () => void) {
+        this.currentContext = context
+        this.currentData = { problem, onRefresh }
+        this.renderState("problem")
+    }
 
-    let notesSection = ""
-    if (problem.notes && problem.notes.trim()) {
-        notesSection = `
-            <div class="smarana-section">
-                <div class="smarana-section-header">Notes</div>
-                <div class="smarana-notes">${escapeHtml(problem.notes)}</div>
+    setError(context: ProblemContext, message: string, onRetry: () => void) {
+        this.currentContext = context
+        this.currentData = { message, onRetry }
+        this.renderState("error")
+    }
+
+    destroy() {
+        this.host.remove()
+    }
+
+    // --- Rendering ---
+
+    private renderState(state: string) {
+        if (this.isExpanded) {
+            this.renderPanel(state, this.currentData)
+        } else {
+            this.renderBubble(state, this.currentData)
+        }
+    }
+
+    private renderBubble(state: string, data?: any) {
+        const statusIndicator = this.getStatusIndicator(state, data)
+
+        this.app.innerHTML = `
+            <div class="bubble" role="button" aria-label="Open Smarana">
+                <img src="${LOGO_URL}" width="24" height="24" class="bubble-logo" alt="Smarana">
+                ${statusIndicator}
             </div>
         `
-    }
 
-    let solutionSection = ""
-    if (problem.solution !== null) {
-        solutionSection = `
-            <div class="smarana-section">
-                <div class="smarana-section-header">
-                    <span>Solution</span>
-                    <button class="smarana-toggle-solution" data-show="false">Show</button>
-                </div>
-                <div class="smarana-solution" style="display: none;">
-                    <pre>${escapeHtml(problem.solution || "")}</pre>
-                </div>
-            </div>
-        `
-    }
+        const bubble = this.app.querySelector(".bubble") as HTMLElement
+        if (bubble) {
+            this.setupDraggable(bubble)
 
-    return `
-        <div class="smarana-problem">
-            <div class="smarana-problem-header">
-                <span class="smarana-difficulty" style="color: ${diffColor}">
-                    ${problem.difficulty}
-                </span>
-                <span class="smarana-reviews">
-                    ${problem.reviewCount} review${problem.reviewCount !== 1 ? "s" : ""}
-                </span>
-            </div>
-
-            <div class="smarana-status ${reviewStatus.class}">
-                ${reviewStatus.icon}
-                <span>${reviewStatus.text}</span>
-            </div>
-
-            ${notesSection}
-            ${solutionSection}
-
-            <a href="${problem.smaranaUrl}" target="_blank" class="smarana-btn smarana-btn-primary smarana-open-btn">
-                Open in Smarana
-            </a>
-        </div>
-    `
-}
-
-/**
- * Get review status info
- */
-function getReviewStatus(problem: ProblemData): { text: string; class: string; icon: string } {
-    if (!problem.nextReviewAt) {
-        return {
-            text: "Not scheduled",
-            class: "smarana-status-neutral",
-            icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"></circle>
-                <path d="M12 6v6l4 2"></path>
-            </svg>`,
-        }
-    }
-
-    const nextReview = new Date(problem.nextReviewAt)
-    const now = new Date()
-    const diffDays = Math.ceil((nextReview.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-
-    if (diffDays < 0) {
-        return {
-            text: "Review overdue!",
-            class: "smarana-status-overdue",
-            icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="8" x2="12" y2="12"></line>
-                <line x1="12" y1="16" x2="12.01" y2="16"></line>
-            </svg>`,
-        }
-    }
-
-    if (diffDays === 0) {
-        return {
-            text: "Due today",
-            class: "smarana-status-due",
-            icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"></circle>
-                <polyline points="12 6 12 12 16 14"></polyline>
-            </svg>`,
-        }
-    }
-
-    return {
-        text: `Due in ${diffDays} day${diffDays !== 1 ? "s" : ""}`,
-        class: "smarana-status-upcoming",
-        icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-            <line x1="16" y1="2" x2="16" y2="6"></line>
-            <line x1="8" y1="2" x2="8" y2="6"></line>
-            <line x1="3" y1="10" x2="21" y2="10"></line>
-        </svg>`,
-    }
-}
-
-/**
- * Attach event listeners to the overlay
- */
-function attachEventListeners(overlay: HTMLElement, state: OverlayState): void {
-    // Toggle button
-    const toggleBtn = overlay.querySelector(".smarana-toggle")
-    if (toggleBtn) {
-        toggleBtn.addEventListener("click", toggleCollapsed)
-    }
-
-    // Connect button
-    if (state.type === "not-connected") {
-        const connectBtn = overlay.querySelector(".smarana-connect-btn")
-        if (connectBtn) {
-            connectBtn.addEventListener("click", state.onConnect)
-        }
-    }
-
-    // Solution toggle
-    if (state.type === "problem") {
-        const toggleSolutionBtn = overlay.querySelector(".smarana-toggle-solution")
-        if (toggleSolutionBtn) {
-            toggleSolutionBtn.addEventListener("click", () => {
-                const solutionDiv = overlay.querySelector(".smarana-solution") as HTMLElement
-                const isShowing = toggleSolutionBtn.getAttribute("data-show") === "true"
-
-                if (solutionDiv) {
-                    solutionDiv.style.display = isShowing ? "none" : "block"
-                    toggleSolutionBtn.textContent = isShowing ? "Show" : "Hide"
-                    toggleSolutionBtn.setAttribute("data-show", isShowing ? "false" : "true")
-                }
+            // Handle click vs drag
+            // setupDraggable prevents click event propogation if dragged
+            bubble.addEventListener("click", () => {
+                this.isExpanded = true
+                this.renderPanel(state, data)
             })
         }
     }
-}
 
-/**
- * Make the overlay draggable
- */
-function makeDraggable(overlay: HTMLElement): void {
-    const header = overlay.querySelector(".smarana-header") as HTMLElement
-    if (!header) return
+    private renderPanel(state: string, data?: any) {
+        const platformName = this.currentContext ? getPlatformName(this.currentContext.platform) : ""
 
-    let isDragging = false
-    let startX = 0
-    let startY = 0
-    let startRight = 0
-    let startBottom = 0
+        // Generate content based on state
+        let content = ""
+        if (state === "loading") content = this.getLoadingContent()
+        else if (state === "not-connected") content = this.getNotConnectedContent()
+        else if (state === "not-tracked") content = this.getNotTrackedContent()
+        else if (state === "problem") content = this.getProblemContent(data.problem)
+        else if (state === "error") content = this.getErrorContent(data.message)
 
-    header.addEventListener("mousedown", (e) => {
-        // Don't drag if clicking a button
-        if ((e.target as HTMLElement).closest("button")) return
+        this.app.innerHTML = `
+            <div class="panel">
+                <div class="panel-header" title="Drag to move">
+                    <div class="panel-title">
+                        <img src="${LOGO_URL}" width="20" height="20" alt="Smarana">
+                        <span>Smarana</span>
+                        ${platformName ? `<span class="platform-badge">${platformName}</span>` : ""}
+                    </div>
+                    <button class="close-btn" aria-label="Close panel">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 6L6 18M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="panel-body">
+                    ${content}
+                </div>
+            </div>
+        `
 
-        isDragging = true
-        startX = e.clientX
-        startY = e.clientY
-
-        const rect = overlay.getBoundingClientRect()
-        startRight = window.innerWidth - rect.right
-        startBottom = window.innerHeight - rect.bottom
-
-        header.style.cursor = "grabbing"
-    })
-
-    document.addEventListener("mousemove", (e) => {
-        if (!isDragging) return
-
-        const deltaX = startX - e.clientX
-        const deltaY = startY - e.clientY
-
-        const newRight = Math.max(0, startRight + deltaX)
-        const newBottom = Math.max(0, startBottom + deltaY)
-
-        overlay.style.right = `${newRight}px`
-        overlay.style.bottom = `${newBottom}px`
-    })
-
-    document.addEventListener("mouseup", () => {
-        isDragging = false
-        header.style.cursor = "grab"
-    })
-}
-
-/**
- * Escape HTML to prevent XSS
- */
-function escapeHtml(text: string): string {
-    const div = document.createElement("div")
-    div.textContent = text
-    return div.innerHTML
-}
-
-/**
- * Get the overlay styles
- */
-function getOverlayStyles(): string {
-    return `
-        #${OVERLAY_ID} {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 320px;
-            max-height: 500px;
-            background: ${DARK_BG};
-            border: 1px solid #333;
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            font-size: 14px;
-            color: #e0e0e0;
-            z-index: 999999;
-            overflow: hidden;
-            transition: max-height 0.2s ease;
+        // Draggable Header
+        const header = this.app.querySelector(".panel-header") as HTMLElement
+        if (header) {
+            this.setupDraggable(header)
         }
 
-        #${OVERLAY_ID}.smarana-collapsed {
-            max-height: 44px;
+        // Close logic
+        const closeBtn = this.app.querySelector(".close-btn")
+        closeBtn?.addEventListener("click", () => {
+            this.isExpanded = false
+            this.renderBubble(state, data)
+        })
+
+        // Interactive Handlers
+        if (state === "not-connected" && data?.onConnect) {
+            this.app.querySelector(".connect-btn")?.addEventListener("click", data.onConnect)
         }
 
-        #${OVERLAY_ID}.smarana-collapsed .smarana-content {
-            display: none;
+        if (state === "problem" && data?.problem) {
+            // Solution toggle
+            const toggleBtn = this.app.querySelector(".solution-toggle")
+            const solutionContent = this.app.querySelector(".solution-content") as HTMLElement
+            if (toggleBtn && solutionContent) {
+                toggleBtn.addEventListener("click", () => {
+                    const isHidden = solutionContent.style.display === "none"
+                    solutionContent.style.display = isHidden ? "block" : "none"
+                    toggleBtn.textContent = isHidden ? "Hide" : "Reveal"
+                })
+            }
+
+            // Refresh
+            if (data.onRefresh) {
+                this.app.querySelector(".refresh-btn")?.addEventListener("click", data.onRefresh)
+            }
         }
 
-        #${OVERLAY_ID}.smarana-collapsed .smarana-toggle svg {
-            transform: rotate(180deg);
+        if (state === "error" && data?.onRetry) {
+            this.app.querySelector(".retry-btn")?.addEventListener("click", data.onRetry)
+        }
+    }
+
+    // --- Draggable Logic ---
+
+    private setupDraggable(element: HTMLElement) {
+        let startX = 0
+        let startY = 0
+        let startPos = { x: 0, y: 0 }
+        let isDragging = false
+
+        const onDown = (e: PointerEvent) => {
+            if (e.button !== 0) return // Only Left Click
+
+            isDragging = false
+            startX = e.clientX
+            startY = e.clientY
+            startPos = { ...this.pos }
+
+            element.setPointerCapture(e.pointerId)
+
+            element.addEventListener("pointermove", onMove)
+            element.addEventListener("pointerup", onUp)
+            element.addEventListener("pointercancel", onUp)
         }
 
-        .smarana-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 16px;
-            background: ${DARK_CARD};
-            border-bottom: 1px solid #333;
-            cursor: grab;
+        const onMove = (e: PointerEvent) => {
+            const dx = e.clientX - startX
+            const dy = e.clientY - startY
+
+            // Drag threshold
+            if (!isDragging && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
+                isDragging = true
+                // Prevent selection/etc
+                element.style.cursor = "grabbing"
+            }
+
+            if (!isDragging) return
+
+            // Update position
+            let nx = startPos.x + dx
+            let ny = startPos.y + dy
+
+            // Clamp to viewport
+            const winW = window.innerWidth
+            const winH = window.innerHeight
+
+            // Estimate element size if needed, or just clamp reasonably
+            // We want at least some part visible
+            nx = Math.max(-20, Math.min(winW - 40, nx))
+            ny = Math.max(-20, Math.min(winH - 40, ny))
+
+            this.pos = { x: nx, y: ny }
+            this.updatePosition()
         }
 
-        .smarana-logo {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: 600;
-            color: ${EMBER_ORANGE};
+        const onUp = (e: PointerEvent) => {
+            element.releasePointerCapture(e.pointerId)
+            element.style.cursor = ""
+
+            element.removeEventListener("pointermove", onMove)
+            element.removeEventListener("pointerup", onUp)
+            element.removeEventListener("pointercancel", onUp)
+
+            if (isDragging) {
+                chrome.storage.local.set({ smarana_overlay_pos: this.pos })
+
+                // Prevent the click event that follows
+                const stopClick = (ev: Event) => {
+                    ev.stopPropagation()
+                    ev.preventDefault()
+                    element.removeEventListener("click", stopClick, { capture: true })
+                }
+                element.addEventListener("click", stopClick, { capture: true })
+            }
         }
 
-        .smarana-toggle {
-            background: none;
-            border: none;
-            color: #888;
-            cursor: pointer;
-            padding: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: color 0.2s;
+        element.addEventListener("pointerdown", onDown)
+    }
+
+    // --- Content Generators ---
+
+    private getLoadingContent(): string {
+        return `
+            <div class="loading-state">
+                <div class="spinner"></div>
+                <span>Loading...</span>
+            </div>
+        `
+    }
+
+    private getNotConnectedContent(): string {
+        return `
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                        <polyline points="10 17 15 12 10 7"></polyline>
+                        <line x1="15" y1="12" x2="3" y2="12"></line>
+                    </svg>
+                </div>
+                <p class="empty-title">Connect to Smarana</p>
+                <p class="empty-desc">See your notes and track review progress</p>
+                <button class="btn btn-primary connect-btn">Connect Account</button>
+            </div>
+        `
+    }
+
+    private getNotTrackedContent(): string {
+        return `
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M12 8v4"></path>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                </div>
+                <p class="empty-title">Not in your list</p>
+                <p class="empty-desc">This problem isn't being tracked yet</p>
+                <a href="${SMARANA_URL}/dashboard" target="_blank" class="btn btn-primary">Open Smarana</a>
+            </div>
+        `
+    }
+
+    private getProblemContent(problem: ProblemData): string {
+        const diffColor = getDifficultyColor(problem.difficulty)
+        const reviewStatus = this.getReviewStatus(problem)
+
+        const notesHtml = problem.notes && problem.notes.trim()
+            ? this.escapeHtml(problem.notes)
+            : `<span class="block-content-hidden">No notes saved.</span>`
+
+        let solutionHtml = ""
+        if (problem.solution === null) {
+            solutionHtml = `<div class="block-content-hidden">Solution hidden by your settings.</div>`
+        } else if (!problem.solution || !problem.solution.trim()) {
+            solutionHtml = `<div class="block-content-hidden">No solution saved.</div>`
+        } else {
+            solutionHtml = `<pre>${this.escapeHtml(problem.solution)}</pre>`
         }
 
-        .smarana-toggle:hover {
-            color: #fff;
+        const solutionHeaderExtra = problem.solution !== null && problem.solution?.trim()
+            ? `<button class="solution-toggle">Reveal</button>`
+            : ""
+
+        const solutionDisplay = "none"
+
+        return `
+            <div class="problem-content">
+                <div class="problem-info-header">
+                    <span class="difficulty" style="color: ${diffColor}">${problem.difficulty}</span>
+                    <span class="review-count">Repetition ${problem.reviewCount}</span>
+                </div>
+            
+                <div class="status-badge ${reviewStatus.class}">
+                    ${reviewStatus.icon}
+                    <span>${reviewStatus.text}</span>
+                </div>
+
+                <div class="block">
+                    <div class="block-header"><span>Notes</span></div>
+                    <div class="block-content">${notesHtml}</div>
+                </div>
+
+                <div class="block">
+                    <div class="block-header">
+                        <span>Solution</span>
+                        ${solutionHeaderExtra}
+                    </div>
+                    <div class="block-content solution-content" style="display: ${solutionDisplay}">
+                        ${solutionHtml}
+                    </div>
+                </div>
+
+                <div class="panel-footer">
+                    <a href="${problem.smaranaUrl}" target="_blank" class="btn btn-primary open-btn">Open in Smarana</a>
+                     <button class="btn btn-ghost refresh-btn" title="Refresh">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M23 4v6h-6"></path>
+                            <path d="M1 20v-6h6"></path>
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        `
+    }
+
+    private getErrorContent(message: string): string {
+        return `
+            <div class="empty-state">
+                 <div class="empty-icon error-text">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="15" y1="9" x2="9" y2="15"></line>
+                        <line x1="9" y1="9" x2="15" y2="15"></line>
+                    </svg>
+                </div>
+                <p class="empty-title error-text">Something went wrong</p>
+                <p class="empty-desc">${this.escapeHtml(message)}</p>
+                <button class="btn btn-secondary retry-btn">Try Again</button>
+            </div>
+        `
+    }
+
+    private getStatusIndicator(state: string, data?: any): string {
+        if (state === "loading") return `<span class="bubble-status bubble-status-loading"></span>`
+        if (state === "not-connected") return `<span class="bubble-status bubble-status-warning"></span>`
+
+        if (state === "problem" && data?.problem) {
+            const p = data.problem as ProblemData
+            // Check overdue
+            if (p.nextReviewAt) {
+                const nextReview = new Date(p.nextReviewAt)
+                const now = new Date()
+                if (nextReview <= now) return `<span class="bubble-status bubble-status-due"></span>`
+            }
+            return `<span class="bubble-status bubble-status-ok"></span>`
+        }
+        return ""
+    }
+
+    private getReviewStatus(problem: ProblemData): { text: string; class: string; icon: string } {
+        if (!problem.nextReviewAt) {
+            return {
+                text: "Not scheduled",
+                class: "status-neutral",
+                icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>`
+            }
         }
 
-        .smarana-toggle svg {
-            transition: transform 0.2s;
+        const nextReview = new Date(problem.nextReviewAt)
+        const now = new Date()
+        const diffTime = nextReview.getTime() - now.getTime()
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+        if (diffDays <= 0) {
+            return {
+                text: "Review available now",
+                class: "status-due",
+                icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`
+            }
         }
 
-        .smarana-content {
-            padding: 16px;
-            overflow-y: auto;
-            max-height: 400px;
+        return {
+            text: `Due in ${diffDays} day${diffDays !== 1 ? "s" : ""}`,
+            class: "status-upcoming",
+            icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>`
         }
+    }
 
-        .smarana-loading {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            padding: 24px;
-            color: #888;
-        }
-
-        .smarana-spinner {
-            width: 20px;
-            height: 20px;
-            border: 2px solid #333;
-            border-top-color: ${EMBER_ORANGE};
-            border-radius: 50%;
-            animation: smarana-spin 0.8s linear infinite;
-        }
-
-        @keyframes smarana-spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .smarana-empty {
-            text-align: center;
-            padding: 16px 0;
-        }
-
-        .smarana-empty p {
-            margin: 0 0 16px;
-            color: #888;
-        }
-
-        .smarana-error {
-            color: #ff6b6b;
-            text-align: center;
-            padding: 16px 0;
-        }
-
-        .smarana-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 10px 16px;
-            border-radius: 8px;
-            font-weight: 500;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-decoration: none;
-            border: none;
-        }
-
-        .smarana-btn-primary {
-            background: ${EMBER_ORANGE};
-            color: #fff;
-        }
-
-        .smarana-btn-primary:hover {
-            background: #d4843a;
-        }
-
-        .smarana-btn-secondary {
-            background: ${DARK_CARD};
-            color: #e0e0e0;
-            border: 1px solid #444;
-        }
-
-        .smarana-btn-secondary:hover {
-            background: #333;
-        }
-
-        .smarana-problem-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 12px;
-        }
-
-        .smarana-difficulty {
-            font-weight: 600;
-        }
-
-        .smarana-reviews {
-            color: #888;
-            font-size: 12px;
-        }
-
-        .smarana-status {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 12px;
-            border-radius: 8px;
-            font-size: 13px;
-            margin-bottom: 16px;
-        }
-
-        .smarana-status-overdue {
-            background: rgba(255, 107, 107, 0.15);
-            color: #ff6b6b;
-        }
-
-        .smarana-status-due {
-            background: rgba(255, 192, 30, 0.15);
-            color: #ffc01e;
-        }
-
-        .smarana-status-upcoming {
-            background: rgba(0, 184, 163, 0.15);
-            color: #00b8a3;
-        }
-
-        .smarana-status-neutral {
-            background: rgba(136, 136, 136, 0.15);
-            color: #888;
-        }
-
-        .smarana-section {
-            margin-bottom: 16px;
-        }
-
-        .smarana-section-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-size: 12px;
-            font-weight: 600;
-            color: #888;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
-        }
-
-        .smarana-toggle-solution {
-            background: none;
-            border: none;
-            color: ${EMBER_ORANGE};
-            cursor: pointer;
-            font-size: 12px;
-            padding: 0;
-        }
-
-        .smarana-toggle-solution:hover {
-            text-decoration: underline;
-        }
-
-        .smarana-notes {
-            background: ${DARK_CARD};
-            border-radius: 8px;
-            padding: 12px;
-            font-size: 13px;
-            line-height: 1.5;
-            white-space: pre-wrap;
-            word-break: break-word;
-        }
-
-        .smarana-solution {
-            background: ${DARK_CARD};
-            border-radius: 8px;
-            padding: 12px;
-            overflow-x: auto;
-        }
-
-        .smarana-solution pre {
-            margin: 0;
-            font-family: 'Fira Code', 'Monaco', monospace;
-            font-size: 12px;
-            line-height: 1.5;
-            white-space: pre-wrap;
-            word-break: break-word;
-        }
-
-        .smarana-open-btn {
-            width: 100%;
-        }
-    `
+    private escapeHtml(text: string): string {
+        const div = document.createElement("div")
+        div.textContent = text
+        return div.innerHTML
+    }
 }
