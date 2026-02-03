@@ -19,8 +19,9 @@ import {
     Tooltip,
     ReferenceLine,
 } from "recharts";
-import { Trophy, TrendingUp, TrendingDown, Award, Target } from "lucide-react";
+import { Trophy, TrendingUp, TrendingDown, Award, Target, RefreshCcw } from "lucide-react";
 import { format } from "date-fns";
+import { toast } from "sonner"; // Assuming sonner is installed, or use basic alert/toast
 
 interface ContestResult {
     date: string;
@@ -57,6 +58,8 @@ export function ContestRatingChart() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    const [syncing, setSyncing] = useState(false);
+
     useEffect(() => {
         fetchContestData();
     }, []);
@@ -71,6 +74,25 @@ export function ContestRatingChart() {
             setError(err instanceof Error ? err.message : "Failed to load");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleSync = async () => {
+        setSyncing(true);
+        try {
+            const res = await fetch("/api/insights/sync", { method: "POST" });
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+                // Refresh data
+                await fetchContestData();
+            } else {
+                console.error("Sync failed", data);
+            }
+        } catch (error) {
+            console.error("Sync error", error);
+        } finally {
+            setSyncing(false);
         }
     };
 
@@ -124,6 +146,14 @@ export function ContestRatingChart() {
                             Your rating history across platforms
                         </CardDescription>
                     </div>
+                    <button
+                        onClick={handleSync}
+                        disabled={syncing}
+                        className="p-2 hover:bg-muted rounded-full transition-colors disabled:opacity-50"
+                        title="Sync ratings"
+                    >
+                        <RefreshCcw className={`h-4 w-4 text-muted-foreground ${syncing ? "animate-spin" : ""}`} />
+                    </button>
                 </div>
             </CardHeader>
 
@@ -157,8 +187,8 @@ export function ContestRatingChart() {
                             metrics.ratingChange30d === null
                                 ? undefined
                                 : metrics.ratingChange30d >= 0
-                                ? "text-green-500"
-                                : "text-red-500"
+                                    ? "text-green-500"
+                                    : "text-red-500"
                         }
                     />
                 </div>
