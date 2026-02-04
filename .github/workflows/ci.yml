@@ -60,6 +60,7 @@ jobs:
         env:
            # Build needs minimal env to pass, usually not DB unless typegen
            NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+           DATABASE_URL: "postgresql://neondb_owner:npg_VAo2smRCk3ZI@ep-lucky-sun-ah00x406-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=requires"
       - name: Run Playwright tests
         run: npx playwright test
         env:

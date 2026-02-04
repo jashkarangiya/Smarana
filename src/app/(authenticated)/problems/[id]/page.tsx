@@ -81,20 +81,32 @@ export default function ProblemDetailPage() {
     })
 
     // Parse notes into sections
+    // Parse notes into sections
     useEffect(() => {
         if (problem?.notes) {
             try {
                 const parsed = JSON.parse(problem.notes)
-                setNotes(parsed.notes || "")
-                setRecallPrompts(parsed.recallPrompts || "")
-                setPitfalls(parsed.pitfalls || "")
+                const newNotes = parsed.notes || ""
+                const newRecall = parsed.recallPrompts || ""
+                const newPitfalls = parsed.pitfalls || ""
+
+                setNotes(prev => prev !== newNotes ? newNotes : prev)
+                setRecallPrompts(prev => prev !== newRecall ? newRecall : prev)
+                setPitfalls(prev => prev !== newPitfalls ? newPitfalls : prev)
             } catch {
                 // Legacy plain text notes
-                setNotes(problem.notes || "")
+                const legacy = problem.notes || ""
+                setNotes(prev => prev !== legacy ? legacy : prev)
             }
+        } else if (problem && !problem.notes) {
+            // Handle case where notes are null/empty, ensuring state is cleared if needed
+            setNotes(prev => prev !== "" ? "" : prev)
+            setRecallPrompts(prev => prev !== "" ? "" : prev)
+            setPitfalls(prev => prev !== "" ? "" : prev)
         }
+
         if (problem?.solution) {
-            setSolution(problem.solution)
+            setSolution(prev => prev !== problem.solution ? problem.solution! : prev)
         }
     }, [problem])
 

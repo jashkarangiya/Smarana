@@ -57,7 +57,7 @@ export default function ProblemsPage() {
         if (filtersParam) {
             try {
                 const parsed = JSON.parse(atob(filtersParam))
-                setFilterGroup(parsed)
+                setFilterGroup(prev => JSON.stringify(prev) !== JSON.stringify(parsed) ? parsed : prev)
             } catch (e) { console.error("Failed to parse URL filters") }
         } else if (filterParam === "due") {
             // Convert legacy "due" to new filter system
