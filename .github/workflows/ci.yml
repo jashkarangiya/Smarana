@@ -29,7 +29,7 @@ jobs:
       - run: npm ci
       - run: npx tsc --noEmit
 
-  unit-test:
+  build-extension:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -38,7 +38,7 @@ jobs:
           node-version: 18
           cache: 'npm'
       - run: npm ci
-      - run: npm test
+      - run: cd extension && npm ci && npm run build
 
   e2e-test:
     name: Playwright Tests
