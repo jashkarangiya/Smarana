@@ -46,7 +46,7 @@ export default function LandingPage() {
             </div>
             <div className="absolute bottom-32 left-[20%] animate-float opacity-15">
               <div className="bg-card border border-border/50 rounded-lg p-2 sm:p-3 shadow-lg">
-                <code className="text-[10px] sm:text-xs text-rose-400">// Binary Search</code>
+                <code className="text-[10px] sm:text-xs text-rose-400">{"// Binary Search"}</code>
               </div>
             </div>
             <div className="absolute bottom-40 right-[10%] animate-float-delayed opacity-15">

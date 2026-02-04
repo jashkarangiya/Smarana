@@ -20,7 +20,7 @@ import { tipForUserTodayWithMix } from "@/lib/daily-tips"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Link from "next/link"
 import { toast } from "sonner"
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect } from "react"
 import { motion } from "framer-motion"
 
 export default function DashboardPage() {
@@ -379,9 +379,15 @@ function DifficultyBar({ label, count, total, color }: { label: string, count: n
 function MotivationalTip() {
     const { data: user } = useUser()
 
-    const tip = useMemo(() => {
-        if (!user?.id) return null
-        return tipForUserTodayWithMix(user.id)
+    const [tip, setTip] = useState<any>(null)
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    useEffect(() => {
+        if (!user?.id) {
+            setTip(null)
+            return
+        }
+        setTip(tipForUserTodayWithMix(user.id))
     }, [user?.id])
 
     if (!tip) return null
@@ -409,7 +415,7 @@ function MotivationalTip() {
                         <p className="text-sm leading-relaxed text-white/90">{tip.text}</p>
                         {tip.tags && tip.tags.length > 0 && (
                             <div className="flex gap-1.5 mt-2">
-                                {tip.tags.slice(0, 3).map(tag => (
+                                {tip.tags.slice(0, 3).map((tag: string) => (
                                     <span key={tag} className="text-[10px] text-white/40 bg-white/5 px-1.5 py-0.5 rounded">
                                         #{tag}
                                     </span>

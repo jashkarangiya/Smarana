@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -64,7 +64,9 @@ export default function ProblemDetailPage() {
     const [recallPrompts, setRecallPrompts] = useState("")
     const [pitfalls, setPitfalls] = useState("")
     const [solution, setSolution] = useState("")
-    const [hasChanges, setHasChanges] = useState(false)
+
+    // Derived state for changes (calculated during render)
+    // We don't use useState for this to avoid synchronization effects
 
     // Expand dialogs
     const [notesExpanded, setNotesExpanded] = useState(false)
@@ -82,6 +84,7 @@ export default function ProblemDetailPage() {
 
     // Parse notes into sections
     // Parse notes into sections
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         if (problem?.notes) {
             try {
@@ -110,9 +113,10 @@ export default function ProblemDetailPage() {
         }
     }, [problem])
 
-    // Track changes
-    useEffect(() => {
-        if (!problem) return
+    // Track changes derived state
+    const hasChanges = useMemo(() => {
+        if (!problem) return false
+
         const currentNotes = problem.notes ? JSON.stringify({
             notes: notes,
             recallPrompts: recallPrompts,
@@ -122,14 +126,14 @@ export default function ProblemDetailPage() {
 
         try {
             const orig = JSON.parse(originalNotes)
-            setHasChanges(
+            return (
                 notes !== (orig.notes || "") ||
                 recallPrompts !== (orig.recallPrompts || "") ||
                 pitfalls !== (orig.pitfalls || "") ||
                 solution !== (problem.solution || "")
             )
         } catch {
-            setHasChanges(notes !== originalNotes || solution !== (problem.solution || ""))
+            return notes !== originalNotes || solution !== (problem.solution || "")
         }
     }, [notes, recallPrompts, pitfalls, solution, problem])
 
@@ -152,7 +156,7 @@ export default function ProblemDetailPage() {
         onSuccess: () => {
             toast.success("Changes saved!")
             queryClient.invalidateQueries({ queryKey: ["problem", problemId] })
-            setHasChanges(false)
+            // hasChanges will auto-update because problem data updates
         },
         onError: () => {
             toast.error("Failed to save changes")

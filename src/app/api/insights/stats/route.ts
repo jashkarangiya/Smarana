@@ -55,7 +55,7 @@ export async function GET() {
             currentStreak = 0
 
             // Start counting from checkDate backwards
-            let pointer = new Date(checkDateString)
+            const pointer = new Date(checkDateString)
 
             while (true) {
                 const pointerString = pointer.toISOString().split('T')[0]
