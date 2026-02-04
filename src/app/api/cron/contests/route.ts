@@ -23,38 +23,14 @@ export async function POST(request: Request) {
             codeforces: { success: false, count: 0, error: null as string | null },
             leetcode: { success: false, count: 0, error: null as string | null },
             atcoder: { success: false, count: 0, error: null as string | null },
+            codechef: { success: false, count: 0, error: null as string | null },
         };
 
         // Fetch Codeforces contests
         try {
             const cfContests = await fetchCodeforcesContests();
             for (const contest of cfContests) {
-                await prisma.contest.upsert({
-                    where: {
-                        platform_contestId: {
-                            platform: "codeforces",
-                            contestId: contest.contestId,
-                        },
-                    },
-                    update: {
-                        name: contest.name,
-                        startTime: contest.startTime,
-                        endTime: contest.endTime,
-                        duration: contest.duration,
-                        url: contest.url,
-                        phase: contest.phase,
-                    },
-                    create: {
-                        platform: "codeforces",
-                        contestId: contest.contestId,
-                        name: contest.name,
-                        startTime: contest.startTime,
-                        endTime: contest.endTime,
-                        duration: contest.duration,
-                        url: contest.url,
-                        phase: contest.phase,
-                    },
-                });
+                await upsertContest("codeforces", contest);
             }
             results.codeforces = { success: true, count: cfContests.length, error: null };
         } catch (error) {
@@ -65,32 +41,7 @@ export async function POST(request: Request) {
         try {
             const lcContests = await fetchLeetCodeContests();
             for (const contest of lcContests) {
-                await prisma.contest.upsert({
-                    where: {
-                        platform_contestId: {
-                            platform: "leetcode",
-                            contestId: contest.contestId,
-                        },
-                    },
-                    update: {
-                        name: contest.name,
-                        startTime: contest.startTime,
-                        endTime: contest.endTime,
-                        duration: contest.duration,
-                        url: contest.url,
-                        phase: contest.phase,
-                    },
-                    create: {
-                        platform: "leetcode",
-                        contestId: contest.contestId,
-                        name: contest.name,
-                        startTime: contest.startTime,
-                        endTime: contest.endTime,
-                        duration: contest.duration,
-                        url: contest.url,
-                        phase: contest.phase,
-                    },
-                });
+                await upsertContest("leetcode", contest);
             }
             results.leetcode = { success: true, count: lcContests.length, error: null };
         } catch (error) {
@@ -101,36 +52,24 @@ export async function POST(request: Request) {
         try {
             const acContests = await fetchAtCoderContests();
             for (const contest of acContests) {
-                await prisma.contest.upsert({
-                    where: {
-                        platform_contestId: {
-                            platform: "atcoder",
-                            contestId: contest.contestId,
-                        },
-                    },
-                    update: {
-                        name: contest.name,
-                        startTime: contest.startTime,
-                        endTime: contest.endTime,
-                        duration: contest.duration,
-                        url: contest.url,
-                        phase: contest.phase,
-                    },
-                    create: {
-                        platform: "atcoder",
-                        contestId: contest.contestId,
-                        name: contest.name,
-                        startTime: contest.startTime,
-                        endTime: contest.endTime,
-                        duration: contest.duration,
-                        url: contest.url,
-                        phase: contest.phase,
-                    },
-                });
+                await upsertContest("atcoder", contest);
             }
             results.atcoder = { success: true, count: acContests.length, error: null };
         } catch (error) {
             results.atcoder.error = error instanceof Error ? error.message : "Unknown error";
+        }
+
+        // Fetch CodeChef contests
+        try {
+            const ccContests = await fetchCodeChefContests();
+            for (const contest of ccContests) {
+                await upsertContest("codechef", contest);
+            }
+            // CodeChef API returns a lot, maybe limit? fetchCodeChefContests implementation will handle it.
+            results.codechef = { success: true, count: ccContests.length, error: null };
+        } catch (error) {
+            // @ts-ignore
+            results.codechef = { success: false, count: 0, error: error instanceof Error ? error.message : "CodeChef error" };
         }
 
         // Generate notifications for upcoming contests
@@ -147,6 +86,36 @@ export async function POST(request: Request) {
             { status: 500 }
         );
     }
+}
+
+// Helper to reduce code duplication
+async function upsertContest(platform: string, contest: ContestData) {
+    await prisma.contest.upsert({
+        where: {
+            platform_contestId: {
+                platform,
+                contestId: contest.contestId,
+            },
+        },
+        update: {
+            name: contest.name,
+            startTime: contest.startTime,
+            endTime: contest.endTime,
+            duration: contest.duration,
+            url: contest.url,
+            phase: contest.phase,
+        },
+        create: {
+            platform,
+            contestId: contest.contestId,
+            name: contest.name,
+            startTime: contest.startTime,
+            endTime: contest.endTime,
+            duration: contest.duration,
+            url: contest.url,
+            phase: contest.phase,
+        },
+    });
 }
 
 interface ContestData {
@@ -301,6 +270,50 @@ async function fetchAtCoderContests(): Promise<ContestData[]> {
     return contests
         .sort((a, b) => a.startTime.getTime() - b.startTime.getTime())
         .slice(0, 20);
+}
+
+/**
+ * Fetch contests from CodeChef
+ */
+async function fetchCodeChefContests(): Promise<ContestData[]> {
+    // CodeChef public API for contest list
+    const response = await fetch("https://www.codechef.com/api/list/contests/all?sort_by=START&sorting_order=asc&status=future", {
+        headers: {
+            "User-Agent": "Mozilla/5.0",
+        },
+        next: { revalidate: 0 }
+    });
+
+    if (!response.ok) {
+        // Fallback or just error
+        throw new Error(`CodeChef API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (data.status !== "success") {
+        throw new Error("CodeChef API returned error status");
+    }
+
+    const contests: ContestData[] = [];
+    const futureContests = data.future_contests || [];
+
+    for (const contest of futureContests) {
+        const startTime = new Date(contest.contest_start_date_iso);
+        const endTime = new Date(contest.contest_end_date_iso);
+        const durationMinutes = Number(contest.contest_duration);
+
+        contests.push({
+            contestId: contest.contest_code,
+            name: contest.contest_name,
+            startTime,
+            endTime,
+            duration: durationMinutes,
+            url: `https://www.codechef.com/${contest.contest_code}`,
+            phase: "BEFORE",
+        });
+    }
+
+    return contests.slice(0, 10);
 }
 
 /**

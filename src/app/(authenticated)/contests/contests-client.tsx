@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Bell, BellOff, Calendar, Clock, ExternalLink, Trophy } from "lucide-react";
-import { formatDistanceToNow, format, isPast, isFuture, differenceInHours } from "date-fns";
+import { formatDistanceToNow, format, isPast, isFuture, differenceInHours, addDays } from "date-fns";
 
 interface Contest {
     id: string;
@@ -80,9 +80,14 @@ export function ContestsClient() {
         }
     };
 
-    const upcomingContests = contests.filter(
-        (c) => c.phase === "BEFORE" && isFuture(new Date(c.startTime))
-    );
+    const nextWeekCutoff = addDays(new Date(), 7);
+
+    const upcomingContests = contests
+        .filter((c) => c.phase === "BEFORE" && isFuture(new Date(c.startTime)))
+        .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+
+    const next7Days = upcomingContests.filter(c => new Date(c.startTime) <= nextWeekCutoff);
+    const otherUpcoming = upcomingContests.filter(c => new Date(c.startTime) > nextWeekCutoff);
 
     const liveContests = contests.filter((c) => c.phase === "CODING");
 
@@ -178,36 +183,57 @@ export function ContestsClient() {
             )}
 
             {/* Upcoming Contests */}
-            <section className="space-y-4">
-                <div className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5 text-muted-foreground" />
-                    <h2 className="text-lg font-semibold">Upcoming</h2>
+            {/* Upcoming Contests */}
+            <section className="space-y-6">
+                <div>
+                    <div className="flex items-center gap-2 mb-4">
+                        <Calendar className="h-5 w-5 text-green-500" />
+                        <h2 className="text-lg font-semibold">Next 7 Days</h2>
+                    </div>
+
+                    {next7Days.length === 0 && otherUpcoming.length === 0 ? (
+                        <div className="text-center py-12 bg-muted/30 rounded-lg border border-dashed">
+                            <Trophy className="h-10 w-10 mx-auto text-muted-foreground/50 mb-4" />
+                            <p className="text-muted-foreground">No upcoming contests found.</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {next7Days.length > 0 ? (
+                                next7Days.map((contest) => (
+                                    <ContestCard
+                                        key={contest.id}
+                                        contest={contest}
+                                        onToggleReminder={toggleReminder}
+                                        isTogglingReminder={togglingReminder === contest.id}
+                                        getTimeUntilStart={getTimeUntilStart}
+                                        formatDuration={formatDuration}
+                                    />
+                                ))
+                            ) : (
+                                <p className="text-muted-foreground text-sm italic">No contests in the next 7 days.</p>
+                            )}
+                        </div>
+                    )}
                 </div>
 
-                {upcomingContests.length === 0 ? (
-                    <Card className="bg-muted/30 border-dashed">
-                        <CardContent className="py-12 text-center">
-                            <Trophy className="h-10 w-10 mx-auto text-muted-foreground/50 mb-4" />
-                            <p className="text-muted-foreground">
-                                No upcoming contests found.
-                            </p>
-                            <p className="text-sm text-muted-foreground/70 mt-1">
-                                Check back later or refresh to see new contests.
-                            </p>
-                        </CardContent>
-                    </Card>
-                ) : (
-                    <div className="space-y-3">
-                        {upcomingContests.map((contest) => (
-                            <ContestCard
-                                key={contest.id}
-                                contest={contest}
-                                onToggleReminder={toggleReminder}
-                                isTogglingReminder={togglingReminder === contest.id}
-                                getTimeUntilStart={getTimeUntilStart}
-                                formatDuration={formatDuration}
-                            />
-                        ))}
+                {otherUpcoming.length > 0 && (
+                    <div>
+                        <div className="flex items-center gap-2 mb-4 mt-8">
+                            <Clock className="h-5 w-5 text-muted-foreground" />
+                            <h2 className="text-lg font-semibold">Later</h2>
+                        </div>
+                        <div className="space-y-3">
+                            {otherUpcoming.map((contest) => (
+                                <ContestCard
+                                    key={contest.id}
+                                    contest={contest}
+                                    onToggleReminder={toggleReminder}
+                                    isTogglingReminder={togglingReminder === contest.id}
+                                    getTimeUntilStart={getTimeUntilStart}
+                                    formatDuration={formatDuration}
+                                />
+                            ))}
+                        </div>
                     </div>
                 )}
             </section>
@@ -245,13 +271,12 @@ function ContestCard({
 
     return (
         <Card
-            className={`transition-all hover:border-primary/20 ${
-                isLive
-                    ? "border-red-500/30 bg-red-500/5"
-                    : isStartingSoon
+            className={`transition-all hover:border-primary/20 ${isLive
+                ? "border-red-500/30 bg-red-500/5"
+                : isStartingSoon
                     ? "border-amber-500/30 bg-amber-500/5"
                     : ""
-            }`}
+                }`}
         >
             <CardContent className="p-4">
                 <div className="flex items-start justify-between gap-4">
@@ -295,11 +320,10 @@ function ContestCard({
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className={`h-9 w-9 ${
-                                    contest.hasReminder
-                                        ? "text-primary"
-                                        : "text-muted-foreground"
-                                }`}
+                                className={`h-9 w-9 ${contest.hasReminder
+                                    ? "text-primary"
+                                    : "text-muted-foreground"
+                                    }`}
                                 onClick={() =>
                                     onToggleReminder(contest.id, !!contest.hasReminder)
                                 }
