@@ -14,16 +14,21 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
   ]),
   {
-    files: ["**/*.cjs", "**/*.js", "scripts/**"],
+    files: ["**/*.cjs", "**/*.js", "scripts/**", "tailwind.config.ts"],
     rules: {
       "@typescript-eslint/no-require-imports": "off",
       "@typescript-eslint/no-var-requires": "off"
     }
   },
   {
+    files: ["**/*.tsx", "**/*.jsx"],
     rules: {
-      "@typescript-eslint/no-explicit-any": "warn",
       "react/no-unescaped-entities": "warn"
+    }
+  },
+  {
+    rules: {
+      "@typescript-eslint/no-explicit-any": "warn"
     }
   }
 ]);
