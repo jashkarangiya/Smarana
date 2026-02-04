@@ -26,7 +26,7 @@ export async function GET(req: Request) {
         return new NextResponse("User not found", { status: 404 })
     }
 
-    let whereClause: any = { userId: user.id }
+    const whereClause: any = { userId: user.id }
     const now = new Date()
 
     if (filter === "solved-today") {

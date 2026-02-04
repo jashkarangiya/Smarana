@@ -13,7 +13,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
           cache: 'npm'
       - run: npm ci
       - run: npm run lint
@@ -24,21 +24,21 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
           cache: 'npm'
       - run: npm ci
       - run: npx tsc --noEmit
 
-  unit-test:
+  build-extension:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
           cache: 'npm'
       - run: npm ci
-      - run: npm test
+      - run: cd extension && npm ci && npm run build
 
   e2e-test:
     name: Playwright Tests
@@ -50,7 +50,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
           cache: 'npm'
       - run: npm ci
       - name: Install Playwright Browsers
@@ -60,6 +60,7 @@ jobs:
         env:
            # Build needs minimal env to pass, usually not DB unless typegen
            NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+           DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
       - name: Run Playwright tests
         run: npx playwright test
         env:

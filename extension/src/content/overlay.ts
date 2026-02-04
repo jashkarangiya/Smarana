@@ -324,8 +324,8 @@ export class SmaranaOverlay {
 
             if (!dragging) return
 
-            let x = baseX + dx
-            let y = baseY + dy
+            const x = baseX + dx
+            const y = baseY + dy
 
             const maxX = window.innerWidth - this.host.offsetWidth - 8
             const maxY = window.innerHeight - this.host.offsetHeight - 8

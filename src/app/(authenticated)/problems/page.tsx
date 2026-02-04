@@ -35,7 +35,24 @@ export default function ProblemsPage() {
     const router = useRouter()
 
     // Filter State
-    const [filterGroup, setFilterGroup] = useState<FilterGroup>(DEFAULT_FILTERS)
+    const [filterGroup, setFilterGroup] = useState<FilterGroup>(() => {
+        const filtersParam = searchParams.get("filters")
+        const filterParam = searchParams.get("filter")
+
+        if (filtersParam) {
+            try {
+                return JSON.parse(atob(filtersParam))
+            } catch (e) {
+                console.error("Failed to parse URL filters")
+            }
+        } else if (filterParam === "due") {
+            return {
+                join: "and",
+                rules: [{ id: "init-due", field: "reviewState", op: "is", value: "PENDING" }]
+            }
+        }
+        return DEFAULT_FILTERS
+    })
 
     // Derived: encoded filters for API
     const encodedFilters = useMemo(() => {
@@ -44,29 +61,9 @@ export default function ProblemsPage() {
     }, [filterGroup])
 
     // Fetch data using the advanced filters
-    // Passing undefined for 'filter' (legacy) and 'limit', and passing encodedFilters as 3rd arg
     const { data: problems, isLoading } = useProblems(undefined, undefined, encodedFilters)
 
     const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" }>({ key: "nextReviewAt", direction: "asc" })
-
-    // Initialize from URL (legacy support or deep linking)
-    useEffect(() => {
-        const filtersParam = searchParams.get("filters")
-        const filterParam = searchParams.get("filter")
-
-        if (filtersParam) {
-            try {
-                const parsed = JSON.parse(atob(filtersParam))
-                setFilterGroup(parsed)
-            } catch (e) { console.error("Failed to parse URL filters") }
-        } else if (filterParam === "due") {
-            // Convert legacy "due" to new filter system
-            setFilterGroup({
-                join: "and",
-                rules: [{ id: "init-due", field: "reviewState", op: "is", value: "PENDING" }]
-            })
-        }
-    }, [])
 
     // Update URL when filters change (debounced or on apply? The dialog handles 'Apply', so we just sync state here)
     const handleMainApply = () => {
@@ -92,12 +89,22 @@ export default function ProblemsPage() {
         }
     }
 
-    const sortData = (data: any[]) => {
-        if (!sortConfig.key) return data
+    const handleSort = (key: string) => {
+        setSortConfig(current => ({
+            key,
+            direction: current.key === key && current.direction === "asc" ? "desc" : "asc"
+        }))
+    }
 
-        return [...data].sort((a, b) => {
-            let aValue = a[sortConfig.key]
-            let bValue = b[sortConfig.key]
+    // Client-side sorting of the server-filtered results
+    const sortedProblems = useMemo(() => {
+        if (!problems) return []
+
+        return [...problems].sort((a, b) => {
+            if (!sortConfig.key) return 0
+
+            let aValue = (a as any)[sortConfig.key]
+            let bValue = (b as any)[sortConfig.key]
 
             // Handle dates
             if (sortConfig.key === "nextReviewAt" || sortConfig.key === "lastSolvedAt") {
@@ -116,19 +123,6 @@ export default function ProblemsPage() {
             if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1
             return 0
         })
-    }
-
-    const handleSort = (key: string) => {
-        setSortConfig(current => ({
-            key,
-            direction: current.key === key && current.direction === "asc" ? "desc" : "asc"
-        }))
-    }
-
-    // Client-side sorting of the server-filtered results
-    const sortedProblems = useMemo(() => {
-        if (!problems) return []
-        return sortData(problems)
     }, [problems, sortConfig])
 
     return (

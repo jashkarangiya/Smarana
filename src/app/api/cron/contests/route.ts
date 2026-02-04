@@ -68,7 +68,7 @@ export async function POST(request: Request) {
             // CodeChef API returns a lot, maybe limit? fetchCodeChefContests implementation will handle it.
             results.codechef = { success: true, count: ccContests.length, error: null };
         } catch (error) {
-            // @ts-ignore
+
             results.codechef = { success: false, count: 0, error: error instanceof Error ? error.message : "CodeChef error" };
         }
 
