@@ -482,3 +482,26 @@ model ContestResult {
   @@index([userId, attendedAt])
 }
 
+
+enum ContactMessageStatus {
+  NEW
+  OPEN
+  RESOLVED
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String
+  message   String
+
+  // optional helpful metadata
+  pageUrl   String?
+  userAgent String?
+  ipHash    String?
+
+  status    ContactMessageStatus @default(NEW)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

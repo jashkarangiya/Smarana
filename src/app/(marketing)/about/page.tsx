@@ -1,56 +1,152 @@
+
 import { Metadata } from "next";
+import Image from "next/image";
+import { Brain, Clock, Zap, Target, Layout, ListChecks, History } from "lucide-react";
 
 export const metadata: Metadata = {
     title: "About",
-    description: "Why Smarana exists and how it helps you retain coding patterns with spaced repetition.",
+    description: "Why Smarana exists and how it helps you retain coding patterns.",
 };
 
 export default function AboutPage() {
     return (
-        <div className="space-y-12">
-            <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-8 md:p-12">
-                <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
-                    About <span className="text-[#BB7331]">Smarana</span>
-                </h1>
-                <p className="mt-4 max-w-2xl text-white/65 leading-relaxed">
-                    Smarana (स्मरण) means <span className="text-white/80">“remembrance.”</span>
-                    It’s a simple idea: you shouldn’t have to re-learn the same algorithm patterns every few weeks.
-                    If you’ve solved it once, you should be able to recall it when it matters.
-                </p>
+        <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8 py-12 lg:py-20 space-y-20 md:space-y-32">
+            {/* Section 1: Hero split (Origin Story) */}
+            <section className="grid gap-12 lg:grid-cols-2 lg:items-center">
+                <div className="space-y-6">
+                    <div className="space-y-2">
+                        <p className="text-sm font-medium text-[#BB7331]">About Smarana</p>
+                        <h1 className="text-4xl font-semibold tracking-tight text-white md:text-5xl">
+                            Not to do more problems. <br />
+                            <span className="text-white/50">To remember the ones you solved.</span>
+                        </h1>
+                    </div>
+                    <p className="text-lg text-white/60 leading-relaxed max-w-md">
+                        I started Smarana because I needed a revision reminder.
+                        I’d solve problems, feel confident, and then blank out weeks later.
+                        Smarana began as a small system to revisit what I already knew—and grew into a spaced repetition layer for algorithms.
+                    </p>
+                </div>
+
+                <div className="relative rounded-3xl border border-white/10 bg-black/40 shadow-2xl overflow-hidden w-full">
+                    <Image
+                        src="/274_1x_shots_so.png"
+                        alt="Smarana Interface"
+                        width={0}
+                        height={0}
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                        className="w-full h-auto"
+                        priority
+                    />
+                    {/* Gradient Overlay for better integration */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
+                </div>
             </section>
 
+            {/* Section 2: Timeline (Evolution) */}
+            <section className="max-w-3xl mx-auto">
+                <h2 className="text-2xl font-semibold mb-10 text-center">How it evolved</h2>
+                <div className="space-y-8 relative before:absolute before:inset-0 before:left-[19px] before:w-0.5 before:bg-gradient-to-b before:from-[#BB7331] before:via-white/10 before:to-transparent">
+                    {/* Step 1 */}
+                    <div className="relative flex gap-6 items-start">
+                        <div className="relative z-10 h-10 w-10 rounded-full bg-black border border-[#BB7331] shadow-[0_0_10px_rgba(187,115,49,0.3)] flex items-center justify-center shrink-0">
+                            <Brain className="h-5 w-5 text-[#BB7331]" />
+                        </div>
+                        <div className="pt-2 pb-6">
+                            <h3 className="text-lg font-medium text-white">The Frustration</h3>
+                            <p className="mt-1 text-white/60">"Solved → forgot → re-solve." The endless cycle of LeetCode grind with diminishing returns.</p>
+                        </div>
+                    </div>
+
+                    {/* Step 2 */}
+                    <div className="relative flex gap-6 items-start">
+                        <div className="relative z-10 h-10 w-10 rounded-full bg-black border border-white/20 flex items-center justify-center shrink-0">
+                            <Zap className="h-5 w-5 text-white/70" />
+                        </div>
+                        <div className="pt-2 pb-6">
+                            <h3 className="text-lg font-medium text-white">The MVP</h3>
+                            <p className="mt-1 text-white/60">A simple script for revision reminders and quick notes. No bells, no whistles.</p>
+                        </div>
+                    </div>
+
+                    {/* Step 3 */}
+                    <div className="relative flex gap-6 items-start">
+                        <div className="relative z-10 h-10 w-10 rounded-full bg-black border border-white/20 flex items-center justify-center shrink-0">
+                            <Target className="h-5 w-5 text-white/70" />
+                        </div>
+                        <div className="pt-2 pb-6">
+                            <h3 className="text-lg font-medium text-white">The Product</h3>
+                            <p className="mt-1 text-white/60">A focused spaced-repetition loop that compounds knowledge over time.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Section 3: Cards (Problem / Approach / Goal) */}
             <section className="grid gap-6 md:grid-cols-3">
                 {[
                     {
-                        title: "The problem",
-                        body: "You solve a problem, understand it… and forget the approach later. Interview prep becomes repeat work.",
+                        icon: Layout,
+                        title: "The Problem",
+                        body: "Interview prep often becomes 'cramming and forgetting.' You solve hundreds of problems but retain only a fraction.",
                     },
                     {
-                        title: "The approach",
-                        body: "Smarana schedules reviews using spaced repetition so you revisit problems at the right time—not randomly.",
+                        icon: History,
+                        title: "The Approach",
+                        body: "Smarana brings spaced repetition to coding. We schedule reviews based on your confidence, ensuring you revisit patterns just before you forget them.",
                     },
                     {
-                        title: "The goal",
-                        body: "Build durable pattern memory: the kind that shows up under pressure when time is limited.",
+                        icon: Target,
+                        title: "The Goal",
+                        body: "Build durable pattern intuition. When you see a problem in an interview, the solution path should feel obvious, not memorable.",
                     },
-                ].map((x) => (
-                    <div key={x.title} className="rounded-2xl border border-white/10 bg-white/[0.02] p-6">
-                        <div className="text-sm font-semibold text-white/90">{x.title}</div>
-                        <p className="mt-2 text-sm text-white/60 leading-relaxed">{x.body}</p>
+                ].map((item) => (
+                    <div key={item.title} className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.03)] flex flex-col h-full">
+                        <div className="h-10 w-10 rounded-lg bg-white/5 flex items-center justify-center mb-4 text-[#BB7331]">
+                            <item.icon className="h-5 w-5" />
+                        </div>
+                        <h3 className="text-lg font-medium text-white mb-2">{item.title}</h3>
+                        <p className="text-sm text-white/60 leading-relaxed flex-1">
+                            {item.body}
+                        </p>
                     </div>
                 ))}
             </section>
 
-            <section className="rounded-3xl border border-white/10 bg-white/[0.02] p-8">
-                <h2 className="text-xl font-semibold">Why I built it</h2>
-                <p className="mt-3 text-white/65 leading-relaxed">
-                    I built Smarana while practicing DSA consistently and noticing a pattern:
-                    progress wasn’t blocked by learning new concepts—it was blocked by forgetting solutions I’d already solved.
-                    Smarana exists to make that retention automatic.
-                </p>
-
-                <div className="mt-6 text-sm text-white/55">
-                    No inflated claims. No fake numbers. Just a clean system that respects focus.
+            {/* Section 4: Product Snapshots */}
+            <section className="space-y-6">
+                <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                    <h3 className="text-sm font-medium uppercase tracking-wider text-white/40">Product Design</h3>
+                    <span className="text-xs text-white/40">Focus-first Interface</span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="group space-y-3">
+                        <div className="aspect-video rounded-xl bg-white/[0.02] relative overflow-hidden">
+                            <Image
+                                src="/803_1x_shots_so.webp"
+                                alt="Dashboard Overview"
+                                fill
+                                className="object-cover object-top"
+                            />
+                        </div>
+                        <p className="text-xs text-center text-white/40 group-hover:text-white/60 transition-colors">Dashboard Overview</p>
+                    </div>
+                    <div className="group space-y-3">
+                        <div className="aspect-video rounded-xl border border-white/10 bg-white/[0.02] relative overflow-hidden">
+                            <div className="absolute inset-0 flex items-center justify-center text-white/20 bg-black/40">
+                                <ListChecks className="h-8 w-8" />
+                            </div>
+                        </div>
+                        <p className="text-xs text-center text-white/40 group-hover:text-white/60 transition-colors">Review Session</p>
+                    </div>
+                    <div className="group space-y-3">
+                        <div className="aspect-video rounded-xl border border-white/10 bg-white/[0.02] relative overflow-hidden">
+                            <div className="absolute inset-0 flex items-center justify-center text-white/20 bg-black/40">
+                                <Brain className="h-8 w-8" />
+                            </div>
+                        </div>
+                        <p className="text-xs text-center text-white/40 group-hover:text-white/60 transition-colors">Extension Overlay</p>
+                    </div>
                 </div>
             </section>
         </div>
