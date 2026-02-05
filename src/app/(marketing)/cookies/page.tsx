@@ -1,40 +1,53 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-    title: "Cookies Policy",
-    description: "Cookies Policy for Smarana.",
+    title: "Cookie Policy · Smarana",
+    description: "How Smarana uses cookies for essential functionality.",
 };
 
 export default function CookiesPage() {
     return (
-        <div className="max-w-3xl space-y-8 text-white/80 leading-relaxed">
-            <h1 className="text-3xl font-semibold text-white">Cookie Policy</h1>
-            <p className="text-white/50 text-sm">Last updated: January 29, 2026</p>
-
-            <section className="space-y-4">
-                <h2 className="text-xl font-semibold text-white">What are cookies?</h2>
-                <p>
-                    Cookies are small text files that are stored on your computer or mobile device when you visit a website. They allow the website to remember your actions and preferences over a period of time.
+        <div className="mx-auto w-full max-w-4xl px-4 md:px-0">
+            <header className="mb-8 md:mb-12">
+                <h1 className="text-4xl md:text-5xl font-semibold tracking-tight">
+                    Cookie <span className="text-[#BB7331]">Policy</span>
+                </h1>
+                <p className="mt-4 text-white/60 text-lg max-w-2xl leading-relaxed">
+                    We keep it minimal. We use cookies only for what's necessary to make the app work.
                 </p>
-            </section>
+                <div className="mt-4 flex items-center gap-2 text-sm text-white/40">
+                    <span>Last updated: February 4, 2026</span>
+                </div>
+            </header>
 
-            <section className="space-y-4">
-                <h2 className="text-xl font-semibold text-white">How we use cookies</h2>
-                <p>
-                    Smarana uses cookies primarily for <strong>authentication and security</strong>.
-                </p>
-                <ul className="list-disc pl-5 space-y-2 text-white/70">
-                    <li><strong>Essential Cookies:</strong> These are necessary for the website to function (e.g., keeping you logged in).</li>
-                    <li><strong>Preference Cookies:</strong> We may use these to remember your settings (like dark mode, though our site is always dark mode!).</li>
-                </ul>
-            </section>
+            <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-8 md:p-12 overflow-hidden">
+                <div className="prose prose-invert prose-lg max-w-none prose-headings:font-semibold prose-headings:tracking-tight prose-p:text-white/70 prose-li:text-white/70 prose-strong:text-white/90 prose-a:text-[#BB7331] prose-a:no-underline hover:prose-a:text-[#BB7331]/80">
 
-            <section className="space-y-4">
-                <h2 className="text-xl font-semibold text-white">Managing Cookies</h2>
-                <p>
-                    You can control and/or delete cookies as you wish using your browser settings. However, disabling cookies may limit your ability to use Smarana (specifically, you won't be able to log in).
-                </p>
-            </section>
+                    <h2>What are cookies?</h2>
+                    <p>
+                        Cookies are small text files stored on your device when you visit a website. They help the website remember who you are and your preferences.
+                    </p>
+
+                    <h2>How we use cookies</h2>
+                    <p>
+                        Smarana uses cookies strictly for <strong>essential functionality</strong>:
+                    </p>
+                    <ul>
+                        <li><strong>Authentication:</strong> To keep you logged in as you navigate between pages. Without these, you would need to log in on every single page load.</li>
+                        <li><strong>Security:</strong> To protect your account and preventing cross-site request forgery (CSRF) attacks.</li>
+                    </ul>
+
+                    <h2>Tracking & Advertising</h2>
+                    <p>
+                        We do <strong>not</strong> use third-party tracking cookies for behavioral advertising. We respect your privacy and do not sell your browsing habits.
+                    </p>
+
+                    <h2>Managing Cookies</h2>
+                    <p>
+                        Most web browsers allow you to control cookies through their settings preferences. However, if you limit the ability of websites to set cookies, you may be unable to sign in to Smarana.
+                    </p>
+                </div>
+            </div>
         </div>
     );
 }

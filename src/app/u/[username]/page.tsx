@@ -74,13 +74,8 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
     })
 
     if (error) {
-        // Simple error handling, could be better
-        return (
-            <div className="container py-20 text-center">
-                <h1 className="text-2xl font-bold">User not found</h1>
-                <p className="text-muted-foreground">The user @{username} does not exist.</p>
-            </div>
-        )
+        notFound()
+        return null
     }
 
     if (isLoading) {

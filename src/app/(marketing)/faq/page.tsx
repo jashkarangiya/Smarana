@@ -5,10 +5,11 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@/components/ui/accordion"
+import { Card } from "@/components/ui/card"
 
 export const metadata: Metadata = {
-    title: "FAQ",
-    description: "Frequently asked questions about Smarana.",
+    title: "FAQ · Smarana",
+    description: "Answers to common questions about Smarana.",
 };
 
 const faqs = [
@@ -36,30 +37,43 @@ const faqs = [
 
 export default function FAQPage() {
     return (
-        <div className="space-y-12 max-w-3xl">
-            <section>
-                <h1 className="text-3xl font-semibold tracking-tight">
-                    Frequently <span className="text-[#BB7331]">Asked Questions</span>
+        <div className="space-y-8 max-w-4xl mx-auto">
+            {/* HERO */}
+            <Card className="relative overflow-hidden border-white/10 bg-white/[0.03] p-8 md:p-10">
+                <div className="pointer-events-none absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top,#BB7331_0%,transparent_55%)]" />
+                <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">
+                    Frequently <span className="text-[#BB7331]">Asked</span> Questions
                 </h1>
-                <p className="mt-4 text-white/65 leading-relaxed">
-                    Everything you need to know about Smarana and our spaced repetition system.
+                <p className="mt-3 max-w-2xl text-white/60 text-lg">
+                    Everything you need to know about Smarana and how the spaced repetition flow works.
                 </p>
-            </section>
+            </Card>
 
-            <section>
-                <Accordion type="single" collapsible className="w-full space-y-4">
+            {/* FAQ LIST */}
+            <Card className="border-white/10 bg-white/[0.03] overflow-hidden">
+                <Accordion type="single" collapsible className="divide-y divide-white/10">
                     {faqs.map((faq, i) => (
-                        <AccordionItem key={i} value={`item-${i}`} className="border border-white/10 rounded-xl bg-white/[0.02] px-4">
-                            <AccordionTrigger className="hover:no-underline hover:text-[#BB7331] text-left">
+                        <AccordionItem key={i} value={`item-${i}`} className="px-6 border-b-0">
+                            <AccordionTrigger className="py-5 text-left text-white/90 hover:text-white hover:no-underline data-[state=open]:text-[#BB7331] transition-colors">
                                 {faq.question}
                             </AccordionTrigger>
-                            <AccordionContent className="text-white/60 leading-relaxed">
+                            <AccordionContent className="pb-5 text-white/60 leading-relaxed max-w-3xl">
                                 {faq.answer}
                             </AccordionContent>
                         </AccordionItem>
                     ))}
                 </Accordion>
-            </section>
+            </Card>
+
+            {/* Support Callout */}
+            <Card className="border-white/10 bg-white/[0.03] p-6 text-center md:text-left flex flex-col md:flex-row items-center justify-between gap-4">
+                <p className="text-white/70">
+                    Still have questions? Reach out to us directly.
+                </p>
+                <a href="/contact" className="text-sm font-medium text-[#BB7331] hover:text-[#BB7331]/80 hover:underline transition-colors">
+                    Contact Support &rarr;
+                </a>
+            </Card>
         </div>
     );
 }

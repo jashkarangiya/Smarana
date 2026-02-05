@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useParams, useRouter, notFound } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -210,17 +210,8 @@ export default function ProblemDetailPage() {
     }
 
     if (error || !problem) {
-        return (
-            <div className="container mx-auto px-4 py-6 max-w-4xl">
-                <div className="text-center py-20">
-                    <h1 className="text-2xl font-bold mb-2">Problem not found</h1>
-                    <p className="text-muted-foreground mb-6">This problem doesn't exist or you don't have access.</p>
-                    <Button asChild>
-                        <Link href="/problems">Back to Problems</Link>
-                    </Button>
-                </div>
-            </div>
-        )
+        notFound()
+        return null
     }
 
     const nextReview = new Date(problem.nextReviewAt)
