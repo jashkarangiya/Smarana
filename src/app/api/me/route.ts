@@ -50,6 +50,7 @@ export async function PUT(req: Request) {
                 ...(name !== undefined && { name: name.trim() }),
                 ...(bio !== undefined && { bio: bio.trim() || null }),
                 ...(timezone !== undefined && { timezone }),
+                ...(body.emailReviewRemindersEnabled !== undefined && { emailReviewRemindersEnabled: body.emailReviewRemindersEnabled }),
             },
         })
 

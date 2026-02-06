@@ -510,10 +510,69 @@ export const OVERLAY_CSS = `
     background: rgba(var(--sm-panel), 0.6);
 }
 
-@media (max-width: 440px) {
-    .panel {
-        width: calc(100vw - 20px);
-        max-height: calc(100vh - 20px);
-    }
+/* ========== SPOILER / REVEAL ========== */
+.smr-spoiler-container {
+    position: relative;
+    cursor: pointer;
+    overflow: hidden;
+    min-height: 60px;
+    border-radius: 0 0 var(--sm-radius-lg) var(--sm-radius-lg);
+}
+
+.smr-spoiler-content {
+    transition: filter 0.4s ease, opacity 0.4s ease;
+}
+
+.smr-spoiler-blur {
+    filter: blur(12px);
+    opacity: 0.6;
+    user-select: none;
+    pointer-events: none;
+}
+
+.smr-spoiler-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    z-index: 10;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.smr-spoiler-btn {
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 11px;
+    padding: 8px 16px;
+    border-radius: var(--sm-radius-pill);
+    background: rgba(var(--sm-bg), 0.85);
+    border: 1px solid rgba(var(--sm-accent-rgb), 0.4);
+    color: rgba(var(--sm-accent-rgb), 1);
+    backdrop-filter: blur(4px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    transition: all 0.2s ease;
+}
+
+.smr-spoiler-container:hover .smr-spoiler-btn {
+    transform: scale(1.05);
+    background: rgba(var(--sm-bg), 0.95);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+}
+
+.smr-spoiler-container.revealed .smr-spoiler-blur {
+    filter: none;
+    opacity: 1;
+    user-select: text;
+    pointer-events: auto;
+}
+
+.smr-spoiler-container.revealed .smr-spoiler-overlay {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.95);
 }
 `;

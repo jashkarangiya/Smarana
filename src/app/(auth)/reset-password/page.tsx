@@ -10,6 +10,7 @@ import { toast } from "sonner"
 import { Check, X, Eye, EyeOff, Shield } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
+import { getPasswordRules, validatePassword } from "@/lib/auth/passwordPolicy"
 
 function ResetPasswordForm() {
     const searchParams = useSearchParams()
@@ -36,15 +37,9 @@ function ResetPasswordForm() {
             .catch(() => setTokenValid(false))
     }, [token])
 
-    const passwordRules = [
-        { label: "At least 12 characters", test: (p: string) => p.length >= 12 },
-        { label: "Contains uppercase letter", test: (p: string) => /[A-Z]/.test(p) },
-        { label: "Contains lowercase letter", test: (p: string) => /[a-z]/.test(p) },
-        { label: "Contains number", test: (p: string) => /[0-9]/.test(p) },
-        { label: "Contains special character", test: (p: string) => /[^A-Za-z0-9]/.test(p) },
-    ]
+    const passwordRules = getPasswordRules()
 
-    const allRulesMet = passwordRules.every(rule => rule.test(password))
+    const { ok: allRulesMet } = validatePassword(password)
     const passwordsMatch = password === confirmPassword && confirmPassword !== ""
 
     const handleSubmit = async (e: React.FormEvent) => {

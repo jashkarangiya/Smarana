@@ -1,4 +1,26 @@
 -- CreateTable
+CREATE TABLE "User" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "name" TEXT,
+    "email" TEXT,
+    "emailVerified" TIMESTAMP(3),
+    "password" TEXT,
+    "image" TEXT,
+    "username" TEXT,
+    "usernameLower" TEXT,
+    "usernameChangedAt" TIMESTAMP(3),
+    "usernameChangeCount" INTEGER NOT NULL DEFAULT 0,
+    "leetcodeUsername" TEXT,
+    "codeforcesUsername" TEXT,
+    "codechefUsername" TEXT,
+    "atcoderUsername" TEXT,
+    "xp" INTEGER NOT NULL DEFAULT 0,
+    "level" INTEGER NOT NULL DEFAULT 1,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL
+);
+
+-- CreateTable
 CREATE TABLE "Account" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "userId" TEXT NOT NULL,
@@ -20,37 +42,15 @@ CREATE TABLE "Session" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "sessionToken" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
-    "expires" DATETIME NOT NULL,
+    "expires" TIMESTAMP(3) NOT NULL,
     CONSTRAINT "Session_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
-);
-
--- CreateTable
-CREATE TABLE "User" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "name" TEXT,
-    "email" TEXT,
-    "emailVerified" DATETIME,
-    "password" TEXT,
-    "image" TEXT,
-    "username" TEXT,
-    "usernameLower" TEXT,
-    "usernameChangedAt" DATETIME,
-    "usernameChangeCount" INTEGER NOT NULL DEFAULT 0,
-    "leetcodeUsername" TEXT,
-    "codeforcesUsername" TEXT,
-    "codechefUsername" TEXT,
-    "atcoderUsername" TEXT,
-    "xp" INTEGER NOT NULL DEFAULT 0,
-    "level" INTEGER NOT NULL DEFAULT 1,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
 );
 
 -- CreateTable
 CREATE TABLE "VerificationToken" (
     "identifier" TEXT NOT NULL,
     "token" TEXT NOT NULL,
-    "expires" DATETIME NOT NULL
+    "expires" TIMESTAMP(3) NOT NULL
 );
 
 -- CreateTable
@@ -62,16 +62,16 @@ CREATE TABLE "RevisionProblem" (
     "title" TEXT NOT NULL,
     "difficulty" TEXT NOT NULL,
     "url" TEXT NOT NULL,
-    "firstSolvedAt" DATETIME NOT NULL,
-    "lastSolvedAt" DATETIME NOT NULL,
-    "nextReviewAt" DATETIME NOT NULL,
+    "firstSolvedAt" TIMESTAMP(3) NOT NULL,
+    "lastSolvedAt" TIMESTAMP(3) NOT NULL,
+    "nextReviewAt" TIMESTAMP(3) NOT NULL,
     "interval" INTEGER NOT NULL DEFAULT 0,
     "reviewCount" INTEGER NOT NULL DEFAULT 0,
-    "lastReviewedAt" DATETIME,
+    "lastReviewedAt" TIMESTAMP(3),
     "notes" TEXT DEFAULT '',
     "solution" TEXT DEFAULT '',
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     CONSTRAINT "RevisionProblem_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -79,7 +79,7 @@ CREATE TABLE "RevisionProblem" (
 CREATE TABLE "ReviewLog" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "userId" TEXT NOT NULL,
-    "date" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "count" INTEGER NOT NULL DEFAULT 1,
     "xpEarned" INTEGER NOT NULL DEFAULT 0,
     CONSTRAINT "ReviewLog_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE

@@ -81,7 +81,7 @@ export default function ContactPage() {
                             </div>
                             <div>
                                 <h3 className="text-xl font-semibold text-white">Message Sent</h3>
-                                <p className="text-white/60 mt-2">Thanks for reaching out! We'll get back to you soon.</p>
+                                <p className="text-white/60 mt-2">Message sent — it’ll appear in the Smarana admin inbox.</p>
                             </div>
                             <Button variant="outline" onClick={() => setIsSuccess(false)} className="mt-4">
                                 Send another
@@ -181,18 +181,7 @@ export default function ContactPage() {
 
                 {/* Right: Info */}
                 <div className="space-y-6">
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6 flex flex-col gap-4 max-w-sm">
-                        <div className="flex items-center gap-4">
-                            <div className="h-10 w-10 rounded-full bg-white/5 flex items-center justify-center">
-                                <Mail className="h-5 w-5 text-white/70" />
-                            </div>
-                            <div>
-                                <h3 className="font-semibold">Email Support</h3>
-                                <a href="mailto:hello@smarana.app" className="text-sm text-[#BB7331] hover:underline">hello@smarana.app</a>
-                            </div>
-                        </div>
-                        <p className="text-xs text-white/40 pl-14">Response time: usually within 24-48 hours.</p>
-                    </div>
+
 
                     <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6 max-w-sm">
                         <h3 className="font-semibold mb-4">Connect on Social</h3>

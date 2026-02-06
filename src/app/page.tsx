@@ -8,6 +8,7 @@ import { motion, useReducedMotion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Footer } from "@/components/layout/footer"
+import { GlowFrame } from "@/components/ui/glow-frame"
 import { ArrowRight, Brain, BookOpen, Sparkles, Check, X, Users, Target, TrendingUp } from "lucide-react"
 
 export default function LandingPage() {
@@ -112,27 +113,23 @@ export default function LandingPage() {
         </section>
 
         {/* Product Preview Section */}
-        <section className="py-12 sm:py-16 lg:py-24 px-4 overflow-hidden">
-          <div className="mx-auto w-full max-w-6xl relative">
-            {/* Orange Aura Glow */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] h-[60%] bg-[#BB7331]/20 blur-[100px] -z-10 rounded-full opacity-50 pointer-events-none mix-blend-screen" />
+        <section className="py-12 sm:py-16 lg:py-24 px-4">
+          <GlowFrame className="mx-auto max-w-6xl">
 
-            <div className="relative w-full overflow-hidden rounded-2xl border border-white/10 bg-black/40 shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
-              <Image
-                src="/823_1x_shots_so.png"
-                alt="Smarana Dashboard"
-                width={0}
-                height={0}
-                sizes="100vw"
-                className="w-full h-auto"
-                priority
-              />
-            </div>
-          </div>
+
+            <Image
+              src="/823_1x_shots_so.png"
+              alt="Smarana Dashboard"
+              width={1600}
+              height={900}
+              className="w-full h-auto"
+              priority
+            />
+          </GlowFrame>
         </section>
 
         {/* How It Works Section */}
-        <section className="py-12 sm:py-16 lg:py-24 relative">
+        <section id="how-it-works" className="py-12 sm:py-16 lg:py-24 relative">
           <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8 relative z-10">
             <div className="text-center mb-10 sm:mb-16">
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4">How it works</h2>
@@ -156,7 +153,7 @@ export default function LandingPage() {
         </section>
 
         {/* Features Section */}
-        <section className="py-12 sm:py-16 lg:py-24 border-t border-border/50">
+        <section id="features" className="py-12 sm:py-16 lg:py-24 border-t border-border/50">
           <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
             <div className="max-w-3xl mx-auto text-center mb-12">
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-semibold mb-4">
@@ -246,52 +243,54 @@ export default function LandingPage() {
         </section>
 
         {/* FAQ Section */}
-        <FAQSection>
-          <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center mb-10 sm:mb-16">
-              Frequently asked questions
-            </h2>
-            <div className="max-w-2xl mx-auto">
-              <Accordion type="single" collapsible className="space-y-3">
-                {[
-                  {
-                    q: "How does spaced repetition work?",
-                    a: "Spaced repetition is a learning technique that schedules reviews at increasing intervals. When you solve a problem, we calculate the optimal time to review it based on your performance, ensuring you review just before you're likely to forget."
-                  },
-                  {
-                    q: "Which platforms are supported?",
-                    a: "Smarana supports LeetCode, Codeforces, AtCoder, and CodeChef. Connect your account to automatically sync your solved problems, or manually add problems from any source."
-                  },
-                  {
-                    q: "Is Smarana free?",
-                    a: "Yes! Smarana is completely free to use. We believe everyone should have access to effective learning tools for technical interview preparation."
-                  },
-                  {
-                    q: "How is this different from Anki?",
-                    a: "Unlike Anki, Smarana is specifically designed for coding problems. It integrates with major competitive programming platforms, provides code-specific review interfaces, tracks your solutions, and understands the unique challenges of remembering algorithms."
-                  }
-                ].map((faq) => (
-                  <AccordionItem
-                    key={faq.q}
-                    value={faq.q}
-                    className="overflow-hidden rounded-xl border border-white/10 bg-black/20 backdrop-blur transition data-[state=open]:border-[#BB7331]/30 data-[state=open]:bg-black/35 data-[state=open]:shadow-[0_0_0_4px_rgba(187,115,49,0.10)]"
-                  >
-                    <AccordionTrigger
-                      className="group flex w-full items-center justify-between px-5 py-4 text-left text-white/85 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#BB7331]/30 [&[data-state=open]>svg]:rotate-180 [&[data-state=open]>svg]:text-[#BB7331]/80"
+        <section id="faq">
+          <FAQSection>
+            <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center mb-10 sm:mb-16">
+                Frequently asked questions
+              </h2>
+              <div className="max-w-2xl mx-auto">
+                <Accordion type="single" collapsible className="space-y-3">
+                  {[
+                    {
+                      q: "How does spaced repetition work?",
+                      a: "Spaced repetition is a learning technique that schedules reviews at increasing intervals. When you solve a problem, we calculate the optimal time to review it based on your performance, ensuring you review just before you're likely to forget."
+                    },
+                    {
+                      q: "Which platforms are supported?",
+                      a: "Smarana supports LeetCode, Codeforces, AtCoder, and CodeChef. Connect your account to automatically sync your solved problems, or manually add problems from any source."
+                    },
+                    {
+                      q: "Is Smarana free?",
+                      a: "Yes! Smarana is completely free to use. We believe everyone should have access to effective learning tools for technical interview preparation."
+                    },
+                    {
+                      q: "How is this different from Anki?",
+                      a: "Unlike Anki, Smarana is specifically designed for coding problems. It integrates with major competitive programming platforms, provides code-specific review interfaces, tracks your solutions, and understands the unique challenges of remembering algorithms."
+                    }
+                  ].map((faq) => (
+                    <AccordionItem
+                      key={faq.q}
+                      value={faq.q}
+                      className="overflow-hidden rounded-xl border border-white/10 bg-black/20 backdrop-blur transition data-[state=open]:border-[#BB7331]/30 data-[state=open]:bg-black/35 data-[state=open]:shadow-[0_0_0_4px_rgba(187,115,49,0.10)]"
                     >
-                      <span className="pr-6">{faq.q}</span>
-                    </AccordionTrigger>
-                    <AccordionContent
-                      className="overflow-hidden px-5 pb-4 text-white/65 leading-relaxed data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up motion-reduce:animate-none"
-                    >
-                      {faq.a}
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
+                      <AccordionTrigger
+                        className="group flex w-full items-center justify-between px-5 py-4 text-left text-white/85 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#BB7331]/30 [&[data-state=open]>svg]:rotate-180 [&[data-state=open]>svg]:text-[#BB7331]/80"
+                      >
+                        <span className="pr-6">{faq.q}</span>
+                      </AccordionTrigger>
+                      <AccordionContent
+                        className="overflow-hidden px-5 pb-4 text-white/65 leading-relaxed data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up motion-reduce:animate-none"
+                      >
+                        {faq.a}
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              </div>
             </div>
-          </div>
-        </FAQSection>
+          </FAQSection>
+        </section>
 
         {/* Final CTA */}
         <section className="py-16 sm:py-24 border-t border-border/50 bg-gradient-to-t from-primary/10 to-transparent">

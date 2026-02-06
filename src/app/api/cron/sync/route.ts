@@ -5,6 +5,8 @@ import { fetchLeetCodeSolvedProblems } from "@/lib/platforms/leetcode"
 import { fetchCodeforcesSolvedProblems } from "@/lib/platforms/codeforces"
 import { fetchAtCoderSolvedProblems } from "@/lib/platforms/atcoder"
 import { PlatformProblem } from "@/lib/platforms"
+import { sendEmail } from "@/lib/email/sendEmail"
+import { reviewReminderEmail } from "@/lib/email/templates/reviewReminder"
 
 export async function GET(req: Request) {
     const authHeader = req.headers.get("authorization")
@@ -48,15 +50,93 @@ export async function GET(req: Request) {
             }
         }
 
+        // Send Reminders
+        const remindersSent = await sendReminders()
+
         return NextResponse.json({
             success: true,
             usersProcessed: users.length,
             problemsAdded: totalAdded,
+            remindersSent,
         })
     } catch (error) {
         console.error("Cron sync failed:", error)
         return new NextResponse("Internal Server Error", { status: 500 })
     }
+}
+
+async function sendReminders(): Promise<number> {
+    const now = new Date()
+    const reviewUrl = `${process.env.NEXTAUTH_URL}/review` // Check correct URL
+
+    // Find users who want reminders
+    const users = await prisma.user.findMany({
+        where: {
+            email: { not: null },
+            emailReviewRemindersEnabled: true,
+        },
+        select: {
+            id: true,
+            email: true,
+            name: true,
+            lastReviewReminderSentAt: true,
+            timezone: true,
+        },
+    })
+
+    let sentCount = 0
+
+    for (const u of users) {
+        // 1. Check cooldown (24h)
+        if (u.lastReviewReminderSentAt) {
+            const diff = now.getTime() - u.lastReviewReminderSentAt.getTime()
+            if (diff < 24 * 60 * 60 * 1000) continue
+        }
+
+        // 2. Count due problems
+        // We need to count problems where nextReviewAt <= now
+        const dueCount = await prisma.revisionProblem.count({
+            where: {
+                userId: u.id,
+                nextReviewAt: { lte: now },
+            },
+        })
+
+        if (dueCount <= 0) continue
+
+        // 3. Send email
+        try {
+            const appUrl = process.env.APP_URL || process.env.NEXTAUTH_URL || "http://localhost:3000"
+            const logoUrl = new URL("/logo.png", appUrl).toString()
+
+            const { subject, html, text } = reviewReminderEmail({
+                appUrl,
+                logoUrl,
+                username: u.name,
+                dueCount,
+                reviewUrl,
+            })
+
+            await sendEmail({
+                to: u.email!,
+                subject,
+                html,
+                text,
+            })
+
+            // 4. Update last sent time
+            await prisma.user.update({
+                where: { id: u.id },
+                data: { lastReviewReminderSentAt: now },
+            })
+
+            sentCount++
+        } catch (e) {
+            console.error(`Failed to send reminder to ${u.email}:`, e)
+        }
+    }
+
+    return sentCount
 }
 
 async function syncProblems(userId: string, platform: string, problems: PlatformProblem[]): Promise<number> {

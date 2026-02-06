@@ -8,24 +8,20 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus } from "lucide-react";
-
-type Category = "SHEET" | "PLAYLIST" | "ARTICLE" | "TOOL" | "COURSE";
 
 export function SuggestResourceDialog() {
     const [open, setOpen] = useState(false);
     const [title, setTitle] = useState("");
     const [url, setUrl] = useState("");
-    const [category, setCategory] = useState<Category>("SHEET");
-    const [note, setNote] = useState("");
+    const [description, setDescription] = useState("");
 
     const mutation = useMutation({
         mutationFn: async () => {
-            const res = await fetch("/api/resources/suggestions", {
+            const res = await fetch("/api/resources/suggest", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ title, url, category, note: note || undefined }),
+                body: JSON.stringify({ title, url, description: description || undefined }),
             });
 
             const data = await res.json();
@@ -36,8 +32,7 @@ export function SuggestResourceDialog() {
             toast.success("Thanks! Your suggestion was sent to the admins.");
             setTitle("");
             setUrl("");
-            setNote("");
-            setCategory("SHEET");
+            setDescription("");
             setOpen(false);
         },
         onError: (e: any) => {
@@ -83,26 +78,10 @@ export function SuggestResourceDialog() {
                     </div>
 
                     <div className="space-y-2">
-                        <div className="text-sm font-medium text-white/70">Category</div>
-                        <Select value={category} onValueChange={(v) => setCategory(v as Category)}>
-                            <SelectTrigger className="bg-white/5 border-white/10 focus:ring-[#BB7331]/50">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="bg-[#111] border-white/10">
-                                <SelectItem value="SHEET">Sheet</SelectItem>
-                                <SelectItem value="PLAYLIST">Playlist</SelectItem>
-                                <SelectItem value="ARTICLE">Article</SelectItem>
-                                <SelectItem value="TOOL">Tool</SelectItem>
-                                <SelectItem value="COURSE">Course</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                        <div className="text-sm font-medium text-white/70">Why is it helpful? (optional)</div>
+                        <div className="text-sm font-medium text-white/70">Description (optional)</div>
                         <Textarea
-                            value={note}
-                            onChange={(e) => setNote(e.target.value)}
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
                             placeholder="Short note about why this resource is valuable..."
                             className="min-h-[100px] bg-white/5 border-white/10 focus-visible:ring-[#BB7331]/50 resize-none"
                         />
@@ -120,3 +99,4 @@ export function SuggestResourceDialog() {
         </Dialog>
     );
 }
+

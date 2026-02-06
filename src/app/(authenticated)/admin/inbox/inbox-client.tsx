@@ -81,7 +81,7 @@ export function InboxClient({ messages }: InboxClientProps) {
                             </div>
 
                             {/* Metadata Footer */}
-                            {(selectedMessage.ipHash || selectedMessage.userAgent) && (
+                            {/* {(selectedMessage.ipHash || selectedMessage.userAgent) && (
                                 <div className="mt-8 pt-6 border-t border-white/5 grid gap-2 text-xs text-muted-foreground/50">
                                     {selectedMessage.ipHash && (
                                         <div className="flex items-center gap-2">
@@ -96,7 +96,7 @@ export function InboxClient({ messages }: InboxClientProps) {
                                         </div>
                                     )}
                                 </div>
-                            )}
+                            )} */}
                         </ScrollArea>
                     </div>
                 ) : (

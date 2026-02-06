@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import crypto from "crypto"
+import { sendEmail } from "@/lib/email/sendEmail"
+import { resetPasswordEmail } from "@/lib/email/templates/resetPassword"
 
 // Rate limiting helper (simple in-memory - use Redis in production)
 const resetAttempts = new Map<string, { count: number, resetAt: number }>()
@@ -60,17 +62,38 @@ export async function POST(request: NextRequest) {
             },
         })
 
-        // TODO: Send email with reset link
-        // For now, log it (in production, use email service)
-        const resetUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/reset-password?token=${token}`
+        // Send email with reset link
+        const appUrl = process.env.APP_URL || process.env.NEXTAUTH_URL || "http://localhost:3000"
+        const resetUrl = new URL("/reset-password", appUrl)
+        resetUrl.searchParams.set("token", token)
+        resetUrl.searchParams.set("email", email)
 
         console.log("=== PASSWORD RESET LINK ===")
         console.log(`User: ${user.email}`)
-        console.log(`Reset URL: ${resetUrl}`)
+        console.log(`Reset URL: ${resetUrl.toString()}`)
         console.log("===========================")
 
-        // In production, send email:
-        // await sendPasswordResetEmail(user.email, resetUrl)
+        try {
+            const logoUrl = new URL("/logo.png", appUrl).toString()
+
+            const { subject, html, text } = resetPasswordEmail({
+                appUrl,
+                logoUrl,
+                resetUrl: resetUrl.toString(),
+                expiresMinutes: 15,
+                userName: user.name,
+            })
+
+            await sendEmail({
+                to: user.email!,
+                subject,
+                html,
+                text,
+            })
+        } catch (emailError) {
+            console.error("Failed to send password reset email:", emailError)
+            // Continue to return success to client
+        }
 
         return NextResponse.json({ success: true })
     } catch (error) {

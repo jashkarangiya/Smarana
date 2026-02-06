@@ -13,7 +13,7 @@ import { toast } from "sonner"
 import {
     RefreshCw, User, CheckCircle2, Clock, Share2, Download,
     ArrowLeft, Eye, EyeOff, Globe, ExternalLink, Copy, Check, Shield,
-    Users, Lock
+    Users, Lock, Bell
 } from "lucide-react"
 import Link from "next/link"
 import { Switch } from "@/components/ui/switch"
@@ -29,11 +29,12 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 
-type SettingsSection = "basic" | "platforms" | "visibility" | "accounts"
+type SettingsSection = "basic" | "platforms" | "visibility" | "accounts" | "notifications"
 
 const sections = [
     { id: "basic" as const, label: "Basic Info", icon: User, description: "Profile and personal details" },
     { id: "platforms" as const, label: "Platforms", icon: Share2, description: "Connected platforms and sync" },
+    { id: "notifications" as const, label: "Notifications", icon: Bell, description: "Email and updates" },
     { id: "visibility" as const, label: "Visibility", icon: Eye, description: "Privacy and sharing settings" },
     { id: "accounts" as const, label: "Accounts", icon: Shield, description: "Password and security" },
 ]
@@ -99,6 +100,10 @@ export default function ProfilePage() {
     const [showTimezoneToFriends, setShowTimezoneToFriends] = useState(true)
     const [savingVisibility, setSavingVisibility] = useState(false)
 
+    // Notification state
+    const [emailReviewRemindersEnabled, setEmailReviewRemindersEnabled] = useState(false)
+    const [savingNotifications, setSavingNotifications] = useState(false)
+
     // Track if form has unsaved changes
     const initialBasicInfo = useMemo(() => ({
         displayName: user?.name || session?.user?.name || "",
@@ -124,8 +129,11 @@ export default function ProfilePage() {
             setShowStreakPublicly(user.showStreakToPublic ?? true)
             setShowPlatformsPublicly(user.showPlatformsToPublic ?? true)
             setShowBioPublicly(user.showBioPublicly ?? true)
+            setShowBioPublicly(user.showBioPublicly ?? true)
             setShowTimezoneToPublic(user.showTimezoneToPublic ?? false)
             setShowTimezoneToFriends(user.showTimezoneToFriends ?? true)
+            // @ts-ignore - type update might delay
+            setEmailReviewRemindersEnabled(user.emailReviewRemindersEnabled ?? false)
         } else if (session?.user?.name) {
             setDisplayName(session.user.name)
         }
@@ -232,6 +240,29 @@ export default function ProfilePage() {
             toast.error("Failed to update privacy settings")
         } finally {
             setSavingVisibility(false)
+        }
+    }
+
+    const handleSaveNotifications = async () => {
+        setSavingNotifications(true)
+        try {
+            const res = await fetch("/api/me", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    emailReviewRemindersEnabled,
+                }),
+            })
+            if (res.ok) {
+                toast.success("Notification settings updated!")
+                refetchUser()
+            } else {
+                toast.error("Failed to update notification settings")
+            }
+        } catch {
+            toast.error("Failed to update notification settings")
+        } finally {
+            setSavingNotifications(false)
         }
     }
 
@@ -554,6 +585,42 @@ export default function ProfilePage() {
                         </div>
                     )}
 
+                    {/* Notifications Section */}
+                    {activeSection === "notifications" && (
+                        <div className="space-y-6">
+                            <div>
+                                <h1 className="text-2xl font-semibold text-white/90">Notifications</h1>
+                                <p className="text-sm text-white/50 mt-1">Manage your email preferences and alerts.</p>
+                            </div>
+
+                            <Card className="border-white/10 bg-white/[0.03]">
+                                <CardContent className="p-6 space-y-6">
+                                    {/* Email Review Reminders */}
+                                    <div className="flex items-center justify-between gap-4">
+                                        <div className="space-y-1">
+                                            <Label className="text-base">Email Review Reminders</Label>
+                                            <p className="text-sm text-white/50">
+                                                Receive a daily email when you have problems due for review.
+                                            </p>
+                                        </div>
+                                        <Switch
+                                            checked={emailReviewRemindersEnabled}
+                                            onCheckedChange={setEmailReviewRemindersEnabled}
+                                        />
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            <Button
+                                className="bg-[#BB7331] hover:bg-[#BB7331]/90"
+                                onClick={handleSaveNotifications}
+                                disabled={savingNotifications}
+                            >
+                                {savingNotifications ? "Saving..." : "Save Notification Settings"}
+                            </Button>
+                        </div>
+                    )}
+
                     {/* Visibility Section */}
                     {activeSection === "visibility" && (
                         <div className="space-y-6">
@@ -842,6 +909,6 @@ export default function ProfilePage() {
                     )}
                 </div>
             </div>
-        </div>
+        </div >
     )
 }

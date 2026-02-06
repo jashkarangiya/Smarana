@@ -6,9 +6,9 @@ CREATE TABLE "UserStats" (
     "longestStreak" INTEGER NOT NULL DEFAULT 0,
     "totalReviews" INTEGER NOT NULL DEFAULT 0,
     "problemsTracked" INTEGER NOT NULL DEFAULT 0,
-    "lastReviewedAt" DATETIME,
+    "lastReviewedAt" TIMESTAMP(3),
     "reviewsThisWeek" INTEGER NOT NULL DEFAULT 0,
-    "updatedAt" DATETIME NOT NULL,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     CONSTRAINT "UserStats_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -19,12 +19,12 @@ CREATE TABLE "new_User" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "name" TEXT,
     "email" TEXT,
-    "emailVerified" DATETIME,
+    "emailVerified" TIMESTAMP(3),
     "password" TEXT,
     "image" TEXT,
     "username" TEXT,
     "usernameLower" TEXT,
-    "usernameChangedAt" DATETIME,
+    "usernameChangedAt" TIMESTAMP(3),
     "usernameChangeCount" INTEGER NOT NULL DEFAULT 0,
     "leetcodeUsername" TEXT,
     "codeforcesUsername" TEXT,
@@ -32,8 +32,8 @@ CREATE TABLE "new_User" (
     "atcoderUsername" TEXT,
     "xp" INTEGER NOT NULL DEFAULT 0,
     "level" INTEGER NOT NULL DEFAULT 1,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     "isProfilePublic" BOOLEAN NOT NULL DEFAULT true,
     "showStreakPublicly" BOOLEAN NOT NULL DEFAULT true,
     "showLeetCodePublicly" BOOLEAN NOT NULL DEFAULT true

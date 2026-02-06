@@ -15,6 +15,8 @@ import { Brain, BarChart3, Trophy, Zap, Target, Flame, TrendingUp, Clock, Sparkl
 import { PasswordStrength } from "@/components/shared/password-strength"
 import { z } from "zod"
 import { useDebounce } from "use-debounce"
+import { validatePassword } from "@/lib/auth/passwordPolicy"
+
 
 // Sign Up Features
 const SIGNUP_FEATURES = [
@@ -48,25 +50,15 @@ const SignUpSchema = z.object({
         .min(3, "Username must be at least 3 chars")
         .max(20, "Username must be at most 20 chars")
         .regex(usernameRegex, "Only lowercase letters, numbers, and underscores"),
-    password: z.string()
-        .min(8, "Password must be at least 8 characters"),
+    password: z.string(),
     confirmPassword: z.string()
 }).refine((d) => d.password === d.confirmPassword, {
     message: "Passwords do not match",
     path: ["confirmPassword"]
 }).refine((d) => {
-    // Strength check: must pass 3+ of the 4 complexity criteria (excluding length which is already checked)
-    const checks = [
-        /[a-z]/.test(d.password),
-        /[A-Z]/.test(d.password),
-        /[0-9]/.test(d.password),
-        /[^A-Za-z0-9]/.test(d.password),
-    ]
-    // Base requirement is 8 chars (checked above).
-    // Require at least 3 complexity types for "Strong enough"
-    return checks.filter(Boolean).length >= 3
+    return validatePassword(d.password).ok
 }, {
-    message: "Password too weak - include uppercase, number, or symbol",
+    message: "Password does not meet requirements",
     path: ["password"]
 })
 

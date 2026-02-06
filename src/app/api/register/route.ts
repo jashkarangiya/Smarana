@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import { NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
+import { validatePassword } from "@/lib/auth/passwordPolicy"
 
 export async function POST(req: Request) {
     try {
@@ -8,6 +9,11 @@ export async function POST(req: Request) {
 
         if (!email || !password) {
             return new NextResponse("Missing email or password", { status: 400 })
+        }
+
+        const { ok, failed } = validatePassword(password)
+        if (!ok) {
+            return new NextResponse(`Password does not meet requirements: ${failed.map(f => f.label).join(", ")}`, { status: 400 })
         }
 
         // Check if user exists

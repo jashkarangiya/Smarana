@@ -78,9 +78,7 @@ export async function POST(req: Request) {
                 userId: session.user.id,
                 title,
                 url,
-                urlNormalized,
-                category,
-                note: note?.trim() || null,
+                description: note?.trim() || null,
             },
         });
 

@@ -2,25 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import crypto from "crypto"
 import bcrypt from "bcryptjs"
+import { validatePassword } from "@/lib/auth/passwordPolicy"
 
-function validatePassword(password: string): { valid: boolean, error?: string } {
-    if (password.length < 12) {
-        return { valid: false, error: "Password must be at least 12 characters" }
-    }
-    if (!/[A-Z]/.test(password)) {
-        return { valid: false, error: "Password must contain an uppercase letter" }
-    }
-    if (!/[a-z]/.test(password)) {
-        return { valid: false, error: "Password must contain a lowercase letter" }
-    }
-    if (!/[0-9]/.test(password)) {
-        return { valid: false, error: "Password must contain a number" }
-    }
-    if (!/[^A-Za-z0-9]/.test(password)) {
-        return { valid: false, error: "Password must contain a special character" }
-    }
-    return { valid: true }
-}
 
 export async function POST(request: NextRequest) {
     try {
@@ -34,10 +17,10 @@ export async function POST(request: NextRequest) {
         }
 
         // Validate password strength
-        const validation = validatePassword(password)
-        if (!validation.valid) {
+        const { ok, failed } = validatePassword(password)
+        if (!ok) {
             return NextResponse.json(
-                { error: validation.error },
+                { error: `Password does not meet requirements: ${failed.map(f => f.label).join(", ")}` },
                 { status: 400 }
             )
         }

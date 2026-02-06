@@ -135,8 +135,8 @@ export class SmaranaOverlay {
                 case "save":
                     this.handleSave()
                     break
-                case "reveal":
-                    this.toggleSolution(e)
+                case "reveal-spoiler":
+                    this.toggleSpoiler(e)
                     break
                 case "disconnect":
                     clearAuth().then(() => {
@@ -200,24 +200,18 @@ export class SmaranaOverlay {
         }
     }
 
-    private toggleSolution(e: Event) {
-        const solutionContent = this.panelContainer.querySelector(".smr-solution-content") as HTMLElement
-        const solutionHidden = this.panelContainer.querySelector(".smr-solution-hidden") as HTMLElement
-
-        // Find the button from composedPath
-        let btn: HTMLElement | null = null
+    private toggleSpoiler(e: Event) {
+        // Find the container
+        let container: HTMLElement | null = null
         for (const node of e.composedPath()) {
-            if (node instanceof HTMLElement && node.dataset?.smAction === "reveal") {
-                btn = node
+            if (node instanceof HTMLElement && node.classList.contains("smr-spoiler-container")) {
+                container = node
                 break
             }
         }
 
-        if (solutionContent && btn) {
-            const isHidden = solutionContent.style.display === "none"
-            solutionContent.style.display = isHidden ? "block" : "none"
-            if (solutionHidden) solutionHidden.style.display = isHidden ? "none" : "block"
-            btn.textContent = isHidden ? "Hide" : "Reveal"
+        if (container) {
+            container.classList.add("revealed")
         }
     }
 
@@ -593,9 +587,8 @@ export class SmaranaOverlay {
             <section class="smr-card">
                 <div class="smr-card-head">
                     <span class="smr-card-label">Solution</span>
-                    ${solutionToggle}
                 </div>
-                ${solutionBodyHtml}
+                ${this.getSolutionContent(problem)}
             </section>
 
             <div class="smr-footer">
@@ -618,6 +611,26 @@ export class SmaranaOverlay {
             </div>
         `
     }
+
+    private getSolutionContent(problem: ProblemData): string {
+        if (!problem.solution || !problem.solution.trim()) {
+            return `<div class="smr-card-body"><span class="smr-muted-2">No solution saved.</span></div>`
+        }
+
+        // Check if previously revealed? For now, always collapsed on refresh/re-open 
+        // effectively "Spaced Repetition" - you should try to recall first!
+        return `
+            <div class="smr-spoiler-container" data-sm-action="reveal-spoiler">
+                <div class="smr-card-body smr-code smr-spoiler-content smr-spoiler-blur">
+                    <pre>${this.escapeHtml(problem.solution)}</pre>
+                </div>
+                <div class="smr-spoiler-overlay">
+                    <div class="smr-spoiler-btn">Click to Reveal</div>
+                </div>
+            </div>
+        `
+    }
+
 
     private getEditContent(problem: ProblemData): string {
         const notesValue = problem.notes || ""

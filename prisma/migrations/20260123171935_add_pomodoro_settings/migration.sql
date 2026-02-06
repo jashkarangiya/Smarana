@@ -8,7 +8,7 @@ CREATE TABLE "PomodoroSettings" (
     "longBreakInterval" INTEGER NOT NULL DEFAULT 4,
     "autoStartBreaks" BOOLEAN NOT NULL DEFAULT false,
     "autoStartPomodoros" BOOLEAN NOT NULL DEFAULT false,
-    "updatedAt" DATETIME NOT NULL,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     CONSTRAINT "PomodoroSettings_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 

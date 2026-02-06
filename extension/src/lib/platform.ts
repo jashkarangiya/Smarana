@@ -31,6 +31,10 @@ export function getProblemContext(url: string): ProblemContext | null {
         // gym?
         const m3 = u.pathname.match(/\/gym\/(\d+)\/problem\/([A-Z0-9]+)/i)
         if (m3) return { platform: "codeforces", slug: `${m3[1]}-${m3[2]}`.toUpperCase() }
+
+        // group contest?
+        const m4 = u.pathname.match(/\/group\/([a-zA-Z0-9]+)\/contest\/(\d+)\/problem\/([A-Z0-9]+)/i)
+        if (m4) return { platform: "codeforces", slug: `${m4[2]}-${m4[3]}`.toUpperCase() }
     }
 
     // AtCoder

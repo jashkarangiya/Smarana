@@ -10,6 +10,7 @@ import {
     Globe,
     Timer,
     Trophy,
+    Sparkles,
     type LucideIcon
 } from "lucide-react"
 
@@ -25,6 +26,12 @@ export const MAIN_NAV: NavLink[] = [
     { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard, variant: "default" },
     { title: "Problems", href: "/problems", icon: ListTodo, variant: "default" },
     { title: "Schedule", href: "/schedule", icon: Calendar, variant: "default" },
+]
+
+export const LANDING_NAV: NavLink[] = [
+    { title: "How it Works", href: "/#how-it-works", icon: BookOpen, variant: "default" },
+    { title: "Features", href: "/#features", icon: Sparkles, variant: "default" },
+    { title: "FAQ", href: "/#faq", icon: Brain, variant: "default" },
 ]
 
 export const UTILITY_NAV: NavLink[] = [

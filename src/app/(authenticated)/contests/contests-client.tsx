@@ -1,25 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useQuery } from "@tanstack/react-query";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Bell, BellOff, Calendar, Clock, ExternalLink, Trophy } from "lucide-react";
-import { formatDistanceToNow, format, isPast, isFuture, differenceInHours, addDays } from "date-fns";
-
-interface Contest {
-    id: string;
-    platform: string;
-    contestId: string;
-    name: string;
-    startTime: string;
-    endTime: string | null;
-    duration: number | null;
-    url: string;
-    phase: string;
-    hasReminder?: boolean;
-}
+import { Calendar, Clock, ExternalLink, Trophy } from "lucide-react";
+import { formatDistanceToNow, format, differenceInHours, addDays } from "date-fns";
+import type { Contest } from "@/lib/contests/types";
 
 const PLATFORM_COLORS: Record<string, string> = {
     leetcode: "bg-amber-500/10 text-amber-500 border-amber-500/20",
@@ -36,60 +24,38 @@ const PLATFORM_NAMES: Record<string, string> = {
 };
 
 export function ContestsClient() {
-    const [contests, setContests] = useState<Contest[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [togglingReminder, setTogglingReminder] = useState<string | null>(null);
-
-    useEffect(() => {
-        fetchContests();
-    }, []);
-
-    const fetchContests = async () => {
-        try {
+    const { data, isLoading, error, refetch } = useQuery({
+        queryKey: ["contests"],
+        queryFn: async () => {
             const res = await fetch("/api/contests");
             if (!res.ok) throw new Error("Failed to fetch contests");
-            const data = await res.json();
-            setContests(data.contests || []);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : "Failed to load contests");
-        } finally {
-            setLoading(false);
-        }
-    };
+            // The API returns { contests: Contest[] }
+            return (await res.json()) as { contests: Contest[] };
+        },
+    });
 
-    const toggleReminder = async (contestId: string, hasReminder: boolean) => {
-        setTogglingReminder(contestId);
-        try {
-            const res = await fetch("/api/contests/reminder", {
-                method: hasReminder ? "DELETE" : "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ contestId }),
-            });
-            if (!res.ok) throw new Error("Failed to toggle reminder");
-
-            setContests((prev) =>
-                prev.map((c) =>
-                    c.id === contestId ? { ...c, hasReminder: !hasReminder } : c
-                )
-            );
-        } catch (err) {
-            console.error("Failed to toggle reminder:", err);
-        } finally {
-            setTogglingReminder(null);
-        }
-    };
+    const contests = data?.contests || [];
 
     const nextWeekCutoff = addDays(new Date(), 7);
+    const now = Date.now();
+
+    // Helper to determine status since new API doesn't return phase
+    const getContestStatus = (c: Contest) => {
+        const start = new Date(c.startsAt).getTime();
+        const end = start + c.durationSeconds * 1000;
+        if (now >= start && now < end) return "CODING";
+        if (now < start) return "BEFORE";
+        return "FINISHED";
+    };
 
     const upcomingContests = contests
-        .filter((c) => c.phase === "BEFORE" && isFuture(new Date(c.startTime)))
-        .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+        .filter((c) => getContestStatus(c) === "BEFORE")
+        .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
 
-    const next7Days = upcomingContests.filter(c => new Date(c.startTime) <= nextWeekCutoff);
-    const otherUpcoming = upcomingContests.filter(c => new Date(c.startTime) > nextWeekCutoff);
+    const next7Days = upcomingContests.filter(c => new Date(c.startsAt) <= nextWeekCutoff);
+    const otherUpcoming = upcomingContests.filter(c => new Date(c.startsAt) > nextWeekCutoff);
 
-    const liveContests = contests.filter((c) => c.phase === "CODING");
+    const liveContests = contests.filter((c) => getContestStatus(c) === "CODING");
 
     const getTimeUntilStart = (startTime: string) => {
         const start = new Date(startTime);
@@ -101,8 +67,9 @@ export function ContestsClient() {
         return format(start, "MMM d 'at' h:mm a");
     };
 
-    const formatDuration = (minutes: number | null) => {
-        if (!minutes) return null;
+    const formatDuration = (seconds: number) => {
+        if (!seconds) return null;
+        const minutes = Math.floor(seconds / 60);
         const hours = Math.floor(minutes / 60);
         const mins = minutes % 60;
         if (hours === 0) return `${mins}m`;
@@ -110,7 +77,7 @@ export function ContestsClient() {
         return `${hours}h ${mins}m`;
     };
 
-    if (loading) {
+    if (isLoading) {
         return (
             <div className="container max-w-4xl py-8 space-y-6">
                 <div className="space-y-2">
@@ -131,15 +98,11 @@ export function ContestsClient() {
             <div className="container max-w-4xl py-8">
                 <Card className="border-destructive/30 bg-destructive/5">
                     <CardContent className="py-8 text-center">
-                        <p className="text-destructive">{error}</p>
+                        <p className="text-destructive">Failed to load contests</p>
                         <Button
                             variant="outline"
                             className="mt-4"
-                            onClick={() => {
-                                setError(null);
-                                setLoading(true);
-                                fetchContests();
-                            }}
+                            onClick={() => refetch()}
                         >
                             Try Again
                         </Button>
@@ -172,8 +135,6 @@ export function ContestsClient() {
                                 key={contest.id}
                                 contest={contest}
                                 isLive
-                                onToggleReminder={toggleReminder}
-                                isTogglingReminder={togglingReminder === contest.id}
                                 getTimeUntilStart={getTimeUntilStart}
                                 formatDuration={formatDuration}
                             />
@@ -182,7 +143,6 @@ export function ContestsClient() {
                 </section>
             )}
 
-            {/* Upcoming Contests */}
             {/* Upcoming Contests */}
             <section className="space-y-6">
                 <div>
@@ -203,8 +163,6 @@ export function ContestsClient() {
                                     <ContestCard
                                         key={contest.id}
                                         contest={contest}
-                                        onToggleReminder={toggleReminder}
-                                        isTogglingReminder={togglingReminder === contest.id}
                                         getTimeUntilStart={getTimeUntilStart}
                                         formatDuration={formatDuration}
                                     />
@@ -227,8 +185,6 @@ export function ContestsClient() {
                                 <ContestCard
                                     key={contest.id}
                                     contest={contest}
-                                    onToggleReminder={toggleReminder}
-                                    isTogglingReminder={togglingReminder === contest.id}
                                     getTimeUntilStart={getTimeUntilStart}
                                     formatDuration={formatDuration}
                                 />
@@ -240,7 +196,7 @@ export function ContestsClient() {
 
             {/* Info */}
             <p className="text-xs text-muted-foreground/60 text-center pt-4">
-                Contest data is updated periodically. Times are shown in your local timezone.
+                Contest data is updated periodically (cached for 15m). Times are shown in your local timezone.
             </p>
         </div>
     );
@@ -249,23 +205,19 @@ export function ContestsClient() {
 function ContestCard({
     contest,
     isLive = false,
-    onToggleReminder,
-    isTogglingReminder,
     getTimeUntilStart,
     formatDuration,
 }: {
     contest: Contest;
     isLive?: boolean;
-    onToggleReminder: (id: string, hasReminder: boolean) => void;
-    isTogglingReminder: boolean;
     getTimeUntilStart: (startTime: string) => string;
-    formatDuration: (minutes: number | null) => string | null;
+    formatDuration: (seconds: number) => string | null;
 }) {
     const platformColor =
         PLATFORM_COLORS[contest.platform] || "bg-gray-500/10 text-gray-500 border-gray-500/20";
     const platformName = PLATFORM_NAMES[contest.platform] || contest.platform;
 
-    const startDate = new Date(contest.startTime);
+    const startDate = new Date(contest.startsAt);
     const hoursUntil = differenceInHours(startDate, new Date());
     const isStartingSoon = hoursUntil <= 24 && hoursUntil > 0;
 
@@ -307,40 +259,15 @@ function ContestCard({
                         <div className="flex items-center gap-4 text-xs text-muted-foreground">
                             <span className="flex items-center gap-1">
                                 <Clock className="h-3 w-3" />
-                                {isLive ? "In progress" : getTimeUntilStart(contest.startTime)}
+                                {isLive ? "In progress" : getTimeUntilStart(contest.startsAt)}
                             </span>
-                            {contest.duration && (
-                                <span>{formatDuration(contest.duration)}</span>
+                            {contest.durationSeconds > 0 && (
+                                <span>{formatDuration(contest.durationSeconds)}</span>
                             )}
                         </div>
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
-                        {!isLive && (
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className={`h-9 w-9 ${contest.hasReminder
-                                    ? "text-primary"
-                                    : "text-muted-foreground"
-                                    }`}
-                                onClick={() =>
-                                    onToggleReminder(contest.id, !!contest.hasReminder)
-                                }
-                                disabled={isTogglingReminder}
-                                title={
-                                    contest.hasReminder
-                                        ? "Remove reminder"
-                                        : "Set reminder"
-                                }
-                            >
-                                {contest.hasReminder ? (
-                                    <Bell className="h-4 w-4 fill-current" />
-                                ) : (
-                                    <BellOff className="h-4 w-4" />
-                                )}
-                            </Button>
-                        )}
                         <Button
                             variant="outline"
                             size="sm"
@@ -362,3 +289,4 @@ function ContestCard({
         </Card>
     );
 }
+

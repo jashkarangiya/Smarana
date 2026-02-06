@@ -29,7 +29,7 @@ import { NotificationsBell } from "./notifications-bell"
 import { PomodoroSheet } from "@/components/features/pomodoro/pomodoro-sheet"
 import { usePomodoro } from "@/hooks/use-pomodoro"
 import { useEasterEgg } from "@/components/features/gamification/ember-trail-provider"
-import { MAIN_NAV, UTILITY_NAV, ACTIONS_NAV } from "@/config/navigation"
+import { MAIN_NAV, UTILITY_NAV, ACTIONS_NAV, LANDING_NAV } from "@/config/navigation"
 
 export function NavBar() {
     const { data: session } = useSession()
@@ -430,20 +430,90 @@ export function NavBar() {
                             </>
                         ) : (
                             <div className="flex items-center gap-2">
-                                <Button variant="ghost" size="sm" className="rounded-full font-medium h-9 px-4 text-white/80 hover:text-white hover:bg-white/5" asChild>
-                                    <Link href="/sign-in">Sign In</Link>
-                                </Button>
-                                <Button
-                                    size="sm"
-                                    className="rounded-full font-semibold h-9 px-5"
-                                    style={{
-                                        background: 'linear-gradient(135deg, #BB7331, #b8862f)',
-                                        boxShadow: '0 8px 24px rgba(214,162,75,0.3)'
-                                    }}
-                                    asChild
-                                >
-                                    <Link href="/register">Get Started</Link>
-                                </Button>
+                                {/* Desktop Authentication Buttons */}
+                                <div className="hidden sm:flex items-center gap-2">
+                                    <Button variant="ghost" size="sm" className="rounded-full font-medium h-9 px-4 text-white/80 hover:text-white hover:bg-white/5" asChild>
+                                        <Link href="/sign-in">Sign In</Link>
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        className="rounded-full font-semibold h-9 px-5"
+                                        style={{
+                                            background: 'linear-gradient(135deg, #BB7331, #b8862f)',
+                                            boxShadow: '0 8px 24px rgba(214,162,75,0.3)'
+                                        }}
+                                        asChild
+                                    >
+                                        <Link href="/register">Get Started</Link>
+                                    </Button>
+                                </div>
+
+                                {/* Mobile Menu for Unauthenticated Users */}
+                                <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                                    <SheetTrigger asChild className="sm:hidden">
+                                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg hover:bg-white/5">
+                                            <Menu className="h-5 w-5 text-white/80" />
+                                        </Button>
+                                    </SheetTrigger>
+                                    <SheetContent side="right" className="w-[280px] p-0 bg-[#0c0c0c]/95 backdrop-blur-xl border-white/10">
+                                        <SheetHeader className="p-6 border-b border-white/10">
+                                            <SheetTitle className="flex items-center gap-2 text-left">
+                                                <div className="w-8 h-8 rounded-lg overflow-hidden">
+                                                    <Image
+                                                        src="/logo.png"
+                                                        alt="Smarana"
+                                                        width={32}
+                                                        height={32}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                </div>
+                                                <span className="font-bold text-lg tracking-tight text-white/95">
+                                                    Smarana
+                                                </span>
+                                            </SheetTitle>
+                                        </SheetHeader>
+
+                                        <div className="p-4 space-y-4">
+                                            {/* Mobile Navigation Links */}
+                                            <div className="space-y-1">
+                                                {LANDING_NAV.map((link) => (
+                                                    <Link
+                                                        key={link.title}
+                                                        href={link.href}
+                                                        onClick={() => setMobileMenuOpen(false)}
+                                                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-white/70 hover:bg-white/5 hover:text-white transition-all"
+                                                    >
+                                                        <link.icon className="h-5 w-5 opacity-70" />
+                                                        <span className="font-medium">{link.title}</span>
+                                                    </Link>
+                                                ))}
+                                            </div>
+
+                                            {/* Mobile Auth Buttons */}
+                                            <div className="pt-4 mt-4 border-t border-white/10 space-y-3">
+                                                <Button
+                                                    className="w-full rounded-xl font-semibold h-11"
+                                                    style={{
+                                                        background: 'linear-gradient(135deg, #BB7331, #b8862f)',
+                                                        boxShadow: '0 8px 24px rgba(214,162,75,0.2)'
+                                                    }}
+                                                    asChild
+                                                    onClick={() => setMobileMenuOpen(false)}
+                                                >
+                                                    <Link href="/register">Get Started</Link>
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    className="w-full rounded-xl font-medium h-11 text-white/70 hover:text-white hover:bg-white/5"
+                                                    asChild
+                                                    onClick={() => setMobileMenuOpen(false)}
+                                                >
+                                                    <Link href="/sign-in">Sign In</Link>
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </SheetContent>
+                                </Sheet>
                             </div>
                         )}
                     </div>

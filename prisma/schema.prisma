@@ -128,11 +128,17 @@ model User {
   actorNotifications   Notification[] @relation("NotificationActor")
   platformVerifications PlatformVerification[]
   suggestions          ResourceSuggestion[]
+  contactMessages      ContactMessage[]
 
   // Extension
   showSolutionInExtension Boolean @default(true)
   extensionTokens         ExtensionToken[]
   extensionAuthCodes      ExtensionAuthCode[]
+
+  // Email Settings
+  emailReviewRemindersEnabled Boolean   @default(false)
+  emailContestRemindersEnabled Boolean  @default(true)
+  lastReviewReminderSentAt    DateTime?
 
   @@index([usernameLower])
 }
@@ -374,26 +380,36 @@ model PlatformVerification {
   @@index([verificationToken])
 }
 
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String?
+  email     String
+  subject   String?
+  message   String
+  createdAt DateTime @default(now())
+  status    String   @default("NEW")
+
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([status])
+}
+
 model ResourceSuggestion {
-  id            String   @id @default(cuid())
+  id          String   @id @default(cuid())
+  title       String
+  url         String
+  description String?
+  createdAt   DateTime @default(now())
+  status      String   @default("NEW")
 
-  userId        String
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
 
-  title         String
-  url           String
-  urlNormalized String   @unique // prevents duplicates across all users
-  category      String   // SHEET | PLAYLIST | ARTICLE | TOOL | COURSE
-  note          String?  // optional: why it's useful / what it covers
-
-  status        String   @default("PENDING") // PENDING | APPROVED | REJECTED
-  adminNote     String?
-  reviewedAt    DateTime?
-
-  createdAt     DateTime @default(now())
-
-  @@index([status, createdAt])
-  @@index([userId, createdAt])
+  @@index([createdAt])
+  @@index([status])
 }
 
 // Extension authentication - device-style token auth
