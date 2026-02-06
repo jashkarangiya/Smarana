@@ -128,7 +128,6 @@ model User {
   actorNotifications   Notification[] @relation("NotificationActor")
   platformVerifications PlatformVerification[]
   suggestions          ResourceSuggestion[]
-  contactMessages      ContactMessage[]
 
   // Extension
   showSolutionInExtension Boolean @default(true)
@@ -381,21 +380,6 @@ model PlatformVerification {
 }
 
 
-model ContactMessage {
-  id        String   @id @default(cuid())
-  name      String?
-  email     String
-  subject   String?
-  message   String
-  createdAt DateTime @default(now())
-  status    String   @default("NEW")
-
-  userId    String?
-  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-
-  @@index([createdAt])
-  @@index([status])
-}
 
 model ResourceSuggestion {
   id          String   @id @default(cuid())

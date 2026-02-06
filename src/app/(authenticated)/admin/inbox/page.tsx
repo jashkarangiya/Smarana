@@ -1,6 +1,16 @@
 import { prisma } from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
 export default async function AdminInbox() {
+    const session = await getServerSession(authOptions);
+
+    // Admin Protection
+    if (session?.user?.email !== "jashkarangiya@gmail.com") {
+        redirect("/");
+    }
+
     const msgs = await prisma.contactMessage.findMany({
         orderBy: { createdAt: "desc" },
         take: 200,
