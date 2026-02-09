@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { getEffectiveStreak } from "@/lib/streak"
 
 export async function GET() {
     try {
@@ -12,67 +13,28 @@ export async function GET() {
 
         const userId = session.user.id
 
-        // 1. Total Reviews (from ReviewLog)
-        const totalReviewsAgg = await prisma.reviewLog.aggregate({
-            _sum: { count: true },
+        // 1. Total Reviews (from DailyReviewStat)
+        const totalReviewsAgg = await prisma.dailyReviewStat.aggregate({
+            _sum: { reviewCount: true },
             where: { userId },
         })
-        const totalReviews = totalReviewsAgg._sum.count || 0
+        const totalReviews = totalReviewsAgg._sum.reviewCount || 0
 
-        // 2. Current Streak
-        const recentLogs = await prisma.reviewLog.findMany({
-            where: { userId },
-            orderBy: { day: "desc" },
-            take: 365,
-        })
-
-        let currentStreak = 0
-        const today = new Date()
-        const todayString = today.toISOString().split('T')[0]
-
-        // Create a Set of day strings for O(1) lookup
-        const logMap = new Set(recentLogs.map(l => l.day))
-
-        // Determine starting point for streak check
-        // Check if we have an entry for today
-        let checkDateString = todayString
-
-        if (!logMap.has(todayString)) {
-            // If no review today, check yesterday
-            const yesterday = new Date(today)
-            yesterday.setDate(yesterday.getDate() - 1)
-            const yesterdayString = yesterday.toISOString().split('T')[0]
-
-            if (!logMap.has(yesterdayString)) {
-                // No review yesterday either -> Streak is 0
-                checkDateString = ""
-            } else {
-                checkDateString = yesterdayString
-            }
-        }
-
-        if (checkDateString) {
-            currentStreak = 0
-
-            // Start counting from checkDate backwards
-            const pointer = new Date(checkDateString)
-
-            while (true) {
-                const pointerString = pointer.toISOString().split('T')[0]
-                if (logMap.has(pointerString)) {
-                    currentStreak++
-                    pointer.setDate(pointer.getDate() - 1)
-                } else {
-                    break
-                }
-            }
-        }
-
-        // 3. Level & XP
+        // 2. Current Streak (timezone-aware)
         const user = await prisma.user.findUnique({
             where: { id: userId },
-            select: { xp: true, level: true },
+            select: { xp: true, level: true, streakCurrent: true, streakLastDate: true, timezone: true },
         })
+        const currentStreak = user
+            ? getEffectiveStreak({
+                streakCurrent: user.streakCurrent,
+                streakLastDate: user.streakLastDate,
+                now: new Date(),
+                timeZone: user.timezone || "UTC",
+            })
+            : 0
+
+        // 3. Level & XP
 
         // 4. Mastery Score & Stats
         const problems = await prisma.revisionProblem.findMany({

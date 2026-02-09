@@ -3,6 +3,10 @@
         {
             "path": "/api/cron/sync",
             "schedule": "0 0 * * *"
+        },
+        {
+            "path": "/api/cron/contests",
+            "schedule": "30 16 * * 0"
         }
     ]
 }

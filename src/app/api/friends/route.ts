@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { NextResponse } from "next/server"
+import { dateKeyInTz, getEffectiveStreak } from "@/lib/streak"
 
 export async function GET(req: Request) {
     try {
@@ -25,9 +26,12 @@ export async function GET(req: Request) {
                             level: true,
                             xp: true,
                             leetcodeUsername: true,
+                            timezone: true,
+                            streakCurrent: true,
+                            streakLastDate: true,
+                            streakLongest: true,
                             stats: {
                                 select: {
-                                    currentStreak: true,
                                     reviewsThisWeek: true,
                                     totalReviews: true
                                 }
@@ -59,13 +63,15 @@ export async function GET(req: Request) {
         ])
 
         // Compute reviewedToday for each friend
-        const today = new Date().toISOString().split('T')[0]
-
         const friendsWithStats = await Promise.all(friends.map(async (f) => {
-            const todayLog = await prisma.reviewLog.findFirst({
+            const timeZone = f.friend.timezone || "UTC"
+            const todayKey = dateKeyInTz(new Date(), timeZone)
+            const todayLog = await prisma.dailyReviewStat.findUnique({
                 where: {
-                    userId: f.friend.id,
-                    day: today
+                    userId_dateKey: {
+                        userId: f.friend.id,
+                        dateKey: todayKey,
+                    }
                 }
             })
 
@@ -73,7 +79,14 @@ export async function GET(req: Request) {
                 ...f.friend,
                 stats: {
                     ...f.friend.stats,
-                    reviewedToday: todayLog?.count || 0
+                    reviewedToday: todayLog?.reviewCount || 0,
+                    currentStreak: getEffectiveStreak({
+                        streakCurrent: f.friend.streakCurrent || 0,
+                        streakLastDate: f.friend.streakLastDate,
+                        now: new Date(),
+                        timeZone,
+                    }),
+                    longestStreak: f.friend.streakLongest || 0,
                 }
             }
         }))

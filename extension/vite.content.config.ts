@@ -26,8 +26,8 @@ export default defineConfig({
                 }
             },
         },
-        minify: false,
-        sourcemap: false, // Disable sourcemap for now to simplify
+        minify: true,
+        sourcemap: false,
         commonjsOptions: {
             include: [/node_modules/],
         },

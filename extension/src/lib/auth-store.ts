@@ -16,7 +16,12 @@ export type SmaranaAuth = {
  * Get the current auth state from storage
  */
 export async function getAuth(): Promise<SmaranaAuth | null> {
-    const data = await chrome.storage.local.get(AUTH_KEY)
+    let data: Record<string, any> = {}
+    try {
+        data = await chrome.storage.local.get(AUTH_KEY)
+    } catch {
+        return null
+    }
     const auth = data[AUTH_KEY] as SmaranaAuth | undefined
 
     if (!auth?.accessToken) return null
@@ -27,7 +32,6 @@ export async function getAuth(): Promise<SmaranaAuth | null> {
         const now = Date.now()
         // Provide a 1-minute buffer
         if (now > expiry - 60000) {
-            console.log("[Smarana] Token expired in storage")
             await clearAuth()
             return null
         }
@@ -40,14 +44,22 @@ export async function getAuth(): Promise<SmaranaAuth | null> {
  * Save auth state to storage
  */
 export async function setAuth(auth: SmaranaAuth) {
-    await chrome.storage.local.set({ [AUTH_KEY]: auth })
+    try {
+        await chrome.storage.local.set({ [AUTH_KEY]: auth })
+    } catch {
+        // Ignore if context invalidated
+    }
 }
 
 /**
  * Clear auth state from storage
  */
 export async function clearAuth() {
-    await chrome.storage.local.remove(AUTH_KEY)
+    try {
+        await chrome.storage.local.remove(AUTH_KEY)
+    } catch {
+        // Ignore if context invalidated
+    }
 }
 
 /**
@@ -61,6 +73,16 @@ export function onAuthChanged(cb: (auth: SmaranaAuth | null) => void) {
         const newValue = changes[AUTH_KEY].newValue as SmaranaAuth | undefined
         cb(newValue || null)
     }
-    chrome.storage.onChanged.addListener(handler)
-    return () => chrome.storage.onChanged.removeListener(handler)
+    try {
+        chrome.storage.onChanged.addListener(handler)
+    } catch {
+        return () => undefined
+    }
+    return () => {
+        try {
+            chrome.storage.onChanged.removeListener(handler)
+        } catch {
+            // Ignore
+        }
+    }
 }

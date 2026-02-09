@@ -14,6 +14,9 @@ type OverlayCallbacks = {
     onConnect?: () => void
     onRefresh?: () => void
     onSave?: (notes: string, solution: string) => Promise<boolean>
+    onMarkReviewed?: () => void
+    onOpen?: () => void
+    onClose?: () => void
 }
 
 export class SmaranaOverlay {
@@ -34,11 +37,15 @@ export class SmaranaOverlay {
     private currentData: any = null
     private callbacks: OverlayCallbacks = {}
 
+    private timerSeconds = 0
+    private timerRunning = false
+    private showBubbleTimer = true
+    private reviewState: "ready" | "submitting" | "success" = "ready"
+
     // Position (persisted)
     private pos = { x: 16, y: 16 }
 
     constructor() {
-        console.log("[Smarana] Overlay constructor called")
         this.host = document.createElement("div")
         this.host.id = "smarana-root"
         this.host.style.cssText = `
@@ -74,8 +81,8 @@ export class SmaranaOverlay {
         this.app.appendChild(this.bubbleContainer)
         this.app.appendChild(this.panelContainer)
 
+
         document.documentElement.appendChild(this.host)
-        console.log("[Smarana] Host appended to document")
 
         // Setup global event delegation using composedPath() for shadow DOM
         this.setupEventDelegation()
@@ -100,8 +107,6 @@ export class SmaranaOverlay {
         this.shadow.addEventListener("click", (e) => {
             const action = this.findActionFromEvent(e)
 
-            console.log("[Smarana] click event", { action, path: e.composedPath().slice(0, 5) })
-
             if (!action) return
 
             switch (action) {
@@ -112,7 +117,6 @@ export class SmaranaOverlay {
                 case "close":
                     e.stopPropagation()
                     e.preventDefault()
-                    console.log("[Smarana] Close action triggered!")
                     this.setMode("bubble")
                     break
                 case "connect":
@@ -139,16 +143,16 @@ export class SmaranaOverlay {
                     this.toggleSpoiler(e)
                     break
                 case "disconnect":
-                    clearAuth().then(() => {
-                        console.log("[Smarana] Disconnected via overlay")
-                    })
+                    clearAuth()
+                    break
+                case "mark-reviewed":
+                    if (this.callbacks.onMarkReviewed) this.callbacks.onMarkReviewed()
                     break
             }
         })
     }
 
     private setMode(newMode: UIMode) {
-        console.log("[Smarana] setMode:", newMode)
         this.mode = newMode
         this.isEditing = false
 
@@ -159,13 +163,29 @@ export class SmaranaOverlay {
             this.bubbleContainer.style.display = "block"
             this.bubbleContainer.style.pointerEvents = "auto"
             this.renderBubbleContent()
+            if (this.callbacks.onClose) this.callbacks.onClose()
         } else {
             this.bubbleContainer.style.display = "none"
             this.bubbleContainer.style.pointerEvents = "none"
             this.panelContainer.style.display = "block"
             this.panelContainer.style.pointerEvents = "auto"
             this.renderPanelContent()
+            if (this.callbacks.onOpen) this.callbacks.onOpen()
         }
+    }
+
+    collapse() {
+        this.setMode("bubble")
+    }
+
+    hideBubbleTimer() {
+        this.showBubbleTimer = false
+        this.renderBubbleContent()
+    }
+
+    setOpenCloseHandlers(onOpen?: () => void, onClose?: () => void) {
+        this.callbacks.onOpen = onOpen
+        this.callbacks.onClose = onClose
     }
 
     private async handleSave() {
@@ -218,21 +238,18 @@ export class SmaranaOverlay {
     // ==================== POSITION ====================
 
     private async loadPosition() {
-        console.log("[Smarana] Loading position...")
         try {
             const result = await chrome.storage.local.get(["smarana_overlay_pos"])
             if (result.smarana_overlay_pos) {
                 this.pos = result.smarana_overlay_pos
-                console.log("[Smarana] Position loaded:", this.pos)
             }
-        } catch (e) {
-            console.error("[Smarana] Failed to load position", e)
+        } catch {
+            // Ignore — use default position
         }
 
         this.clampPosition()
         this.applyPosition()
         this.host.style.visibility = "visible"
-        console.log("[Smarana] Overlay made visible")
 
         // Initial render
         this.setMode("bubble")
@@ -253,8 +270,8 @@ export class SmaranaOverlay {
     private async savePosition() {
         try {
             await chrome.storage.local.set({ smarana_overlay_pos: this.pos })
-        } catch (e) {
-            console.error("[Smarana] Failed to save position", e)
+        } catch {
+            // Ignore — position will reset next load
         }
     }
 
@@ -400,16 +417,34 @@ export class SmaranaOverlay {
         context: ProblemContext,
         problem: ProblemData,
         onRefresh: () => void,
-        onSave?: (notes: string, solution: string) => Promise<boolean>
+        onSave?: (notes: string, solution: string) => Promise<boolean>,
+        onMarkReviewed?: () => void
     ) {
         this.currentContext = context
         this.currentData = { problem, onRefresh }
         this.callbacks.onRefresh = onRefresh
         this.callbacks.onSave = onSave
+        this.callbacks.onMarkReviewed = onMarkReviewed
+        this.showBubbleTimer = true
+        this.reviewState = "ready"
         this.dataState = "problem"
         this.isEditing = false
         this.render()
     }
+
+    setReviewState(state: "ready" | "submitting" | "success") {
+        this.reviewState = state
+        if (this.mode === "panel") {
+            this.renderPanelContent()
+        }
+    }
+
+    setTimerState(seconds: number, running: boolean) {
+        this.timerSeconds = seconds
+        this.timerRunning = running
+        this.updateTimerUI()
+    }
+
 
     setError(context: ProblemContext, message: string, onRetry: () => void) {
         this.currentContext = context
@@ -434,10 +469,13 @@ export class SmaranaOverlay {
 
     private renderBubbleContent() {
         const statusIndicator = this.getStatusIndicator()
+        const timerLabel = this.formatTimer(this.timerSeconds)
+        const showTimer = this.dataState === "problem" && this.showBubbleTimer
 
         this.bubbleContainer.innerHTML = `
             <div class="bubble" data-sm-action="open" role="button" aria-label="Open Smarana" tabindex="0">
                 <img src="${LOGO_URL}" width="28" height="28" class="bubble-logo" alt="Smarana" draggable="false">
+                ${showTimer ? `<span class="bubble-timer">${timerLabel}</span>` : ""}
                 ${statusIndicator}
             </div>
         `
@@ -512,7 +550,7 @@ export class SmaranaOverlay {
                 </div>
                 <p class="smr-empty-title">Connect to Smarana</p>
                 <p class="smr-subtext">Connect to view your notes, saved solution (if enabled), and review status for this problem.</p>
-                <button id="smConnectBtn" class="smr-primary-btn" data-sm-action="connect" type="button">Connect Account</button>
+                <button id="smConnectBtn" class="smr-primary-btn smr-connect-btn" data-sm-action="connect" type="button">Connect Account</button>
             </div>
         `
     }
@@ -537,6 +575,8 @@ export class SmaranaOverlay {
     private getProblemContent(problem: ProblemData): string {
         const diffClass = this.getDifficultyClass(problem.difficulty)
         const reviewStatus = this.getReviewStatus(problem)
+        const timerHtml = this.getTimerPillHtml()
+        const reviewBanner = this.getReviewBannerHtml()
 
         const notesHtml = problem.notes && problem.notes.trim()
             ? `<div class="smr-prewrap">${this.escapeHtml(problem.notes)}</div>`
@@ -576,6 +616,7 @@ export class SmaranaOverlay {
                 <span class="smr-banner-dot"></span>
                 <span>${reviewStatus.text}</span>
             </div>
+            ${reviewBanner}
 
             <section class="smr-card">
                 <div class="smr-card-head">
@@ -591,8 +632,15 @@ export class SmaranaOverlay {
                 ${this.getSolutionContent(problem)}
             </section>
 
+            ${timerHtml}
+
             <div class="smr-footer">
                 <a href="${problem.smaranaUrl}" target="_blank" class="smr-primary-btn">Open in Smarana</a>
+                <button class="smr-icon-btn ${this.reviewState === "submitting" ? "smr-icon-btn--disabled" : ""}" data-sm-action="mark-reviewed" type="button" title="Mark Reviewed">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="pointer-events:none;">
+                        <path d="M20 6 9 17l-5-5"></path>
+                    </svg>
+                </button>
                 ${editButton}
                 <button class="smr-icon-btn" data-sm-action="refresh" type="button" title="Refresh">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="pointer-events:none;">
@@ -629,6 +677,26 @@ export class SmaranaOverlay {
                 </div>
             </div>
         `
+    }
+
+    private getTimerPillHtml(): string {
+        const timeLabel = this.formatTimer(this.timerSeconds)
+        return `
+            <div class="smr-timer">
+                <span class="smr-timer-icon">⏱</span>
+                <span class="smr-timer-time">${timeLabel}</span>
+            </div>
+        `
+    }
+
+    private getReviewBannerHtml(): string {
+        if (this.reviewState === "submitting") {
+            return `<div class="smr-banner smr-banner-neutral"><span>Saving review…</span></div>`
+        }
+        if (this.reviewState === "success") {
+            return `<div class="smr-banner smr-banner-upcoming"><span>Saved ✅</span></div>`
+        }
+        return ""
     }
 
 
@@ -716,6 +784,21 @@ export class SmaranaOverlay {
         if (d === "medium") return "smr-medium"
         if (d === "hard") return "smr-hard"
         return ""
+    }
+
+    private formatTimer(seconds: number): string {
+        const mm = String(Math.floor(seconds / 60)).padStart(2, "0")
+        const ss = String(seconds % 60).padStart(2, "0")
+        return `${mm}:${ss}`
+    }
+
+    private updateTimerUI() {
+        if (this.mode === "panel" && this.dataState === "problem") {
+            const timeEl = this.panelContainer.querySelector(".smr-timer-time") as HTMLElement | null
+            if (timeEl) timeEl.textContent = this.formatTimer(this.timerSeconds)
+        }
+        const bubbleTime = this.bubbleContainer.querySelector(".bubble-timer") as HTMLElement | null
+        if (bubbleTime) bubbleTime.textContent = this.formatTimer(this.timerSeconds)
     }
 
     private escapeHtml(text: string): string {

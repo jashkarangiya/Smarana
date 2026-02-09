@@ -63,40 +63,126 @@ async function fetchCodeforces(): Promise<Contest[]> {
     }
 }
 
-// 2. LeetCode Direct
+const LEETCODE_WEEKLY_SLUG = "weekly-contest-489";
+const LEETCODE_BIWEEKLY_SLUG = "biweekly-contest-176";
+
+function getNextWeeklyStartUtc(): Date {
+    const now = new Date();
+    const nextSunday = new Date();
+    nextSunday.setDate(now.getDate() + (7 - now.getDay()) % 7);
+    // Weekly: Sunday 10:30 AM ET = 14:30 UTC (standard time)
+    nextSunday.setUTCHours(14, 30, 0, 0);
+    if (nextSunday.getTime() < now.getTime()) {
+        nextSunday.setDate(nextSunday.getDate() + 7);
+    }
+    return nextSunday;
+}
+
+function getNextBiweeklyStartUtc(): Date {
+    const now = new Date();
+    const nextSaturday = new Date();
+    // Saturday is day 6
+    const daysUntilSaturday = (6 - now.getDay() + 7) % 7;
+    nextSaturday.setDate(now.getDate() + daysUntilSaturday);
+    // Biweekly: Saturday 10:30 AM ET = 14:30 UTC (standard time)
+    nextSaturday.setUTCHours(14, 30, 0, 0);
+    if (nextSaturday.getTime() < now.getTime()) {
+        nextSaturday.setDate(nextSaturday.getDate() + 7);
+    }
+    return nextSaturday;
+}
+
+function buildLeetCodeFallback(): Contest[] {
+    try {
+        const weeklyStart = getNextWeeklyStartUtc();
+        const biweeklyStart = getNextBiweeklyStartUtc();
+
+        return [
+            {
+                id: `leetcode:${LEETCODE_WEEKLY_SLUG}`,
+                platform: "leetcode",
+                name: "LeetCode Weekly Contest 489",
+                startsAt: weeklyStart.toISOString(),
+                durationSeconds: 5400, // 90 min
+                url: `https://leetcode.com/contest/${LEETCODE_WEEKLY_SLUG}/`,
+                phase: "BEFORE"
+            },
+            {
+                id: `leetcode:${LEETCODE_BIWEEKLY_SLUG}`,
+                platform: "leetcode",
+                name: "LeetCode Biweekly Contest 176",
+                startsAt: biweeklyStart.toISOString(),
+                durationSeconds: 5400, // 90 min
+                url: `https://leetcode.com/contest/${LEETCODE_BIWEEKLY_SLUG}/`,
+                phase: "BEFORE"
+            }
+        ];
+    } catch (e) {
+        return [];
+    }
+}
+
 async function fetchLeetCode(): Promise<Contest[]> {
     try {
-        const res = await fetch(LC_API, { next: { revalidate: 600 } })
-        if (!res.ok) throw new Error("LC Failed")
-        const data = await res.json()
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        const res = await fetch(LC_API, {
+            signal: controller.signal,
+            next: { revalidate: 600 },
+            headers: {
+                "User-Agent": "Mozilla/5.0",
+                "Referer": "https://leetcode.com/contest/",
+            },
+        });
+        clearTimeout(timeoutId);
 
-        return (data.contests ?? [])
-            .filter((c: any) => {
-                const startTime = c.start_time * 1000
-                // Include future contests or recently started
-                return startTime > Date.now() - (c.duration * 1000)
-            })
+        if (!res.ok) throw new Error("LeetCode API failed");
+        const data = await res.json();
+        const contests = Array.isArray(data?.contests) ? data.contests : [];
+        if (!contests.length) return buildLeetCodeFallback();
+
+        const now = Date.now();
+        return contests
             .map((c: any) => {
-                const startTime = c.start_time * 1000
-                const now = Date.now()
-                const endTime = startTime + (c.duration * 1000)
-                let phase = "BEFORE"
-                if (now >= startTime && now < endTime) phase = "CODING"
-                else if (now >= endTime) phase = "FINISHED"
+                const startSeconds = typeof c.start_time === "number" ? c.start_time : Number(c.start_time);
+                const startMs = Number.isFinite(startSeconds) && startSeconds > 0
+                    ? startSeconds * 1000
+                    : Date.parse(c.start_time);
+                if (!Number.isFinite(startMs)) return null;
+
+                const durationSeconds = Number.isFinite(Number(c.duration))
+                    ? Number(c.duration)
+                    : 5400; // default 90 minutes if missing
+                const endMs = startMs + durationSeconds * 1000;
+
+                let phase = "BEFORE";
+                if (now >= startMs && now < endMs) phase = "CODING";
+                else if (now >= endMs) phase = "FINISHED";
+
+                const slug = c.title_slug || c.slug || (c.title ? c.title.toLowerCase().replace(/\s+/g, "-") : undefined);
+                const url = c.url
+                    ? (String(c.url).startsWith("http") ? c.url : `https://leetcode.com${c.url}`)
+                    : slug
+                        ? `https://leetcode.com/contest/${slug}`
+                        : "https://leetcode.com/contest/";
+
+                const idBase = slug || (Number.isFinite(startSeconds) ? `start-${startSeconds}` : c.title || "contest");
+                const id = `leetcode:${String(idBase).replace(/[^a-zA-Z0-9:_-]/g, "")}`;
 
                 return {
-                    id: `leetcode:${c.titleAsyncSlug ?? c.titleSlug ?? c.title}`,
+                    id,
                     platform: "leetcode",
-                    name: c.title,
-                    startsAt: new Date(startTime).toISOString(),
-                    durationSeconds: c.duration,
-                    url: `https://leetcode.com/contest/${c.titleSlug ?? ""}`,
+                    name: c.title || "LeetCode Contest",
+                    startsAt: new Date(startMs).toISOString(),
+                    durationSeconds,
+                    url,
                     phase,
-                }
+                } as Contest;
             })
+            .filter(Boolean) as Contest[];
     } catch (e) {
-        console.error("LeetCode fetch failed:", e)
-        return []
+        console.warn("LeetCode fetch failed, using fallback:", e);
+        return buildLeetCodeFallback();
     }
 }
 
@@ -105,7 +191,7 @@ async function fetchOthers(): Promise<Contest[]> {
     try {
         // Short timeout for aggregator
         const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 5000)
+        const timeoutId = setTimeout(() => controller.abort(), 10000)
 
         const res = await fetch(KONTESTS_API, {
             signal: controller.signal,
@@ -119,8 +205,8 @@ async function fetchOthers(): Promise<Contest[]> {
         return data
             .filter(c => {
                 const p = normalizePlatform(c.site)
-                // Skip the ones we fetch directly to avoid duplicates/stale data
-                return p !== "leetcode" && p !== "codeforces"
+                // Skip the ones we fetch directly (Codeforces + LeetCode)
+                return p !== "codeforces" && p !== "leetcode"
             })
             .map((c) => {
                 const startTime = new Date(c.start_time)

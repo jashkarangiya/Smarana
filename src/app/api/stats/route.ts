@@ -2,7 +2,8 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { NextResponse } from "next/server"
-import { startOfDay, subDays, isAfter, format } from "date-fns"
+import { subDays, format } from "date-fns"
+import { dateKeyInTz, getEffectiveStreak } from "@/lib/streak"
 
 export async function GET() {
     const session = await getServerSession(authOptions)
@@ -34,28 +35,30 @@ export async function GET() {
     const oneYearAgoDate = subDays(new Date(), 365)
     const oneYearAgoStr = format(oneYearAgoDate, "yyyy-MM-dd")
 
-    const reviewLogs = await prisma.reviewLog.findMany({
+    const reviewLogs = await prisma.dailyReviewStat.findMany({
         where: {
             userId: user.id,
-            day: { gte: oneYearAgoStr },
+            dateKey: { gte: oneYearAgoStr },
         },
-        orderBy: { day: "asc" },
+        orderBy: { dateKey: "asc" },
     })
 
     // Build heatmap data (date string -> count)
     const heatmapData: Record<string, number> = {}
     reviewLogs.forEach(log => {
-        heatmapData[log.day] = log.count
+        heatmapData[log.dateKey] = log.reviewCount
     })
 
-    // Count reviewed today
-    const today = startOfDay(new Date())
-    const reviewedToday = problems.filter(p =>
-        isAfter(new Date(p.lastSolvedAt), today)
-    ).length
+    const timeZone = user.timezone || "UTC"
+    const todayKey = dateKeyInTz(new Date(), timeZone)
+    const reviewedToday = reviewLogs.find(log => log.dateKey === todayKey)?.reviewCount || 0
 
-    // Use pre-calculated streak from UserStats
-    const streak = user.stats?.currentStreak || 0
+    const streak = getEffectiveStreak({
+        streakCurrent: user.streakCurrent,
+        streakLastDate: user.streakLastDate,
+        now: new Date(),
+        timeZone,
+    })
 
     // Calculate level from XP (500 XP per level)
     const level = Math.floor((user.xp || 0) / 500) + 1

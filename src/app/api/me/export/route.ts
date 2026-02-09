@@ -26,6 +26,10 @@ export async function GET() {
                 createdAt: true,
                 problems: true,
                 reviewLogs: true,
+                dailyReviewStats: true,
+                streakCurrent: true,
+                streakLongest: true,
+                streakLastDate: true,
             }
         })
 

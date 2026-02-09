@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "@/components/layout/providers";
 import { NavBar } from "@/components/layout/nav-bar";
 import { EmberTrailProvider } from "@/components/features/gamification/ember-trail-provider";
+import { TitleUpdater } from "@/components/layout/title-updater";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -17,7 +18,7 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Smarana — The Spaced Repetition Layer for Algorithms",
+    default: "Smarana",
     template: "%s — Smarana",
   },
   description: "Master algorithms, LeetCode, and system design with spaced repetition.",
@@ -42,6 +43,7 @@ export default function RootLayout({
       <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`} suppressHydrationWarning>
         <Providers>
           <EmberTrailProvider>
+            <TitleUpdater />
             <NavBar />
             <main>{children}</main>
           </EmberTrailProvider>

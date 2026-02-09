@@ -39,6 +39,12 @@ enum SyncStatus {
   SYNCING
 }
 
+enum AdminInboxStatus {
+  NEW
+  OPENED
+  ARCHIVED
+}
+
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -86,6 +92,9 @@ model User {
   atcoderUsername    String?
   xp                 Int       @default(0)
   level              Int       @default(1)
+  streakCurrent      Int       @default(0)
+  streakLongest      Int       @default(0)
+  streakLastDate     String?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
@@ -93,7 +102,9 @@ model User {
   sessions    Session[]
   problems    RevisionProblem[]
   reviewLogs  ReviewLog[]
+  dailyReviewStats DailyReviewStat[]
   reviewEvents ReviewEvent[]
+  problemAttempts ProblemAttempt[]
 
   // Privacy Settings
   profileVisibility       String  @default("PUBLIC") // "PUBLIC" | "FRIENDS_ONLY" | "PRIVATE"
@@ -152,12 +163,32 @@ model ReviewEvent {
   problem   RevisionProblem @relation(fields: [problemId], references: [id], onDelete: Cascade)
 
   rating    Int      // 1-5
+  source    String   @default("web") // "web" | "extension"
+  timeSpentMs Int?
+  clientEventId String?
   interval  Int      // New interval in days
   xpEarned  Int      @default(0)
+  dateKey   String
+  timezone  String
   
   reviewedAt DateTime @default(now())
 
   @@index([userId, reviewedAt])
+  @@unique([userId, clientEventId])
+}
+
+model DailyReviewStat {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dateKey     String   // "YYYY-MM-DD" in user's timezone at event time
+  timezone    String   // IANA zone used to compute dateKey
+  reviewCount Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, dateKey])
+  @@index([userId, dateKey])
 }
 
 
@@ -230,6 +261,10 @@ model RevisionProblem {
   interval         Int      @default(0)
   reviewCount      Int      @default(0)
   lastReviewedAt   DateTime?
+  attemptCount     Int      @default(0)
+  attemptTotalSec  Int      @default(0)
+  lastAttemptSec   Int?
+  bestAttemptSec   Int?
   notes            String?  @default("")
   solution         String?  @default("")
 
@@ -239,6 +274,7 @@ model RevisionProblem {
   latestSolutionFetchedAt    DateTime?
 
   createdAt        DateTime @default(now())
+  attempts         ProblemAttempt[]
   reviewEvents     ReviewEvent[]
   updatedAt        DateTime @updatedAt
 
@@ -247,6 +283,33 @@ model RevisionProblem {
   @@index([userId, nextReviewAt])
   @@index([userId, lastReviewedAt])
   @@index([userId, firstSolvedAt])
+}
+
+enum AttemptSource {
+  EXTENSION
+  WEB
+}
+
+model ProblemAttempt {
+  id          String        @id @default(cuid())
+  userId      String
+  problemId   String
+  source      AttemptSource @default(EXTENSION)
+
+  platform    String
+  platformKey String
+
+  startedAt   DateTime
+  endedAt     DateTime
+  durationSec Int
+
+  createdAt   DateTime @default(now())
+
+  user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  problem RevisionProblem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  @@index([userId, problemId, createdAt])
+  @@index([userId, platform, platformKey])
 }
 
 model ReviewLog {
@@ -402,14 +465,47 @@ model ResourceSuggestion {
   title       String
   url         String
   description String?
-  createdAt   DateTime @default(now())
-  status      String   @default("NEW")
 
+  suggestedByEmail String?
   userId      String?
   user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
 
+  status      AdminInboxStatus   @default(NEW)
+
+  ipHash      String?
+  userAgent   String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status, createdAt])
   @@index([createdAt])
-  @@index([status])
+  @@index([ipHash, createdAt])
+}
+
+model ContactMessage {
+  id        String          @id @default(cuid())
+  name      String?
+  email     String
+  subject   String?
+  message   String
+
+  // optional link to a logged-in user (if they submitted while signed in)
+  userId    String?
+  user      User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  status    AdminInboxStatus @default(NEW)
+
+  // light anti-spam + audit (store hashed IP, not raw IP)
+  ipHash    String?
+  userAgent String?
+
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  @@index([status, createdAt])
+  @@index([createdAt])
+  @@index([ipHash, createdAt])
 }
 
 // Extension authentication - device-style token auth
@@ -499,25 +595,4 @@ model ContestResult {
 }
 
 
-enum ContactMessageStatus {
-  NEW
-  OPEN
-  RESOLVED
-}
 
-model ContactMessage {
-  id        String   @id @default(cuid())
-  name      String
-  email     String
-  subject   String
-  message   String
-
-  // optional helpful metadata
-  pageUrl   String?
-  userAgent String?
-  ipHash    String?
-
-  status    ContactMessageStatus @default(NEW)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}

@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { NextResponse } from "next/server"
+import { getEffectiveStreak } from "@/lib/streak"
 
 export async function GET(
     req: Request,
@@ -31,6 +32,9 @@ export async function GET(
                 timezone: true,
                 level: true,
                 xp: true,
+                streakCurrent: true,
+                streakLongest: true,
+                streakLastDate: true,
                 profileVisibility: true,
                 showStreakToPublic: true,
                 showStreakToFriends: true,
@@ -61,15 +65,15 @@ export async function GET(
                 },
                 friendsAsUser: { where: { friendId: viewerId || "" }, select: { id: true } },
                 friendsAsFriend: { where: { userId: viewerId || "" }, select: { id: true } },
-                reviewLogs: {
+                dailyReviewStats: {
                     where: {
-                        day: {
+                        dateKey: {
                             gte: new Date(new Date().setFullYear(new Date().getFullYear() - 1)).toISOString().split('T')[0]
                         }
                     },
                     select: {
-                        day: true,
-                        count: true
+                        dateKey: true,
+                        reviewCount: true
                     }
                 }
             }
@@ -123,6 +127,15 @@ export async function GET(
             (!isFriend && user.showTimezoneToPublic)
 
         // 4. Assemble Response
+        const effectiveStreak = canViewStreak
+            ? getEffectiveStreak({
+                streakCurrent: user.streakCurrent || 0,
+                streakLastDate: user.streakLastDate,
+                now: new Date(),
+                timeZone: user.timezone || "UTC",
+            })
+            : null
+
         const responseData = {
             isPrivate: false,
             isFriend,
@@ -141,8 +154,8 @@ export async function GET(
                     totalReviews: user.stats?.totalReviews || 0,
                     problemsTracked: user.stats?.problemsTracked || 0,
                     reviewsThisWeek: user.stats?.reviewsThisWeek || 0,
-                    currentStreak: canViewStreak ? (user.stats?.currentStreak || 0) : null,
-                    longestStreak: canViewStreak ? (user.stats?.longestStreak || 0) : null,
+                    currentStreak: effectiveStreak,
+                    longestStreak: canViewStreak ? (user.streakLongest || 0) : null,
                     leetcodeActivity: canViewPlatforms ? (user.stats?.leetcodeActivity || null) : null,
                     unlockedAchievements: user.stats?.unlockedAchievements || [],
                 },
@@ -155,8 +168,8 @@ export async function GET(
                     return acc
                 }, {} as Record<string, { verified: boolean; verifiedAt: Date | null }>) : {},
             },
-            activityHeatmap: user.reviewLogs.reduce((acc, log) => {
-                acc[log.day] = log.count
+            activityHeatmap: user.dailyReviewStats.reduce((acc, log) => {
+                acc[log.dateKey] = log.reviewCount
                 return acc
             }, {} as Record<string, number>)
         }

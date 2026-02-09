@@ -4,7 +4,7 @@
 const sharp = require('sharp');
 const path = require('path');
 
-const sizes = [16, 48, 128];
+const sizes = [16, 32, 48, 128];
 const inputFile = path.join(__dirname, 'logo-original.png');
 
 async function generateIcons() {

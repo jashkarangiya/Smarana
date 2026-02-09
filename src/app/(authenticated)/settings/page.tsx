@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react"
 import { useState, useEffect, useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -13,7 +14,7 @@ import { toast } from "sonner"
 import {
     RefreshCw, User, CheckCircle2, Clock, Share2, Download,
     ArrowLeft, Eye, EyeOff, Globe, ExternalLink, Copy, Check, Shield,
-    Users, Lock, Bell
+    Users, Lock, Bell, Mail, ShieldCheck
 } from "lucide-react"
 import Link from "next/link"
 import { Switch } from "@/components/ui/switch"
@@ -103,6 +104,9 @@ export default function ProfilePage() {
     // Notification state
     const [emailReviewRemindersEnabled, setEmailReviewRemindersEnabled] = useState(false)
     const [savingNotifications, setSavingNotifications] = useState(false)
+    const [initialEmailReminders, setInitialEmailReminders] = useState(false)
+
+    const notificationsDirty = emailReviewRemindersEnabled !== initialEmailReminders
 
     // Track if form has unsaved changes
     const initialBasicInfo = useMemo(() => ({
@@ -134,6 +138,8 @@ export default function ProfilePage() {
             setShowTimezoneToFriends(user.showTimezoneToFriends ?? true)
             // @ts-ignore - type update might delay
             setEmailReviewRemindersEnabled(user.emailReviewRemindersEnabled ?? false)
+            // @ts-ignore
+            setInitialEmailReminders(user.emailReviewRemindersEnabled ?? false)
         } else if (session?.user?.name) {
             setDisplayName(session.user.name)
         }
@@ -255,6 +261,7 @@ export default function ProfilePage() {
             })
             if (res.ok) {
                 toast.success("Notification settings updated!")
+                setInitialEmailReminders(emailReviewRemindersEnabled)
                 refetchUser()
             } else {
                 toast.error("Failed to update notification settings")
@@ -587,37 +594,139 @@ export default function ProfilePage() {
 
                     {/* Notifications Section */}
                     {activeSection === "notifications" && (
-                        <div className="space-y-6">
-                            <div>
+                        <div className="pb-14">
+                            {/* Header */}
+                            <div className="mb-6">
                                 <h1 className="text-2xl font-semibold text-white/90">Notifications</h1>
-                                <p className="text-sm text-white/50 mt-1">Manage your email preferences and alerts.</p>
+                                <p className="mt-1 text-sm text-white/55">
+                                    Manage your email preferences and alerts.
+                                </p>
                             </div>
 
-                            <Card className="border-white/10 bg-white/[0.03]">
-                                <CardContent className="p-6 space-y-6">
-                                    {/* Email Review Reminders */}
-                                    <div className="flex items-center justify-between gap-4">
-                                        <div className="space-y-1">
-                                            <Label className="text-base">Email Review Reminders</Label>
-                                            <p className="text-sm text-white/50">
-                                                Receive a daily email when you have problems due for review.
+                            {/* Settings + Preview grid */}
+                            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-stretch">
+                                {/* SETTINGS CARD */}
+                                <Card className="h-full rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+                                    {/* Toggle row — entire row is clickable */}
+                                    <label
+                                        htmlFor="email-reminders-switch"
+                                        className="flex items-start justify-between gap-4 cursor-pointer"
+                                    >
+                                        <div className="flex items-start gap-3">
+                                            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-white/10 bg-black/20">
+                                                <Mail className="h-5 w-5 text-[#BB7331]" />
+                                            </div>
+
+                                            <div className="min-w-0">
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    <h2 className="text-base font-medium text-white/90">
+                                                        Email Review Reminders
+                                                    </h2>
+
+                                                    {/* Single state indicator (badge) */}
+                                                    <Badge
+                                                        className={cn(
+                                                            "rounded-full px-2 py-0.5 text-[11px] border",
+                                                            emailReviewRemindersEnabled
+                                                                ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/20"
+                                                                : "bg-white/5 text-white/55 border-white/10"
+                                                        )}
+                                                    >
+                                                        {emailReviewRemindersEnabled ? "Enabled" : "Disabled"}
+                                                    </Badge>
+                                                </div>
+
+                                                <p className="mt-1 text-sm leading-relaxed text-white/55">
+                                                    Receive a daily email on days when you have problems due for review.
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Switch (no badge next to it — badge is inline with title) */}
+                                        <div className="pt-1 shrink-0">
+                                            <Switch
+                                                id="email-reminders-switch"
+                                                checked={emailReviewRemindersEnabled}
+                                                onCheckedChange={setEmailReviewRemindersEnabled}
+                                                aria-label="Toggle email review reminders"
+                                                className="data-[state=checked]:bg-[#BB7331]"
+                                            />
+                                        </div>
+                                    </label>
+
+                                    {/* Info callout */}
+                                    <div className="mt-5 rounded-xl border border-white/10 bg-black/20 p-4">
+                                        <div className="flex items-start gap-3">
+                                            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-white/55" />
+                                            <p className="text-sm text-white/60">
+                                                No spam — reminders only trigger when reviews are due.
                                             </p>
                                         </div>
-                                        <Switch
-                                            checked={emailReviewRemindersEnabled}
-                                            onCheckedChange={setEmailReviewRemindersEnabled}
-                                        />
                                     </div>
-                                </CardContent>
-                            </Card>
 
-                            <Button
-                                className="bg-[#BB7331] hover:bg-[#BB7331]/90"
-                                onClick={handleSaveNotifications}
-                                disabled={savingNotifications}
-                            >
-                                {savingNotifications ? "Saving..." : "Save Notification Settings"}
-                            </Button>
+                                    {/* Helper text */}
+                                    <p className="mt-4 text-xs text-white/40">
+                                        Tip: Make sure your email is correct in{" "}
+                                        <button
+                                            type="button"
+                                            onClick={() => setActiveSection("basic")}
+                                            className="text-white/55 hover:text-white/70 underline underline-offset-2 transition-colors"
+                                        >
+                                            Basic Info
+                                        </button>.
+                                    </p>
+                                </Card>
+
+                                {/* PREVIEW CARD — single surface, no nested card */}
+                                <Card className="h-full rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+                                    <div className="flex flex-col gap-3">
+                                        <div>
+                                            <h3 className="text-sm font-medium text-white/85">Preview</h3>
+                                            <p className="mt-1 text-xs text-white/45">
+                                                This is what the reminder email looks like.
+                                            </p>
+                                        </div>
+
+                                        {/* Single preview surface */}
+                                        <div className="mt-2 rounded-xl border border-white/10 bg-black/30 p-4">
+                                            <div className="flex items-center justify-between text-xs text-white/55">
+                                                <span className="font-medium text-white/80">Smarana</span>
+                                                <span>review reminder</span>
+                                            </div>
+
+                                            <div className="mt-3 text-sm text-white/70">
+                                                <span className="text-[#BB7331] font-medium">You have due reviews</span>{" "}
+                                                today.
+                                                <br />
+                                                Keep the streak alive.
+                                            </div>
+
+                                            <div className="mt-4 inline-flex h-9 items-center justify-center rounded-lg bg-[#BB7331] px-4 text-sm font-medium text-black">
+                                                Start Review
+                                            </div>
+                                        </div>
+                                    </div>
+                                </Card>
+                            </div>
+
+                            {/* Sticky save bar — anchored to viewport bottom */}
+                            <div className="sticky bottom-6 mt-8">
+                                <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-black/40 backdrop-blur px-5 py-4">
+                                    <p className="text-sm text-white/55">
+                                        {notificationsDirty
+                                            ? "You have unsaved changes"
+                                            : "All changes saved"}
+                                    </p>
+
+                                    <Button
+                                        onClick={handleSaveNotifications}
+                                        disabled={!notificationsDirty || savingNotifications}
+                                        className="rounded-xl bg-[#BB7331] text-black hover:bg-[#BB7331]/90 transition disabled:bg-white/10 disabled:text-white/35"
+                                    >
+                                        {savingNotifications ? "Saving..." : "Save settings"}
+                                    </Button>
+                                </div>
+                            </div>
                         </div>
                     )}
 

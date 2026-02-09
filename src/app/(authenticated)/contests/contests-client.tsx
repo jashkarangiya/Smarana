@@ -29,20 +29,23 @@ export function ContestsClient() {
         queryFn: async () => {
             const res = await fetch("/api/contests");
             if (!res.ok) throw new Error("Failed to fetch contests");
-            // The API returns { contests: Contest[] }
-            return (await res.json()) as { contests: Contest[] };
+            // The API returns Contest[] directly
+            return (await res.json()) as Contest[];
         },
     });
 
-    const contests = data?.contests || [];
+    const contests = data || [];
 
     const nextWeekCutoff = addDays(new Date(), 7);
     const now = Date.now();
 
     // Helper to determine status since new API doesn't return phase
     const getContestStatus = (c: Contest) => {
-        const start = new Date(c.startsAt).getTime();
-        const end = start + c.durationSeconds * 1000;
+        // DB uses startTime, check if it exists, fallback to startsAt for compatibility
+        const s = (c as any).startTime || c.startsAt;
+        const start = new Date(s).getTime();
+        const durationSeconds = (c as any).duration ? (c as any).duration * 60 : c.durationSeconds;
+        const end = start + durationSeconds * 1000;
         if (now >= start && now < end) return "CODING";
         if (now < start) return "BEFORE";
         return "FINISHED";
@@ -50,10 +53,14 @@ export function ContestsClient() {
 
     const upcomingContests = contests
         .filter((c) => getContestStatus(c) === "BEFORE")
-        .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
+        .sort((a, b) => {
+            const startA = new Date((a as any).startTime || a.startsAt).getTime();
+            const startB = new Date((b as any).startTime || b.startsAt).getTime();
+            return startA - startB;
+        });
 
-    const next7Days = upcomingContests.filter(c => new Date(c.startsAt) <= nextWeekCutoff);
-    const otherUpcoming = upcomingContests.filter(c => new Date(c.startsAt) > nextWeekCutoff);
+    const next7Days = upcomingContests.filter(c => new Date((c as any).startTime || c.startsAt) <= nextWeekCutoff);
+    const otherUpcoming = upcomingContests.filter(c => new Date((c as any).startTime || c.startsAt) > nextWeekCutoff);
 
     const liveContests = contests.filter((c) => getContestStatus(c) === "CODING");
 
@@ -217,7 +224,7 @@ function ContestCard({
         PLATFORM_COLORS[contest.platform] || "bg-gray-500/10 text-gray-500 border-gray-500/20";
     const platformName = PLATFORM_NAMES[contest.platform] || contest.platform;
 
-    const startDate = new Date(contest.startsAt);
+    const startDate = new Date((contest as any).startTime || contest.startsAt);
     const hoursUntil = differenceInHours(startDate, new Date());
     const isStartingSoon = hoursUntil <= 24 && hoursUntil > 0;
 
@@ -259,10 +266,10 @@ function ContestCard({
                         <div className="flex items-center gap-4 text-xs text-muted-foreground">
                             <span className="flex items-center gap-1">
                                 <Clock className="h-3 w-3" />
-                                {isLive ? "In progress" : getTimeUntilStart(contest.startsAt)}
+                                {isLive ? "In progress" : getTimeUntilStart((contest as any).startTime || contest.startsAt)}
                             </span>
-                            {contest.durationSeconds > 0 && (
-                                <span>{formatDuration(contest.durationSeconds)}</span>
+                            {((contest as any).duration || contest.durationSeconds) > 0 && (
+                                <span>{formatDuration((contest as any).duration ? (contest as any).duration * 60 : contest.durationSeconds)}</span>
                             )}
                         </div>
                     </div>
