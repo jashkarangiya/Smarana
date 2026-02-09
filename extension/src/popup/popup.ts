@@ -42,6 +42,7 @@ function renderNotConnected(container: HTMLElement) {
                 </svg>
                 Connect to Smarana
             </button>
+            <p class="disclosure">Smarana reads the current problem URL to match your saved notes and solutions. Data is fetched from your Smarana account only.</p>
         </div>
         <div class="footer">
             <p>Don't have an account? <a href="https://smarana.vercel.app" target="_blank">Sign up free</a></p>

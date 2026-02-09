@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -47,6 +47,7 @@ export function ProblemsFilterDialog({
     className?: string;
 }) {
     const joinLabel = value.join === "and" ? "All" : "Any";
+    const [open, setOpen] = useState(false);
 
     function setJoin(join: "and" | "or") {
         onChange({ ...value, join });
@@ -65,7 +66,7 @@ export function ProblemsFilterDialog({
     const hasChanges = value.rules.length > 0;
 
     return (
-        <Dialog>
+        <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 <Button variant="outline" className={cn("gap-2", className)}>
                     <ListFilter className="h-4 w-4" />
@@ -131,12 +132,22 @@ export function ProblemsFilterDialog({
                 <Separator className="bg-white/5" />
 
                 <DialogFooter className="p-4 bg-white/[0.02]">
-                    <Button variant="ghost" onClick={onReset} className="mr-auto text-muted-foreground hover:text-white">
+                    <Button
+                        variant="ghost"
+                        onClick={() => {
+                            onReset();
+                            setOpen(false);
+                        }}
+                        className="mr-auto text-muted-foreground hover:text-white"
+                    >
                         Reset defaults
                     </Button>
                     <Button
                         className="bg-[#BB7331] text-black hover:bg-[#BB7331]/90 rounded-lg"
-                        onClick={onApply}
+                        onClick={() => {
+                            onApply();
+                            setOpen(false);
+                        }}
                     >
                         Apply Filters
                     </Button>

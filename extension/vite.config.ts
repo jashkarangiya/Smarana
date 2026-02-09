@@ -30,9 +30,8 @@ export default defineConfig({
                 },
             },
         },
-        // Don't minify for easier debugging during development
-        minify: false,
-        sourcemap: true,
+        minify: true,
+        sourcemap: false,
     },
     resolve: {
         alias: {

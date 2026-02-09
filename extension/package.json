@@ -1,14 +1,14 @@
 {
   "name": "smarana-extension",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Smarana browser extension for spaced repetition review of coding problems",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite build --watch --mode development & vite build -c vite.content.config.ts --watch --mode development",
     "build": "vite build && vite build -c vite.content.config.ts",
-    "zip": "cd dist && zip -r ../smarana-extension.zip .",
-    "clean": "rm -rf dist"
+    "zip": "npm run build && cd dist && rm -rf src icons/generate-* icons/logo-original.* icons/*.svg && rm -f ../smarana-extension.zip && zip -r ../smarana-extension.zip . && echo '✅ Created smarana-extension.zip'",
+    "clean": "rm -rf dist smarana-extension.zip"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.268",

@@ -6,6 +6,119 @@ import { startOfDay, endOfDay, addDays } from "date-fns"
 import { safeDecrypt } from "@/lib/encryption"
 import { problemCreateSchema } from "@/lib/validations/problem"
 import { handleApiError } from "@/lib/api-error"
+import { FilterGroupSchema } from "@/lib/schemas/filters"
+import type { FilterGroup, FilterRule } from "@/types/filters"
+
+const REVIEW_STATE_MATCHERS: Record<string, (now: Date) => any> = {
+    PENDING: (now) => ({
+        nextReviewAt: { lte: endOfDay(now) },
+    }),
+    OVERDUE: (now) => ({
+        nextReviewAt: { lt: startOfDay(now) },
+    }),
+    DUE_TODAY: (now) => ({
+        AND: [
+            { nextReviewAt: { gte: startOfDay(now) } },
+            { nextReviewAt: { lte: endOfDay(now) } },
+        ],
+    }),
+    UPCOMING_7D: (now) => ({
+        AND: [
+            { nextReviewAt: { gt: endOfDay(now) } },
+            { nextReviewAt: { lte: endOfDay(addDays(now, 7)) } },
+        ],
+    }),
+    UPCOMING_30D: (now) => ({
+        AND: [
+            { nextReviewAt: { gt: endOfDay(now) } },
+            { nextReviewAt: { lte: endOfDay(addDays(now, 30)) } },
+        ],
+    }),
+    NEVER_REVIEWED: () => ({
+        reviewCount: 0,
+    }),
+}
+
+function parseDateValue(value: any) {
+    if (!value) return null
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) return null
+    return date
+}
+
+function buildRuleWhere(rule: FilterRule, now: Date) {
+    const value = rule.value
+
+    switch (rule.field) {
+        case "reviewState": {
+            if (typeof value !== "string") return null
+            const matcher = REVIEW_STATE_MATCHERS[value]
+            if (!matcher) return null
+            const clause = matcher(now)
+            if (rule.op === "is_not") return { NOT: clause }
+            return clause
+        }
+        case "difficulty": {
+            if (!value) return null
+            if (rule.op === "is") return { difficulty: { equals: value, mode: "insensitive" } }
+            if (rule.op === "is_not") return { NOT: { difficulty: { equals: value, mode: "insensitive" } } }
+            return null
+        }
+        case "platform": {
+            if (!value) return null
+            if (rule.op === "is") return { platform: { equals: value, mode: "insensitive" } }
+            if (rule.op === "is_not") return { NOT: { platform: { equals: value, mode: "insensitive" } } }
+            return null
+        }
+        case "title": {
+            if (!value) return null
+            if (rule.op === "is") return { title: { equals: value, mode: "insensitive" } }
+            if (rule.op === "contains") return { title: { contains: value, mode: "insensitive" } }
+            if (rule.op === "not_contains") return { NOT: { title: { contains: value, mode: "insensitive" } } }
+            return null
+        }
+        case "nextReviewAt":
+        case "firstSolvedAt": {
+            const dateValue = parseDateValue(value)
+            if (!dateValue) return null
+            const field = rule.field
+            if (rule.op === "before") return { [field]: { lt: startOfDay(dateValue) } }
+            if (rule.op === "after") return { [field]: { gt: endOfDay(dateValue) } }
+            if (rule.op === "between") {
+                const [startRaw, endRaw] = Array.isArray(value) ? value : String(value).split(",")
+                const startDate = parseDateValue(startRaw)
+                const endDate = parseDateValue(endRaw)
+                if (!startDate || !endDate) return null
+                return {
+                    AND: [
+                        { [field]: { gte: startOfDay(startDate) } },
+                        { [field]: { lte: endOfDay(endDate) } },
+                    ],
+                }
+            }
+            return null
+        }
+        case "reviewCount": {
+            const num = Number(value)
+            if (!Number.isFinite(num)) return null
+            if (rule.op === "gte") return { reviewCount: { gte: num } }
+            if (rule.op === "lte") return { reviewCount: { lte: num } }
+            if (rule.op === "is") return { reviewCount: num }
+            return null
+        }
+        default:
+            return null
+    }
+}
+
+function buildAdvancedWhere(group: FilterGroup, now: Date) {
+    const clauses = group.rules
+        .map((rule) => buildRuleWhere(rule, now))
+        .filter(Boolean) as any[]
+
+    if (clauses.length === 0) return null
+    return group.join === "or" ? { OR: clauses } : { AND: clauses }
+}
 
 export async function GET(req: Request) {
     const session = await getServerSession(authOptions)
@@ -17,6 +130,7 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url)
     const limit = searchParams.get("limit") ? parseInt(searchParams.get("limit")!) : undefined
     const filter = searchParams.get("filter") // 'today', 'due', 'upcoming'
+    const rawFilters = searchParams.get("filters")
 
     const user = await prisma.user.findUnique({
         where: { email: session.user.email },
@@ -41,6 +155,23 @@ export async function GET(req: Request) {
     } else if (filter === "upcoming") {
         whereClause.nextReviewAt = {
             gt: endOfDay(now),
+        }
+    }
+
+    if (rawFilters) {
+        try {
+            const decoded = Buffer.from(rawFilters, "base64").toString("utf-8")
+            const parsed = JSON.parse(decoded)
+            const validation = FilterGroupSchema.safeParse(parsed)
+
+            if (validation.success && validation.data.rules.length > 0) {
+                const advanced = buildAdvancedWhere(validation.data, now)
+                if (advanced) {
+                    whereClause.AND = [...(whereClause.AND || []), advanced]
+                }
+            }
+        } catch (e) {
+            console.warn("Invalid filters param, ignoring")
         }
     }
 

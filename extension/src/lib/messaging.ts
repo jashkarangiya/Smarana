@@ -1,5 +1,5 @@
 import type { Platform } from "./platform"
-import type { ProblemData, SaveProblemResponse } from "./api"
+import type { ProblemData, SaveProblemResponse, SaveAttemptResponse, ReviewProblemResponse } from "./api"
 
 import type { ProblemResponse as ApiProblemResponse } from "./api"
 
@@ -8,6 +8,8 @@ export type MessageType =
     | { type: "GET_AUTH_STATUS" }
     | { type: "GET_PROBLEM"; platform: Platform; slug: string }
     | { type: "SAVE_PROBLEM"; platform: Platform; slug: string; notes?: string; solution?: string }
+    | { type: "SAVE_ATTEMPT"; platform: Platform; platformKey: string; startedAt: string; endedAt: string; durationSec: number }
+    | { type: "REVIEW_PROBLEM"; platform: Platform; slug: string; rating?: number; timeSpentMs?: number; clientEventId?: string }
     | { type: "CONNECT" }
     | { type: "DISCONNECT" }
 
@@ -34,12 +36,21 @@ export type MessageResponse =
     | ProblemResponse
     | ConnectResponse
     | SaveProblemResponse
+    | SaveAttemptResponse
+    | ReviewProblemResponse
     | { success: boolean; error?: string }
 
 /**
  * Send a message to the background script
  */
 export function sendMessage<T extends MessageResponse>(message: MessageType): Promise<T> {
+    try {
+        if (!chrome?.runtime?.id) {
+            return Promise.reject(new Error("EXTENSION_CONTEXT_INVALID"))
+        }
+    } catch {
+        return Promise.reject(new Error("EXTENSION_CONTEXT_INVALID"))
+    }
     return new Promise((resolve, reject) => {
         chrome.runtime.sendMessage(message, (response) => {
             if (chrome.runtime.lastError) {
@@ -75,6 +86,45 @@ export function saveProblem(
     solution?: string
 ): Promise<SaveProblemResponse> {
     return sendMessage<SaveProblemResponse>({ type: "SAVE_PROBLEM", platform, slug, notes, solution })
+}
+
+/**
+ * Save an attempt (time spent) for a problem
+ */
+export function saveAttempt(
+    platform: Platform,
+    platformKey: string,
+    startedAt: string,
+    endedAt: string,
+    durationSec: number
+): Promise<SaveAttemptResponse> {
+    return sendMessage<SaveAttemptResponse>({
+        type: "SAVE_ATTEMPT",
+        platform,
+        platformKey,
+        startedAt,
+        endedAt,
+        durationSec,
+    })
+}
+
+/**
+ * Mark a problem as reviewed
+ */
+export function reviewProblem(
+    platform: Platform,
+    slug: string,
+    rating?: number,
+    meta?: { timeSpentMs?: number; clientEventId?: string }
+): Promise<ReviewProblemResponse> {
+    return sendMessage<ReviewProblemResponse>({
+        type: "REVIEW_PROBLEM",
+        platform,
+        slug,
+        rating,
+        timeSpentMs: meta?.timeSpentMs,
+        clientEventId: meta?.clientEventId,
+    })
 }
 
 /**

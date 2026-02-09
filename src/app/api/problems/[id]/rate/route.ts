@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { recordReviewForStreak } from "@/lib/streak"
 
 // SM-2 algorithm intervals based on rating
 const getNextInterval = (currentInterval: number, rating: "remembered" | "kinda" | "forgot"): number => {
@@ -114,26 +115,12 @@ export async function POST(
             },
         })
 
-        // Log the review activity (upsert for the day)
-        const dayKey = new Date().toISOString().split('T')[0]
-
-        await prisma.reviewLog.upsert({
-            where: {
-                userId_day: {
-                    userId: session.user.id,
-                    day: dayKey,
-                },
-            },
-            update: {
-                count: { increment: 1 },
-                xpEarned: { increment: xpReward },
-            },
-            create: {
-                userId: session.user.id,
-                day: dayKey,
-                count: 1,
-                xpEarned: xpReward,
-            },
+        // Record daily review + streak cache
+        const timeZone = user?.timezone || "UTC"
+        await recordReviewForStreak(prisma, {
+            userId: session.user.id,
+            timeZone,
+            now: new Date(),
         })
 
         return NextResponse.json({

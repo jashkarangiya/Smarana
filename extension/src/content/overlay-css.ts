@@ -66,6 +66,22 @@ export const OVERLAY_CSS = `
     border-radius: 8px;
 }
 
+.bubble-timer {
+    position: absolute;
+    bottom: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: rgba(var(--sm-text), 0.75);
+    font-variant-numeric: tabular-nums;
+    background: rgba(var(--sm-bg), 0.75);
+    padding: 1px 6px;
+    border-radius: 999px;
+    border: 1px solid rgba(var(--sm-border), 0.08);
+}
+
 .bubble:hover .bubble-logo { transform: scale(1.1); }
 
 .bubble-status {
@@ -93,7 +109,8 @@ export const OVERLAY_CSS = `
 
 /* ========== PANEL (expanded state) ========== */
 .panel {
-    width: clamp(320px, 34vw, 400px);
+    width: clamp(300px, 34vw, 400px);
+    max-width: calc(100vw - 24px);
     max-height: min(80vh, 600px);
     
     /* 👇 more opaque, readable */
@@ -339,10 +356,37 @@ export const OVERLAY_CSS = `
     gap: 8px;
     padding-top: 8px;
     margin-top: auto;
+    flex-wrap: wrap;
 }
 
+/* ========== TIMER ========== */
+.smr-timer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(var(--sm-border), 0.12);
+    background: rgba(var(--sm-panel), 0.4);
+}
+
+.smr-timer-icon {
+    font-size: 12px;
+    color: rgba(var(--sm-muted), 0.6);
+}
+
+.smr-timer-time {
+    min-width: 54px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: rgba(var(--sm-text), 0.9);
+    font-variant-numeric: tabular-nums;
+}
+
+
 .smr-primary-btn {
-    flex: 1;
+    flex: 1 1 160px;
     height: 48px;
     padding: 0 24px;
     min-width: 140px;
@@ -378,22 +422,48 @@ export const OVERLAY_CSS = `
 }
 
 .smr-icon-btn {
-    width: 42px;
-    height: 42px;
-    border-radius: 12px;
-    border: 1px solid rgba(var(--sm-border), 0.1);
-    background: rgba(var(--sm-panel), 0.6);
-    color: rgba(var(--sm-text), 0.7);
+    width: 38px;
+    height: 38px;
+    border-radius: 999px;
+    border: 1px solid rgba(var(--sm-border), 0.12);
+    background: rgba(var(--sm-panel), 0.45);
+    color: rgba(var(--sm-text), 0.8);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
+    transition: transform 120ms ease, background 120ms ease, color 120ms ease, box-shadow 120ms ease;
+}
+
+@media (max-width: 420px) {
+    .panel {
+        width: calc(100vw - 20px);
+    }
+
+    .smr-primary-btn {
+        flex: 1 1 100%;
+        height: 44px;
+    }
+
+    .smr-footer {
+        gap: 6px;
+    }
 }
 
 .smr-icon-btn:hover {
     background: rgba(var(--sm-panel), 0.8);
     color: rgba(var(--sm-text), 1);
+    box-shadow: 0 0 0 3px rgba(var(--sm-accent-rgb), 0.14);
+}
+
+.smr-icon-btn:active {
+    transform: translateY(1px);
+}
+
+.smr-icon-btn--disabled {
+    opacity: 0.4;
+    pointer-events: none;
+    box-shadow: none;
 }
 
 /* ========== EMPTY/CONNECT/ERROR STATES ========== */
@@ -403,6 +473,7 @@ export const OVERLAY_CSS = `
     align-items: center;
     text-align: center;
     padding: 24px 16px;
+    gap: 10px;
 }
 
 .smr-empty-icon {
@@ -423,6 +494,19 @@ export const OVERLAY_CSS = `
     max-width: 30ch;
     margin: 0 auto 20px;
     font-size: 13px;
+}
+
+.smr-connect-btn {
+    flex: none;
+    width: auto;
+    min-width: 0;
+    max-width: none;
+    padding: 12px 24px;
+    height: auto;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
 }
 
 .smr-error-text { color: #ff6b6b; }
@@ -496,7 +580,7 @@ export const OVERLAY_CSS = `
 .smr-secondary-btn {
     flex: 1;
     height: 44px;
-    border-radius: 12px;
+    border-radius: 999px;
     border: 1px solid rgba(var(--sm-border), 0.1);
     background: rgba(var(--sm-panel), 0.4);
     color: rgba(var(--sm-text), 0.8);
@@ -509,6 +593,7 @@ export const OVERLAY_CSS = `
 .smr-secondary-btn:hover {
     background: rgba(var(--sm-panel), 0.6);
 }
+
 
 /* ========== SPOILER / REVEAL ========== */
 .smr-spoiler-container {

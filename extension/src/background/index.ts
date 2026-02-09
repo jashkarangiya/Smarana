@@ -2,6 +2,8 @@ import {
     exchangeCode,
     fetchProblem,
     saveProblem as apiSaveProblem,
+    saveAttempt as apiSaveAttempt,
+    reviewProblem as apiReviewProblem,
     refreshToken as apiRefreshToken,
     generateState,
     getConnectUrl,
@@ -19,8 +21,6 @@ import {
 import type { MessageType, MessageResponse } from "../lib/messaging"
 import type { Platform } from "../lib/platform"
 
-console.log("[Smarana] Background service worker started")
-
 /**
  * Get a valid access token, refreshing if necessary
  */
@@ -33,7 +33,6 @@ async function getValidAccessToken(): Promise<string | null> {
 
     // Check if token is expired or about to expire
     if (isTokenExpired(tokens.expiresAt)) {
-        console.log("[Smarana] Token expired, refreshing...")
         try {
             const refreshed = await apiRefreshToken(tokens.refreshToken)
             await storeTokens({
@@ -44,13 +43,11 @@ async function getValidAccessToken(): Promise<string | null> {
             return refreshed.accessToken
         } catch (error) {
             console.error("[Smarana] Failed to refresh token:", error)
-            // Clear invalid tokens
             await clearStorage()
             return null
         }
     }
 
-    console.log("[Smarana] Valid token found")
     return tokens.accessToken
 }
 
@@ -81,8 +78,6 @@ async function handleMessage(message: MessageType): Promise<MessageResponse> {
                 return { isAuthenticated: false }
             }
 
-            // Verify token is valid by checking expiry
-            // We don't refresh here to avoid unnecessary API calls
             const isValid = !isTokenExpired(tokens.expiresAt)
 
             return {
@@ -112,7 +107,6 @@ async function handleMessage(message: MessageType): Promise<MessageResponse> {
                 return response
             } catch (error) {
                 if (error instanceof Error && error.message === "TOKEN_EXPIRED") {
-                    // Token refresh failed, clear storage
                     await clearStorage()
                     return {
                         tracked: false,
@@ -155,12 +149,73 @@ async function handleMessage(message: MessageType): Promise<MessageResponse> {
             }
         }
 
+        case "SAVE_ATTEMPT": {
+            const accessToken = await getValidAccessToken()
+
+            if (!accessToken) {
+                return {
+                    ok: false,
+                    error: "NOT_AUTHENTICATED",
+                }
+            }
+
+            try {
+                const response = await apiSaveAttempt(accessToken, {
+                    platform: message.platform,
+                    platformKey: message.platformKey,
+                    startedAt: message.startedAt,
+                    endedAt: message.endedAt,
+                    durationSec: message.durationSec,
+                })
+                return response
+            } catch (error) {
+                if (error instanceof Error && error.message === "TOKEN_EXPIRED") {
+                    await clearStorage()
+                    return {
+                        ok: false,
+                        error: "NOT_AUTHENTICATED",
+                    }
+                }
+                throw error
+            }
+        }
+
+        case "REVIEW_PROBLEM": {
+            const accessToken = await getValidAccessToken()
+
+            if (!accessToken) {
+                return {
+                    error: "NOT_AUTHENTICATED",
+                }
+            }
+
+            try {
+                const response = await apiReviewProblem(
+                    accessToken,
+                    message.platform,
+                    message.slug,
+                    message.rating,
+                    {
+                        timeSpentMs: message.timeSpentMs,
+                        clientEventId: message.clientEventId,
+                    }
+                )
+                return response
+            } catch (error) {
+                if (error instanceof Error && error.message === "TOKEN_EXPIRED") {
+                    await clearStorage()
+                    return {
+                        error: "NOT_AUTHENTICATED",
+                    }
+                }
+                throw error
+            }
+        }
+
         case "CONNECT": {
-            // Generate a state parameter for security
             const state = generateState()
             await storePendingState(state)
 
-            // Open the connect page in a new tab
             const connectUrl = getConnectUrl(state)
             await chrome.tabs.create({ url: connectUrl })
 
@@ -178,23 +233,10 @@ async function handleMessage(message: MessageType): Promise<MessageResponse> {
 }
 
 /**
- * Listen for navigation to our callback URL
- * The web app redirects to smarana-extension://callback?code=...
- * But since we can't register a custom protocol, we'll handle this differently
- */
-
-// Instead, we'll listen for when the connect page sends us a code
-// This is done through a content script on our own domain, or through
-// the popup polling for changes
-
-/**
  * Handle external messages (from the web app after successful auth)
- * This requires adding the extension ID to web_accessible_resources
  */
 chrome.runtime.onMessageExternal?.addListener(
-    async (message, sender, sendResponse) => {
-        console.log("[Smarana] External message received:", message, sender)
-
+    async (message, _sender, sendResponse) => {
         if (message.type === "AUTH_CALLBACK" && message.code) {
             try {
                 const result = await exchangeCode(message.code)
@@ -224,44 +266,32 @@ chrome.runtime.onMessageExternal?.addListener(
 )
 
 /**
- * Alternative approach: Poll for URL changes in tabs
- * When the connect page shows success and includes a code in the URL,
- * we can intercept it
+ * Intercept navigation to the callback URL after auth
+ * Only matches the production Smarana domain (no localhost in production)
  */
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     if (changeInfo.url && tab.url) {
-        // Check if this is the callback URL
-        const url = new URL(tab.url)
+        try {
+            const url = new URL(tab.url)
 
-        // Handle smarana-extension:// protocol (if registered)
-        if (url.protocol === "smarana-extension:") {
-            const code = url.searchParams.get("code")
-            const state = url.searchParams.get("state")
+            if (
+                url.hostname === "smarana.vercel.app" &&
+                url.pathname.includes("/extension/callback")
+            ) {
+                const code = url.searchParams.get("code")
+                const state = url.searchParams.get("state")
 
-            if (code && state) {
-                await handleAuthCallback(code, state, tabId)
+                if (code && state) {
+                    await handleAuthCallback(code, state, tabId)
+                }
             }
-        }
-
-        // Also handle if the web app embeds the code in a success page URL
-        // This is a fallback approach
-        if (
-            (url.hostname === "smarana.vercel.app" || url.hostname === "localhost") &&
-            url.pathname.includes("/extension/callback")
-        ) {
-            const code = url.searchParams.get("code")
-            const state = url.searchParams.get("state")
-
-            if (code && state) {
-                await handleAuthCallback(code, state, tabId)
-            }
+        } catch {
+            // Ignore invalid URLs
         }
     }
 })
 
 async function handleAuthCallback(code: string, state: string, tabId?: number) {
-    console.log("[Smarana] Handling auth callback")
-
     // Verify state matches
     const pendingState = await getPendingState()
     if (pendingState && pendingState !== state) {
@@ -281,8 +311,6 @@ async function handleAuthCallback(code: string, state: string, tabId?: number) {
         if (result.user) {
             await storeUser(result.user)
         }
-
-        console.log("[Smarana] Successfully authenticated")
 
         // Close the tab that handled the auth
         if (tabId) {

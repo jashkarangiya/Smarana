@@ -29,10 +29,10 @@ export async function GET(request: Request) {
         const auth = await validateExtensionToken(request)
 
         if (!auth) {
-            return NextResponse.json(
+            return withCors(NextResponse.json(
                 { error: "Unauthorized - Invalid or expired token" },
                 { status: 401 }
-            )
+            ))
         }
 
         // Parse query parameters
@@ -46,10 +46,10 @@ export async function GET(request: Request) {
         const validation = querySchema.safeParse(queryParams)
 
         if (!validation.success) {
-            return NextResponse.json(
+            return withCors(NextResponse.json(
                 { error: validation.error.issues[0].message },
                 { status: 400 }
-            )
+            ))
         }
 
         const { platform, slug, url } = validation.data
@@ -63,7 +63,7 @@ export async function GET(request: Request) {
         })
 
         if (!user) {
-            return NextResponse.json({ error: "User not found" }, { status: 404 })
+            return withCors(NextResponse.json({ error: "User not found" }, { status: 404 }))
         }
 
         // Find the problem by platform and slug (primary lookup)
@@ -114,7 +114,7 @@ export async function GET(request: Request) {
 
         // Not tracked in Smarana yet → return a clean empty shape
         if (!problem) {
-            return NextResponse.json({
+            return withCors(NextResponse.json({
                 tracked: false,
                 platform,
                 slug,
@@ -125,7 +125,7 @@ export async function GET(request: Request) {
                 solution: null,
                 // Additional fields to match the shape if needed on frontend
                 smaranaUrl: null,
-            })
+            }))
         }
 
         // Decrypt notes and conditionally decrypt solution
@@ -137,7 +137,7 @@ export async function GET(request: Request) {
         // Build the Smarana app URL for this problem
         const smaranaUrl = `${process.env.NEXTAUTH_URL || "https://smarana.app"}/problems/${problem.id}`
 
-        return NextResponse.json({
+        return withCors(NextResponse.json({
             tracked: true,
             platform,
             slug,
@@ -152,13 +152,13 @@ export async function GET(request: Request) {
             interval: problem.interval,
             lastReviewedAt: problem.lastReviewedAt?.toISOString() || null,
             smaranaUrl,
-        })
+        }))
     } catch (error) {
         console.error("Extension problem fetch error:", error)
-        return NextResponse.json(
+        return withCors(NextResponse.json(
             { error: "Failed to fetch problem data" },
             { status: 500 }
-        )
+        ))
     }
 }
 
@@ -174,20 +174,20 @@ export async function POST(request: Request) {
         const auth = await validateExtensionToken(request)
 
         if (!auth) {
-            return NextResponse.json(
+            return withCors(NextResponse.json(
                 { error: "Unauthorized - Invalid or expired token" },
                 { status: 401 }
-            )
+            ))
         }
 
         const body = await request.json()
         const validation = saveSchema.safeParse(body)
 
         if (!validation.success) {
-            return NextResponse.json(
+            return withCors(NextResponse.json(
                 { error: validation.error.issues[0].message },
                 { status: 400 }
-            )
+            ))
         }
 
         const { platform, slug, notes, solution } = validation.data
@@ -204,10 +204,10 @@ export async function POST(request: Request) {
         })
 
         if (!problem) {
-            return NextResponse.json(
+            return withCors(NextResponse.json(
                 { error: "Problem not found. Please add it to Smarana first." },
                 { status: 404 }
-            )
+            ))
         }
 
         // Update notes and/or solution
@@ -228,12 +228,23 @@ export async function POST(request: Request) {
             })
         }
 
-        return NextResponse.json({ success: true })
+        return withCors(NextResponse.json({ success: true }))
     } catch (error) {
         console.error("Extension problem save error:", error)
-        return NextResponse.json(
+        return withCors(NextResponse.json(
             { error: "Failed to save problem data" },
             { status: 500 }
-        )
+        ))
     }
+}
+
+export async function OPTIONS() {
+    return withCors(new NextResponse(null, { status: 204 }))
+}
+
+function withCors(response: NextResponse) {
+    response.headers.set("Access-Control-Allow-Origin", "*")
+    response.headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+    response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+    return response
 }

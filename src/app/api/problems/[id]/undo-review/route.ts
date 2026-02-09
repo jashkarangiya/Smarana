@@ -3,7 +3,7 @@ import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { NextResponse } from "next/server"
 import { getNextReviewDate } from "@/lib/repetition"
-import { startOfDay, subDays } from "date-fns"
+import { dateKeyInTz, recomputeStreak } from "@/lib/streak"
 
 // XP values by difficulty (to deduct)
 const XP_REWARDS: Record<string, number> = {
@@ -25,6 +25,7 @@ export async function POST(
 
     const user = await prisma.user.findUnique({
         where: { email: session.user.email },
+        select: { id: true, xp: true, timezone: true, streakLastDate: true },
     })
 
     if (!user) {
@@ -54,58 +55,58 @@ export async function POST(
     // Calculate XP to deduct
     const xpToDeduct = XP_REWARDS[problem.difficulty.toLowerCase()] || 10
 
-    // Update problem - revert review
-    const updated = await prisma.revisionProblem.update({
-        where: { id: problem.id },
-        data: {
-            reviewCount: newReviewCount,
-            nextReviewAt: nextDate,
-            // Keep lastSolvedAt as is or revert to previous? Keeping as is for simplicity
-        },
+    const timeZone = user.timezone || "UTC"
+    const lastEvent = await prisma.reviewEvent.findFirst({
+        where: { userId: user.id, problemId: problem.id },
+        orderBy: { reviewedAt: "desc" },
+        select: { id: true, dateKey: true },
+    })
+    const eventDateKey = lastEvent?.dateKey || dateKeyInTz(new Date(), timeZone)
+
+    const daily = await prisma.dailyReviewStat.findUnique({
+        where: { userId_dateKey: { userId: user.id, dateKey: eventDateKey } },
+        select: { id: true, reviewCount: true },
     })
 
-    // Deduct user XP (don't go below 0)
-    await prisma.user.update({
-        where: { id: user.id },
-        data: {
-            xp: {
-                decrement: Math.min(xpToDeduct, user.xp || 0)
-            }
-        },
-    })
+    const shouldRecompute =
+        daily && daily.reviewCount <= 1 && user.streakLastDate === eventDateKey
 
-    // Update ReviewLog - decrement count for today
-    // We assume undo happens on the same day usually, or we decrement the day the undo happens.
-    // Ideally we should decrement the log of the actual review day, but we don't store "reviewLogId" in ReviewEvent easily accessible here without query.
-    // For MVP, simplistic approach: decrement today's count if > 0. 
-    // Correction: If the user reviews today and undoes today, this is correct.
-    const dayKey = new Date().toISOString().split('T')[0]
-
-    const existingLog = await prisma.reviewLog.findUnique({
-        where: {
-            userId_day: {
-                userId: user.id,
-                day: dayKey,
+    const updated = await prisma.$transaction(async (tx) => {
+        const updatedProblem = await tx.revisionProblem.update({
+            where: { id: problem.id },
+            data: {
+                reviewCount: newReviewCount,
+                nextReviewAt: nextDate,
             },
-        },
+        })
+
+        await tx.user.update({
+            where: { id: user.id },
+            data: {
+                xp: {
+                    decrement: Math.min(xpToDeduct, user.xp || 0),
+                },
+            },
+        })
+
+        if (daily && daily.reviewCount > 1) {
+            await tx.dailyReviewStat.update({
+                where: { id: daily.id },
+                data: { reviewCount: { decrement: 1 } },
+            })
+        } else if (daily && daily.reviewCount <= 1) {
+            await tx.dailyReviewStat.delete({ where: { id: daily.id } })
+        }
+
+        if (lastEvent) {
+            await tx.reviewEvent.delete({ where: { id: lastEvent.id } })
+        }
+
+        return updatedProblem
     })
 
-    if (existingLog && existingLog.count > 0) {
-        if (existingLog.count === 1) {
-            // Delete the log entry if this was the only review
-            await prisma.reviewLog.delete({
-                where: { id: existingLog.id },
-            })
-        } else {
-            // Decrement count
-            await prisma.reviewLog.update({
-                where: { id: existingLog.id },
-                data: {
-                    count: { decrement: 1 },
-                    xpEarned: { decrement: xpToDeduct },
-                },
-            })
-        }
+    if (shouldRecompute) {
+        await recomputeStreak(prisma, { userId: user.id, timeZone })
     }
 
     return NextResponse.json({

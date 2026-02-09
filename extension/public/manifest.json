@@ -1,26 +1,42 @@
 {
   "manifest_version": 3,
-  "name": "Smarana — Recall Overlay",
-  "version": "0.1.0",
-  "description": "Review your solved coding problems with spaced repetition",
-  "permissions": [
-    "storage",
-    "tabs"
-  ],
+  "name": "Smarana Companion",
+  "version": "1.0.0",
+  "description": "Overlay your Smarana notes and saved solutions on supported coding problem pages.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+
+  "action": {
+    "default_title": "Smarana",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+
+  "permissions": ["storage"],
+
   "host_permissions": [
     "https://smarana.vercel.app/*",
-    "http://localhost:3000/*"
+    "https://leetcode.com/*",
+    "https://codeforces.com/*",
+    "https://atcoder.jp/*",
+    "https://www.codechef.com/*",
+    "https://codechef.com/*"
   ],
-  "web_accessible_resources": [
-    {
-      "resources": [
-        "icons/*"
-      ],
-      "matches": [
-        "<all_urls>"
-      ]
-    }
-  ],
+
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+
   "content_scripts": [
     {
       "matches": [
@@ -38,29 +54,24 @@
         "https://www.codechef.com/problems/*",
         "https://codechef.com/problems/*"
       ],
-      "js": [
-        "content.js"
-      ],
-      "css": [
-        "content.css"
-      ]
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
     }
   ],
-  "background": {
-    "service_worker": "background.js",
-    "type": "module"
-  },
-  "action": {
-    "default_popup": "popup.html",
-    "default_icon": {
-      "16": "icons/icon16.png",
-      "48": "icons/icon48.png",
-      "128": "icons/icon128.png"
+
+  "web_accessible_resources": [
+    {
+      "resources": ["icons/*", "assets/*"],
+      "matches": [
+        "https://leetcode.com/*",
+        "https://*.leetcode.com/*",
+        "https://codeforces.com/*",
+        "https://www.codeforces.com/*",
+        "https://atcoder.jp/*",
+        "https://www.codechef.com/*",
+        "https://codechef.com/*"
+      ]
     }
-  },
-  "icons": {
-    "16": "icons/icon16.png",
-    "48": "icons/icon48.png",
-    "128": "icons/icon128.png"
-  }
+  ]
 }

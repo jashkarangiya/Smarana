@@ -5,13 +5,12 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
-const ContactSchema = z.object({
-    name: z.string().trim().max(80).optional().or(z.literal("")),
-    email: z.string().trim().email().max(254),
-    subject: z.string().trim().max(120).optional().or(z.literal("")),
-    message: z.string().trim().min(10).max(4000),
-    // honeypot field (bots will fill it, humans won't see it)
-    website: z.string().optional(),
+const SuggestSchema = z.object({
+    title: z.string().trim().min(2).max(120),
+    url: z.string().trim().url().max(500),
+    description: z.string().trim().max(800).optional().or(z.literal("")),
+    email: z.string().trim().email().max(254).optional().or(z.literal("")),
+    website: z.string().optional(), // honeypot
 });
 
 function getClientIp(req: Request) {
@@ -27,36 +26,34 @@ export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
 
     const body = await req.json().catch(() => null);
-    const parsed = ContactSchema.safeParse(body);
+    const parsed = SuggestSchema.safeParse(body);
 
     if (!parsed.success) {
         return NextResponse.json({ error: "Invalid input" }, { status: 400 });
     }
 
-    // Honeypot hit -> pretend success (don't teach bots)
     if (parsed.data.website) {
         return NextResponse.json({ ok: true });
     }
 
-    const ip = getClientIp(req);
-    const ipHash = hashIp(ip);
+    const ipHash = hashIp(getClientIp(req));
     const userAgent = req.headers.get("user-agent") ?? undefined;
 
-    // DB rate-limit: max 10 per hour per IP hash
+    // max 10 suggestions/hour per IP
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-    const recentCount = await prisma.contactMessage.count({
+    const recentCount = await prisma.resourceSuggestion.count({
         where: { ipHash, createdAt: { gt: oneHourAgo } },
     });
     if (recentCount >= 10) {
         return NextResponse.json({ error: "Too many requests" }, { status: 429 });
     }
 
-    await prisma.contactMessage.create({
+    await prisma.resourceSuggestion.create({
         data: {
-            name: parsed.data.name || null,
-            email: parsed.data.email,
-            subject: parsed.data.subject || null,
-            message: parsed.data.message,
+            title: parsed.data.title,
+            url: parsed.data.url,
+            description: parsed.data.description || null,
+            suggestedByEmail: parsed.data.email || session?.user?.email || null,
             userId: session?.user?.id ?? null,
             status: "NEW",
             ipHash,

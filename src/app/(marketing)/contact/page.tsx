@@ -22,7 +22,7 @@ const formSchema = z.object({
     email: z.string().email("Invalid email address"),
     subject: z.string().min(5, "Subject must be at least 5 characters"),
     message: z.string().min(10, "Message must be at least 10 characters"),
-    company: z.string().optional(), // Honeypot
+    website: z.string().optional(), // Honeypot
 })
 
 export default function ContactPage() {
@@ -36,7 +36,7 @@ export default function ContactPage() {
             email: "",
             subject: "",
             message: "",
-            company: "",
+            website: "",
         },
     })
 
@@ -45,6 +45,7 @@ export default function ContactPage() {
         try {
             const res = await fetch("/api/contact", {
                 method: "POST",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(values),
             })
 
@@ -93,7 +94,7 @@ export default function ContactPage() {
                                 {/* Honeypot - Hidden */}
                                 <FormField
                                     control={form.control}
-                                    name="company"
+                                    name="website"
                                     render={({ field }) => (
                                         <FormItem className="hidden">
                                             <FormControl>

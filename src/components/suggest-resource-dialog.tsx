@@ -21,7 +21,7 @@ export function SuggestResourceDialog() {
             const res = await fetch("/api/resources/suggest", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ title, url, description: description || undefined }),
+                body: JSON.stringify({ title, url, description: description || undefined, website: "" }),
             });
 
             const data = await res.json();
