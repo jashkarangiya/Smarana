@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
         console.log("===========================")
 
         try {
-            const logoUrl = new URL("/logo.png", appUrl).toString()
+            const logoUrl = new URL("/logo-filled.jpg", appUrl).toString()
 
             const { subject, html, text } = resetPasswordEmail({
                 appUrl,

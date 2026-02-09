@@ -136,9 +136,9 @@ export default function ProfilePage() {
             setShowBioPublicly(user.showBioPublicly ?? true)
             setShowTimezoneToPublic(user.showTimezoneToPublic ?? false)
             setShowTimezoneToFriends(user.showTimezoneToFriends ?? true)
-            // @ts-ignore - type update might delay
+
             setEmailReviewRemindersEnabled(user.emailReviewRemindersEnabled ?? false)
-            // @ts-ignore
+
             setInitialEmailReminders(user.emailReviewRemindersEnabled ?? false)
         } else if (session?.user?.name) {
             setDisplayName(session.user.name)

@@ -255,6 +255,8 @@ async function main() {
           interval: intervals[Math.min(r, intervals.length - 1)],
           xpEarned: 25 + Math.floor(Math.random() * 25),
           reviewedAt: reviewDate,
+          dateKey: reviewDate.toISOString().split('T')[0],
+          timezone: 'UTC',
         })
       }
     }

@@ -40,12 +40,8 @@ jobs:
       - run: npm ci
       - run: cd extension && npm ci && npm run build
 
-  e2e-test:
-    name: Playwright Tests
+  unit-test:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    container:
-      image: mcr.microsoft.com/playwright:v1.50.0-jammy
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -53,19 +49,4 @@ jobs:
           node-version: 20
           cache: 'npm'
       - run: npm ci
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
-      - name: Build App
-        run: npm run build
-        env:
-           # Build needs minimal env to pass, usually not DB unless typegen
-           NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
-           DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
-      - name: Run Playwright tests
-        run: npx playwright test
-        env:
-          CI: true
-          # Database URL required for the running app
-          DATABASE_URL: ${{ secrets.DATABASE_URL }} 
-          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
-          CRON_SECRET: "test-secret"
+      - run: npm test

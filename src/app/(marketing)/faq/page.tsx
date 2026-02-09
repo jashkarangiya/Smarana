@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import Link from "next/link";
 import {
     Accordion,
     AccordionContent,
@@ -70,9 +71,9 @@ export default function FAQPage() {
                 <p className="text-white/70">
                     Still have questions? Reach out to us directly.
                 </p>
-                <a href="/contact" className="text-sm font-medium text-[#BB7331] hover:text-[#BB7331]/80 hover:underline transition-colors">
+                <Link href="/contact" className="text-sm font-medium text-[#BB7331] hover:text-[#BB7331]/80 hover:underline transition-colors">
                     Contact Support &rarr;
-                </a>
+                </Link>
             </Card>
         </div>
     );

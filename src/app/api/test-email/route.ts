@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
     }
 
     const appUrl = process.env.APP_URL || process.env.NEXTAUTH_URL || "http://localhost:3000"
-    const logoUrl = new URL("/logo.png", appUrl).toString()
+    const logoUrl = new URL("/logo-filled.jpg", appUrl).toString()
 
     let emailContent: { subject: string, html: string, text: string }
 

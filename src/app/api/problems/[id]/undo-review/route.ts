@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma"
 import { NextResponse } from "next/server"
 import { getNextReviewDate } from "@/lib/repetition"
 import { dateKeyInTz, recomputeStreak } from "@/lib/streak"
+import { startOfDay } from "date-fns"
 
 // XP values by difficulty (to deduct)
 const XP_REWARDS: Record<string, number> = {

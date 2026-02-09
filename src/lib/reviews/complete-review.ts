@@ -37,8 +37,8 @@ async function buildReviewResponse(tx: PrismaTx, userId: string, problemId: stri
 
     return {
         problem,
-        notes: safeDecrypt(problem.notes || ""),
-        solution: safeDecrypt(problem.solution || ""),
+        notes: safeDecrypt(problem.notes || "") || "",
+        solution: safeDecrypt(problem.solution || "") || "",
         xpEarned: 0,
         achievementBonusXP: 0,
         newAchievements: [],
@@ -180,8 +180,8 @@ export async function completeReview(input: CompleteReviewInput): Promise<Review
             xpEarned,
             achievementBonusXP,
             newAchievements: unlockedNow,
-            notes: safeDecrypt(updatedProblem.notes || ""),
-            solution: safeDecrypt(updatedProblem.solution || ""),
+            notes: safeDecrypt(updatedProblem.notes || "") || "",
+            solution: safeDecrypt(updatedProblem.solution || "") || "",
         }
     })
 }

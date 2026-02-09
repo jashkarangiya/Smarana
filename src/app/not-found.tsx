@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 
 export default function NotFound() {
     return (
-        <div className="min-h-screen bg-black text-white flex items-center justify-center px-6">
+        <div className="min-h-[calc(100vh-80px)] bg-black text-white flex items-center justify-center px-6">
             <Card className="relative w-full max-w-lg border-white/10 bg-white/[0.03] p-8 overflow-hidden text-center md:text-left">
                 <div className="pointer-events-none absolute inset-0 opacity-20
           bg-[radial-gradient(circle_at_top,#BB7331_0%,transparent_55%)]" />

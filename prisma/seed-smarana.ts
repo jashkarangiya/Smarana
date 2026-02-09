@@ -283,6 +283,8 @@ async function main() {
                     interval: intervals[Math.min(r, intervals.length - 1)],
                     xpEarned: 25 + Math.floor(Math.random() * 25),
                     reviewedAt: reviewDate,
+                    dateKey: reviewDate.toISOString().split('T')[0],
+                    timezone: 'UTC',
                 })
             }
         }
@@ -455,7 +457,9 @@ async function main() {
                 rating: 5,
                 interval: 14,
                 xpEarned: 50,
-                reviewedAt: new Date(new Date().getTime() - Math.floor(Math.random() * 1000 * 60 * 60 * 4)) // Last 4 hours
+                reviewedAt: new Date(new Date().getTime() - Math.floor(Math.random() * 1000 * 60 * 60 * 4)), // Last 4 hours
+                dateKey: new Date().toISOString().split('T')[0],
+                timezone: 'UTC',
             }
         })
 

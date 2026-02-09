@@ -139,6 +139,7 @@ model User {
   actorNotifications   Notification[] @relation("NotificationActor")
   platformVerifications PlatformVerification[]
   suggestions          ResourceSuggestion[]
+  contactMessages      ContactMessage[]
 
   // Extension
   showSolutionInExtension Boolean @default(true)

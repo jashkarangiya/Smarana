@@ -1,53 +1,61 @@
-# <img src="public/logo.png" width="25" height="25" alt="Smarana Logo" /> Smarana
+# <img src="public/logo-filled.jpg" width="30" height="30" alt="Smarana Logo" /> Smarana
 
 **Master Algorithms with Spaced Repetition & Gamification.**
 
-Smarana ("Remembrance" in Sanskrit) is a spaced repetition platform designed for competitive programmers and software engineers. It helps you track, schedule, and master algorithmic problems from LeetCode, Codeforces, and AtCoder using smart retention intervals.
+Smarana ("Remembrance" in Sanskrit) is a specialized spaced repetition platform for competitive programmers. It seamlessly integrates with your workflow to help you track, schedule, and master algorithmic problems from LeetCode, Codeforces, and AtCoder.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Next.js](https://img.shields.io/badge/Next.js-16.1-black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)
+![Prisma](https://img.shields.io/badge/Prisma-5.0-teal)
 
 ## 🚀 Features
 
-### 🧠 Core Learning
-- **Spaced Repetition System (SRS)**: Automatically schedules reviews at optimal intervals (1, 3, 7, 14, 30 days) to maximize long-term retention.
-- **Review Queue**: A daily prioritized list of problems you are likely to forget.
-- **Problem Sync**: Seamlessly sync your solved history from **LeetCode**, **Codeforces**, and **AtCoder**.
+### 🧠 Core Learning Platform
+- **Spaced Repetition System (SRS)**: Smart scheduling (1, 3, 7, 14, 30 days) based on your performance to maximize retention.
+- **Review Queue**: A prioritized daily dashboard of problems you need to review.
+- **Problem Sync**: Automatic history tracking from **LeetCode**, **Codeforces**, and **AtCoder**.
+
+### 🧩 Browser Extension
+- **In-Context Overlay**: Solve problems directly on LeetCode with a non-intrusive floating panel.
+- **Focus Timer**: High-precision timer that tracks solve duration and auto-pauses when you switch tabs.
+- **One-Click Review**: Instantly save solutions, notes, and difficulty ratings to your dashboard without leaving the problem page.
 
 ### 🎮 Gamification
-- **XP & Levels**: Earn XP for solving problems and reviewing due items. Level up from "Novice" to "Grandmaster".
-- **Ember Trail (Heatmap)**: Visualize your daily consistency with a GitHub-style activity graph.
-- **Achievements**: Unlock badges for streaks, total solves, and hard problems.
-- **Leaderboards**: Compete with friends and the global community.
+- **XP & Ranking**: Earn XP for consistency and solving hard problems. Climb from "Novice" to "Grandmaster".
+- **Ember Trail**: Visualize your consistency with a GitHub-style activity heatmap.
+- **Achievements**: Unlock badges for milestones like "7-Day Streak" or "100 Problems Solved".
+- **Leaderboards**: Compete globally or with friends.
 
-### 👥 Social & Community
-- **Friends System**: Follow other users and track their progress.
-- **Social Pulse**: A real-time feed of your friends' recent activity and achievements.
-- **Profile Sharing**: Public profiles to showcase your stats, streak, and badges.
+### 👥 Social & Admin
+- **Community**: Follow friends, view their stats, and get inspired by their activity pulse.
+- **Admin Console**: dedicated tools for managing resource suggestions and user feedback.
 
 ### 🎨 Design & Experience
-- **"Night Garden" Aesthetic**: A premium, deep dark mode with ember/orange accents (`#BB7331`).
-- **Responsive Layout**: polished mobile and desktop experience with a 2-column settings layout.
-- **Keyboard First**: Optimized for developer workflow.
+- **"Night Garden" Aesthetic**: A premium dark UI with ember-orange accents (`#BB7331`) designed for late-night coding sessions.
+- **Developer First**: optimized for keyboard navigation and speed.
 
 ## 🛠️ Tech Stack
 
+### Web Application
 - **Framework**: [Next.js 16](https://nextjs.org/) (App Router, Server Actions)
 - **Language**: [TypeScript](https://www.typescriptlang.org/)
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/) + [Shadcn UI](https://ui.shadcn.com/)
 - **Database**: [PostgreSQL](https://www.postgresql.org/) (via [Prisma ORM](https://www.prisma.io/))
-- **Auth**: [NextAuth.js](https://next-auth.js.org/) (Google OAuth + Credentials)
-- **State**: [TanStack Query](https://tanstack.com/query/latest) (React Query)
-- **Icons**: [Lucide React](https://lucide.dev/)
-- **Testing**: Playwright (E2E)
+- **Auth**: [NextAuth.js](https://next-auth.js.org/)
+- **State**: [TanStack Query](https://tanstack.com/query/latest)
+
+### Browser Extension
+- **Core**: [Vite](https://vitejs.dev/) + [React](https://react.dev/)
+- **Architecture**: Shadow DOM for style isolation
+- **Communication**: Chrome Runtime Messaging
 
 ## ⚡ Getting Started
 
 ### Prerequisites
 - Node.js 18+
-- PostgreSQL Database (Local or Cloud like Neon/Supabase)
-- Google Cloud Project (for OAuth, optional for dev)
+- PostgreSQL Database
+- Google Cloud Project (for OAuth)
 
 ### 1. Clone & Install
 ```bash
@@ -62,64 +70,62 @@ Copy the example environment file:
 cp .env.example .env
 ```
 
-Fill in your secrets in `.env`:
+Fill in your secrets:
 ```env
 # Database
 DATABASE_URL="postgresql://user:password@localhost:5432/smarana"
 
-# Auth (NextAuth)
+# Auth
 NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="your-super-secret-key" # Generate with: openssl rand -base64 32
+NEXTAUTH_SECRET="your-super-secret-key"
 
-# Google OAuth (Optional for local dev if using Credentials)
-GOOGLE_CLIENT_ID="your-google-client-id"
-GOOGLE_CLIENT_SECRET="your-google-client-secret"
+# Google OAuth
+GOOGLE_CLIENT_ID="..."
+GOOGLE_CLIENT_SECRET="..."
 ```
 
 ### 3. Setup Database
-Initialize the database schema and generate the Prisma client:
 ```bash
-npx prisma migrate dev --name init
-# or simply
-npm run build # (Runs prisma generate + migrate deploy)
+npm run build # Runs prisma generate + migrate deploy
 ```
 
-### 4. Seed Data (Optional)
-Populate the database with demo user, problems, and activity:
-```bash
-npm run seed:demo
-```
-*Creates a test user: `demo@example.com` / `Password123!`*
-
-### 5. Run Locally
-Start the development server:
+### 4. Run Web App
 ```bash
 npm run dev
 ```
-Visit [http://localhost:3000](http://localhost:3000) to start mastering algorithms.
+Visit [http://localhost:3000](http://localhost:3000).
+
+### 5. Build Extension (Optional)
+To run the browser extension locally:
+```bash
+cd extension
+npm install
+npm run build
+```
+Load the `extension/dist` folder in Chrome via `chrome://extensions` > "Load unpacked".
 
 ## 📂 Project Structure
 
 ```
 src/
-├── app/                 # Next.js App Router pages & layouts
-│   ├── (auth)/          # Login/Signup routes
-│   ├── (authenticated)/ # App routes (Dashboard, Profile, etc.)
-│   └── api/             # API Routes (Next.js Route Handlers)
-├── components/          # Reusable UI components
-│   ├── ui/              # Shadcn primitive components
-│   └── ...              # Feature-specific components (SettingsNav, DailyChallenge)
-├── lib/                 # Utilities, helpers, and constants
-├── actions/             # Server Actions
-└── hooks/               # Custom React hooks (useUser, useStats)
+├── app/                 # Next.js App Router
+│   ├── (authenticated)/ # Dashboard, Profile, Admin
+│   └── api/             # API Routes
+├── components/          # React Components
+├── lib/                 # Utilities & Business Logic
+extension/               # Browser Extension Source
+│   ├── src/
+│   │   ├── content/     # Content Scripts (Overlay)
+│   │   └── background/  # Service Worker
+└── prisma/              # Database Schema & Migrations
 ```
 
 ## 🤝 Contributing
 
 1. Fork the Project
 2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
+3. Commit your Changes
+4. Push to the Branch
 5. Open a Pull Request
 
 ## 📄 License

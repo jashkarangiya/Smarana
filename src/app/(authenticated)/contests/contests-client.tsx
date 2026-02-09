@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useEffect } from "react";
+
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -37,7 +39,12 @@ export function ContestsClient() {
     const contests = data || [];
 
     const nextWeekCutoff = addDays(new Date(), 7);
-    const now = Date.now();
+    const [now, setNow] = useState(0);
+
+    useEffect(() => {
+        const timer = setTimeout(() => setNow(Date.now()), 0);
+        return () => clearTimeout(timer);
+    }, []);
 
     // Helper to determine status since new API doesn't return phase
     const getContestStatus = (c: Contest) => {

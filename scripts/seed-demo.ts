@@ -250,7 +250,9 @@ async function main() {
                     rating: Math.floor(Math.random() * 3) + 3, // 3-5 rating
                     interval: problem.interval,
                     xpEarned: 10 + Math.floor(Math.random() * 20),
-                    reviewedAt: reviewDate
+                    reviewedAt: reviewDate,
+                    dateKey: reviewDate.toISOString().split('T')[0],
+                    timezone: 'UTC'
                 }
             })
         }

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -79,7 +80,7 @@ export default function PrivacyPage() {
 
                     <h2>6. Contact Us</h2>
                     <p>
-                        If you have questions about this Privacy Policy or wish to request data deletion, please contact us via the <a href="/contact">Contact Page</a>.
+                        If you have questions about this Privacy Policy or wish to request data deletion, please contact us via the <Link href="/contact">Contact Page</Link>.
                     </p>
                 </div>
             </div>

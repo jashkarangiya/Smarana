@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -57,7 +58,7 @@ export default function TermsPage() {
 
                     <h2>7. Contact</h2>
                     <p>
-                        If you have any questions about these Terms, please contact us via the <a href="/contact">Contact Page</a>.
+                        If you have any questions about these Terms, please contact us via the <Link href="/contact">Contact Page</Link>.
                     </p>
                 </div>
             </div>
