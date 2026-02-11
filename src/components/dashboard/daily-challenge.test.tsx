@@ -47,21 +47,19 @@ describe('DailyChallenge', () => {
         expect(screen.queryByRole('button', { name: /Complete Challenge/i })).not.toBeInTheDocument()
     })
 
-    it('calls onComplete when button is clicked', () => {
+    it('renders start challenge link when not completed', () => {
         const problem = {
             id: '1',
             title: 'Two Sum',
             difficulty: 'Easy',
             url: 'https://leetcode.com/problems/two-sum'
         }
-        const onComplete = vi.fn()
 
-        render(<DailyChallenge problem={problem} onComplete={onComplete} />)
+        render(<DailyChallenge problem={problem} />)
 
-        const button = screen.getByRole('button', { name: /Complete Challenge/i })
-        fireEvent.click(button)
-
-        expect(onComplete).toHaveBeenCalledTimes(1)
+        const link = screen.getByRole('link', { name: /Start Challenge/i })
+        expect(link).toBeInTheDocument()
+        expect(link).toHaveAttribute('href', '/review?focus=1&src=daily_challenge')
     })
 
     it('updates timer correctly', () => {
