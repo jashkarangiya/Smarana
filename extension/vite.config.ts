@@ -54,6 +54,10 @@ export default defineConfig({
                     // Fix paths from ../../ to ./
                     html = html.replace(/src="\.\.\/\.\.\//g, 'src="./')
                     html = html.replace(/href="\.\.\/\.\.\//g, 'href="./')
+                    // Strip crossorigin attributes (flags Chrome Web Store review)
+                    html = html.replace(/ crossorigin/g, "")
+                    // Remove modulepreload links (unnecessary for extension, can cause CSP issues)
+                    html = html.replace(/\s*<link rel="modulepreload"[^>]*>\s*/g, "\n")
                     writeFileSync(destPath, html)
                     console.log("Copied popup.html to dist root with fixed paths")
                 }
