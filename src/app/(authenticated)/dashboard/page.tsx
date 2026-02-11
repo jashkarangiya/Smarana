@@ -276,7 +276,6 @@ export default function DashboardPage() {
                                                 difficulty: dueProblems[0].difficulty,
                                                 url: dueProblems[0].url,
                                             }}
-                                            onComplete={() => handleReview(dueProblems[0].id, dueProblems[0].difficulty, dueProblems[0].title)}
                                         />
                                     ) : (
                                         <Card className="hover-card">

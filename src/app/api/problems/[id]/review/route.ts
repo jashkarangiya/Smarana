@@ -20,7 +20,7 @@ export async function POST(
     const body = await req.json().catch(() => ({}))
     const BodySchema = z.object({
         rating: z.number().int().min(1).max(5).default(3),
-        source: z.enum(["web", "extension"]).default("web"),
+        source: z.enum(["web", "extension", "daily_challenge"]).default("web"),
         timeSpentMs: z.number().int().min(0).max(6 * 60 * 60 * 1000).optional(),
         clientEventId: z.string().min(8).max(100).optional(),
     })

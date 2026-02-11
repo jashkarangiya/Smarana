@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import crypto from "crypto"
 import { sendEmail } from "@/lib/email/sendEmail"
 import { resetPasswordEmail } from "@/lib/email/templates/resetPassword"
+import { getBaseUrl } from "@/lib/baseUrl"
 
 // Rate limiting helper (simple in-memory - use Redis in production)
 const resetAttempts = new Map<string, { count: number, resetAt: number }>()
@@ -63,7 +64,7 @@ export async function POST(request: NextRequest) {
         })
 
         // Send email with reset link
-        const appUrl = process.env.APP_URL || process.env.NEXTAUTH_URL || "http://localhost:3000"
+        const appUrl = getBaseUrl()
         const resetUrl = new URL("/reset-password", appUrl)
         resetUrl.searchParams.set("token", token)
         resetUrl.searchParams.set("email", email)
@@ -74,7 +75,7 @@ export async function POST(request: NextRequest) {
         console.log("===========================")
 
         try {
-            const logoUrl = new URL("/logo-filled.jpg", appUrl).toString()
+            const logoUrl = `${appUrl}/brand/logo-email.png`
 
             const { subject, html, text } = resetPasswordEmail({
                 appUrl,

@@ -5,7 +5,7 @@ import { OVERLAY_CSS } from "./overlay-css"
 import { clearAuth } from "../lib/auth-store"
 
 const SMARANA_URL = "https://smarana.vercel.app"
-const LOGO_URL = chrome.runtime.getURL("icons/icon48.png")
+const LOGO_URL = chrome.runtime.getURL("icons/smarana-48.png")
 
 type UIMode = "bubble" | "panel"
 type DataState = "loading" | "not-connected" | "not-tracked" | "problem" | "error"
@@ -61,8 +61,33 @@ export class SmaranaOverlay {
 
         this.shadow = this.host.attachShadow({ mode: "closed" })
 
+        const interUrl = chrome.runtime.getURL("fonts/Inter-Regular.woff2")
+        const interSemiBoldUrl = chrome.runtime.getURL("fonts/Inter-SemiBold.woff2")
+        const jetBrainsUrl = chrome.runtime.getURL("fonts/JetBrainsMono-Regular.woff2")
+
+        const fontFaces = `
+            @font-face {
+                font-family: 'Inter';
+                src: url('${interUrl}') format('woff2');
+                font-weight: 400;
+                font-style: normal;
+            }
+            @font-face {
+                font-family: 'Inter';
+                src: url('${interSemiBoldUrl}') format('woff2');
+                font-weight: 600;
+                font-style: normal;
+            }
+            @font-face {
+                font-family: 'JetBrains Mono';
+                src: url('${jetBrainsUrl}') format('woff2');
+                font-weight: 400;
+                font-style: normal;
+            }
+        `
+
         const style = document.createElement("style")
-        style.textContent = OVERLAY_CSS
+        style.textContent = fontFaces + OVERLAY_CSS
         this.shadow.appendChild(style)
 
         this.app = document.createElement("div")

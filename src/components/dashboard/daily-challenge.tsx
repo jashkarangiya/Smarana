@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import Link from "next/link"
 import { Flame, Clock, Zap, Gift, ArrowUpRight } from "lucide-react"
 import { useEffect, useState } from "react"
 
@@ -12,11 +13,10 @@ interface DailyChallengeProps {
         difficulty: string
         url: string
     }
-    onComplete?: () => void
     isCompleted?: boolean
 }
 
-export function DailyChallenge({ problem, onComplete, isCompleted = false }: DailyChallengeProps) {
+export function DailyChallenge({ problem, isCompleted = false }: DailyChallengeProps) {
     const [timeLeft, setTimeLeft] = useState("")
 
     useEffect(() => {
@@ -125,11 +125,14 @@ export function DailyChallenge({ problem, onComplete, isCompleted = false }: Dai
                         Challenge Completed!
                     </div>
                 ) : (
-                    <Button onClick={onComplete} className="w-full mt-auto bg-[#BB7331] hover:bg-[#b8862f] text-black font-semibold shadow-[0_0_15px_rgba(187,115,49,0.2)]" size="lg">
-                        Complete Challenge
+                    <Button asChild className="w-full mt-auto bg-[#BB7331] hover:bg-[#b8862f] text-black font-semibold shadow-[0_0_15px_rgba(187,115,49,0.2)]" size="lg">
+                        <Link href={`/review?focus=${problem.id}&src=daily_challenge`}>
+                            Start Challenge
+                        </Link>
                     </Button>
                 )}
             </CardContent>
+
         </Card>
     )
 }

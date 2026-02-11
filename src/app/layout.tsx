@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { Providers } from "@/components/layout/providers";
 import { NavBar } from "@/components/layout/nav-bar";
@@ -46,6 +47,7 @@ export default function RootLayout({
             <TitleUpdater />
             <NavBar />
             <main>{children}</main>
+            <Analytics />
           </EmberTrailProvider>
         </Providers>
       </body>

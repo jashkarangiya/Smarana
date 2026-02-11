@@ -59,3 +59,5 @@ extension/*.zip
 # test artifacts
 playwright-report/
 test-results/
+
+*.zip

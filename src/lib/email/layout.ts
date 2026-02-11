@@ -1,112 +1,140 @@
 type EmailLayoutProps = {
-    preheader?: string
-    title: string
-    brandLine?: string // e.g. "spaced repetition for algorithms"
-    appUrl: string
-    logoUrl: string
-    topRightLink?: { label: string; href: string }
-    childrenHtml: string
-    footerHtml?: string
+  preheader?: string
+  title?: string
+  appUrl: string
+  logoUrl: string
+  openSmaranaUrl?: string
+  childrenHtml: string
+  // Optional footer text for the card footer strip
+  cardFooterHtml?: string
 }
 
 const escapeHtml = (s: string) =>
-    s
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;")
+  s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;")
 
 export function renderEmailLayout({
-    preheader,
-    title,
-    brandLine = "spaced repetition for algorithms",
-    appUrl,
-    logoUrl,
-    topRightLink,
-    childrenHtml,
-    footerHtml,
+  preheader,
+  title,
+  appUrl,
+  logoUrl,
+  openSmaranaUrl,
+  childrenHtml,
+  cardFooterHtml,
 }: EmailLayoutProps) {
-    const safeTitle = escapeHtml(title)
+  const brand = {
+    gold: "#BB7331",
+    ink: "#111214",
+    text: "#1C1D21",
+    muted: "#5B5E66",
+    border: "#E7E7EC",
+    surface: "#FFFFFF",
+    soft: "#F7F7FA",
+  }
 
-    const preheaderBlock = preheader
-        ? `
-    <div style="display:none;font-size:1px;color:#0b0b0d;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
-      ${escapeHtml(preheader)}
-    </div>
-  `
-        : ""
+  const safeTitle = title ? escapeHtml(title) : ""
+  const targetUrl = openSmaranaUrl || appUrl
 
-    const rightLink = topRightLink
-        ? `<a href="${topRightLink.href}" style="color:#BB7331;text-decoration:none;font-weight:600;font-size:13px;">${escapeHtml(
-            topRightLink.label
-        )} →</a>`
-        : `<a href="${appUrl}" style="color:#BB7331;text-decoration:none;font-weight:600;font-size:13px;">Open Smarana →</a>`
+  // Logo chip logic: The user wants a dark chip to show the white logo.
+  // If logoUrl is passed, we wrap it.
 
-    // Note: table layout for email compatibility
-    return `<!doctype html>
+  return `<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="x-apple-disable-message-reformatting">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light only" />
   <title>${safeTitle}</title>
+  <style>
+    /* Gmail supports embedded CSS; keep it minimal */
+    @media screen and (max-width: 600px) {
+      .container { width: 100% !important; }
+      .px { padding-left: 18px !important; padding-right: 18px !important; }
+      .btn { width: 100% !important; }
+      .stack { display: block !important; width: 100% !important; }
+      .text-center-sm { text-align: center !important; }
+    }
+  </style>
 </head>
-<body style="margin:0;padding:0;background-color:#0b0b0d;">
-  ${preheaderBlock}
 
-  <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color:#0b0b0d;padding:24px 12px;">
+<body style="margin:0; padding:0; background:${brand.surface}; font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, 'Apple Color Emoji','Segoe UI Emoji'; color:${brand.text};">
+  <!-- Preheader (hidden) -->
+  <div style="display:none; max-height:0; overflow:hidden; opacity:0; color:transparent;">
+    ${preheader ? escapeHtml(preheader) : ""}
+  </div>
+
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:${brand.surface};">
     <tr>
-      <td align="center">
-        <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="width:600px;max-width:600px;">
+      <td align="center" style="padding:24px 12px;">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" class="container" style="width:600px; max-width:600px;">
+
           <!-- Header -->
           <tr>
-            <td style="padding:0 0 14px 0;">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+            <td class="px" style="padding:0 24px 14px 24px;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                 <tr>
-                  <td align="left" style="vertical-align:middle;">
-                    <a href="${appUrl}" style="text-decoration:none;">
-                      <img src="${logoUrl}" width="28" height="28" alt="Smarana" style="display:inline-block;vertical-align:middle;border:0;outline:none;text-decoration:none;border-radius:6px;">
-                      <span style="display:inline-block;vertical-align:middle;margin-left:10px;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:#ffffff;font-weight:700;font-size:16px;">
-                        Smarana
-                      </span>
-                      <span style="display:inline-block;vertical-align:middle;margin-left:8px;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:#a3a3ad;font-weight:500;font-size:13px;">
-                        • ${escapeHtml(brandLine)}
-                      </span>
-                    </a>
+                  <td align="left" valign="middle" style="padding:0;">
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                      <tr>
+                        <td valign="middle" style="padding:0 10px 0 0;">
+                          <!-- Logo chip (keeps white logo visible on white email) -->
+                          <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="border-radius:12px; background:#0B0F16; box-shadow:0 6px 18px rgba(0,0,0,0.12);">
+                            <tr>
+                              <td style="padding:9px;">
+                                <img src="cid:smarana-logo" width="22" height="22" alt="Smarana" style="display:block; border:0; outline:none; text-decoration:none;" />
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                        <td valign="middle" style="padding:0;">
+                          <div style="font-size:16px; font-weight:700; color:#111827; line-height:1.2; letter-spacing:-0.2px;">
+                            Smarana <span style="font-weight:500; color:#6B7280;">• spaced repetition for algorithms</span>
+                          </div>
+                        </td>
+                      </tr>
+                    </table>
                   </td>
-                  <td align="right" style="vertical-align:middle;">
-                    ${rightLink}
+                  <td align="right" valign="middle" style="padding:0;">
+                    <a href="${targetUrl}"
+                       style="font-size:14px; font-weight:600; color:${brand.gold}; text-decoration:none;">
+                      Open Smarana →
+                    </a>
                   </td>
                 </tr>
               </table>
-            </td>
-          </tr>
 
-          <!-- Accent line -->
-          <tr>
-            <td style="height:2px;background:#BB7331;border-radius:999px;"></td>
+              <div style="height:1px; background:${brand.border}; margin-top:14px;"></div>
+              <div style="height:3px; width:72px; background:${brand.gold}; border-radius:999px; margin-top:10px;"></div>
+            </td>
           </tr>
 
           <!-- Card -->
           <tr>
-            <td style="padding:18px 0 0 0;">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
-                style="background:#101014;border:1px solid #24242c;border-radius:18px;">
+            <td class="px" style="padding:0 24px;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
+                     style="border:1px solid ${brand.border}; border-radius:18px; overflow:hidden; background:${brand.surface};">
                 <tr>
-                  <td style="padding:22px 22px 18px 22px;">
-                    <h1 style="margin:0 0 10px 0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:#ffffff;font-weight:800;font-size:24px;line-height:1.2;">
-                      ${safeTitle}
-                    </h1>
-
+                  <td style="padding:22px 22px 10px 22px;">
+                    ${safeTitle
+      ? `<div style="font-size:30px; font-weight:800; letter-spacing:-0.6px; line-height:1.15; margin-bottom: 14px;">
+                        ${safeTitle}
+                       </div>`
+      : ""
+    }
+                    
                     ${childrenHtml}
                   </td>
                 </tr>
 
+                <!-- Footer strip -->
                 <tr>
-                  <td style="padding:14px 22px 18px 22px;border-top:1px solid #1f1f26;">
-                    <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:#8b8b96;font-size:12px;line-height:1.5;">
-                      ${footerHtml ?? `© ${new Date().getFullYear()} Smarana • “Remembrance is the root of knowledge”`}
+                  <td style="padding:14px 22px; border-top:1px solid ${brand.border}; background:#fff;">
+                    <div style="font-size:12px; color:${brand.muted}; line-height:1.5;">
+                      ${cardFooterHtml || "You’re receiving this because you signed up for Smarana."}
                     </div>
                   </td>
                 </tr>
@@ -114,8 +142,17 @@ export function renderEmailLayout({
             </td>
           </tr>
 
-          <!-- Bottom spacing -->
-          <tr><td style="height:18px;"></td></tr>
+          <!-- Global footer -->
+          <tr>
+            <td class="px" style="padding:18px 24px 0 24px;">
+              <div style="font-size:12px; color:${brand.muted}; line-height:1.6;">
+                If you didn’t expect this email, you can ignore it.
+              </div>
+              <div style="margin-top:8px; font-size:12px; color:${brand.muted};">
+                © ${new Date().getFullYear()} Smarana · “Remembrance is the root of knowledge”
+              </div>
+            </td>
+          </tr>
 
         </table>
       </td>

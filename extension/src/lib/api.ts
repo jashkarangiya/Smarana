@@ -130,6 +130,28 @@ export async function fetchProblem(
 }
 
 /**
+ * Fetch the current user profile (for validation)
+ */
+export async function fetchUser(accessToken: string): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/api/auth/session`, {
+        method: "GET",
+        headers: {
+            Authorization: `Bearer ${accessToken}`,
+        },
+    })
+
+    if (response.status === 401) {
+        throw new Error("TOKEN_EXPIRED")
+    }
+
+    if (!response.ok) {
+        throw new Error("Failed to fetch user")
+    }
+
+    return response.json()
+}
+
+/**
  * Build the Smarana connect URL
  */
 export function getConnectUrl(state: string): string {

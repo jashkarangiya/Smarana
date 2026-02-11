@@ -1,86 +1,139 @@
-import { renderEmailLayout } from "../layout"
+import { renderEmailLayout } from "../layout";
 
-const escapeHtml = (s: string) =>
-    s
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;")
+type ContestReminderEmailProps = {
+  appUrl: string;            // e.g. https://smarana.vercel.app
+  openSmaranaUrl: string;    // deep link to contest page or /contests
+  settingsUrl: string;       // link to notification settings
+  userName: string;          // "Jash"
+  contestName: string;       // "Weekly Contest 400"
+  platform: string;          // "LeetCode" | "Codeforces" | ...
+  startsAtLabel: string;     // "Sunday, 10:30 AM (IST)"
+  startsInLabel: string;     // "2 days" / "in 3 hours" etc
+  contestUrl: string;        // external contest URL
+};
 
-export function contestReminderEmail(params: {
-    appUrl: string
-    logoUrl: string
-    username?: string | null
-    platform: string
-    contestName: string
-    startTimeLocal: string
-    startInText: string
-    contestUrl: string
-}) {
-    const subject = `Contest reminder: ${params.contestName}`
+// Minimal HTML escape (avoid injection)
+const esc = (s: string) =>
+  s.replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 
-    const greeting = params.username?.trim()
-        ? `Hey ${escapeHtml(params.username.trim())},`
-        : "Hey,"
+export function remindContestEmail({
+  appUrl,
+  openSmaranaUrl,
+  settingsUrl,
+  userName,
+  contestName,
+  platform,
+  startsAtLabel,
+  startsInLabel,
+  contestUrl,
+}: ContestReminderEmailProps) {
+  const brand = {
+    gold: "#BB7331",
+    text: "#1C1D21",
+    muted: "#5B5E66",
+    border: "#E7E7EC",
+    soft: "#F7F7FA",
+  };
 
-    const childrenHtml = `
-    <p style="margin:0 0 12px 0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:#cfcfda;font-size:14px;line-height:1.6;">
-      ${greeting}
-    </p>
-    <p style="margin:0 0 14px 0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:#cfcfda;font-size:14px;line-height:1.6;">
-      <b>${escapeHtml(params.contestName)}</b> on <b>${escapeHtml(params.platform)}</b> starts <b>${escapeHtml(params.startInText)}</b>.
-    </p>
+  const logoUrl = `${appUrl}/brand/logo-email.png`;
 
-    <div style="margin:14px 0 14px 0;padding:14px;background:#0c0c10;border:1px solid #1f1f26;border-radius:14px;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-        <tr>
-          <td style="padding-bottom:6px;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:#8b8b96;font-size:13px;">
-            Starts:
-          </td>
-          <td style="padding-bottom:6px;padding-left:12px;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:#ffffff;font-size:13px;font-weight:600;">
-            ${escapeHtml(params.startTimeLocal)}
-          </td>
-        </tr>
-        <tr>
-          <td style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:#8b8b96;font-size:13px;">
-            Platform:
-          </td>
-          <td style="padding-left:12px;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:#ffffff;font-size:13px;font-weight:600;">
-            ${escapeHtml(params.platform)}
-          </td>
-        </tr>
-      </table>
+  const subject = `Contest reminder: ${contestName} starts ${startsInLabel}`;
+  const preheader = `${contestName} on ${platform} starts ${startsInLabel}.`;
+
+  const childrenHtml = `
+    <div style="margin-top:14px; font-size:16px; line-height:1.6; color:${brand.text};">
+      Hey ${esc(userName)},
     </div>
 
-    <div style="margin:16px 0 10px 0;">
-      <a href="${params.contestUrl}"
-         style="display:inline-block;background:#24242c;color:#ffffff;text-decoration:none;border:1px solid #33333d;
-                font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
-                font-weight:600;font-size:14px;padding:12px 18px;border-radius:14px;">
-        View Contest
-      </a>
+    <div style="margin-top:10px; font-size:16px; line-height:1.6; color:${brand.text};">
+      <span style="font-weight:700;">${esc(contestName)}</span>
+      on <span style="font-weight:700;">${esc(platform)}</span>
+      starts in <span style="font-weight:800; color:${brand.gold};">${esc(startsInLabel)}</span>.
     </div>
-  `
 
-    const html = renderEmailLayout({
-        preheader: `${params.platform} • starts ${params.startInText}`,
-        title: "Contest reminder",
-        appUrl: params.appUrl,
-        logoUrl: params.logoUrl,
-        childrenHtml,
-        footerHtml: "You can disable contest reminders from Settings.",
-    })
+    <!-- Details box -->
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
+           style="margin-top:16px; background:${brand.soft}; border:1px solid ${brand.border}; border-radius:14px;">
+      <tr>
+        <td style="padding:14px 14px;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+            <tr>
+              <td class="stack" width="140" style="width:140px; padding:6px 0; color:${brand.muted}; font-size:13px; font-weight:700;">
+                Starts
+              </td>
+              <td class="stack" style="padding:6px 0; color:${brand.text}; font-size:14px; font-weight:700;">
+                ${esc(startsAtLabel)}
+              </td>
+            </tr>
+            <tr>
+              <td class="stack" width="140" style="width:140px; padding:6px 0; color:${brand.muted}; font-size:13px; font-weight:700;">
+                Platform
+              </td>
+              <td class="stack" style="padding:6px 0; color:${brand.text}; font-size:14px; font-weight:700;">
+                ${esc(platform)}
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
 
-    const text = [
-        greeting,
-        "",
-        `${params.contestName} on ${params.platform} starts ${params.startInText}.`,
-        `Start time: ${params.startTimeLocal}`,
-        `Contest link: ${params.contestUrl}`,
-        "",
-        "You can disable contest reminders from Settings.",
-    ].join("\n")
+    <!-- Button -->
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin-top:18px;">
+      <tr>
+        <td>
+          <a href="${esc(contestUrl)}"
+             class="btn"
+             style="
+               display:inline-block;
+               padding:12px 16px;
+               border-radius:14px;
+               background:${brand.gold};
+               color:#111;
+               font-size:14px;
+               font-weight:800;
+               text-decoration:none;
+               border:1px solid rgba(0,0,0,0.08);
+             ">
+            View contest
+          </a>
+        </td>
+      </tr>
+    </table>
 
-    return { subject, html, text }
+    <!-- Small helper -->
+    <div style="margin-top:14px; font-size:13px; color:${brand.muted}; line-height:1.6;">
+      Tip: If you prefer fewer pings, you can manage reminders in
+      <a href="${esc(settingsUrl)}" style="color:${brand.gold}; text-decoration:none; font-weight:700;">Settings</a>.
+    </div>
+  `;
+
+  const html = renderEmailLayout({
+    preheader,
+    title: "Contest reminder",
+    appUrl,
+    logoUrl,
+    openSmaranaUrl,
+    childrenHtml,
+    cardFooterHtml: "You’re receiving this because contest reminders are enabled for your account.",
+  });
+
+  const text =
+    `Smarana — contest reminder
+
+Hey ${userName},
+
+${contestName} on ${platform} starts in ${startsInLabel}.
+Starts: ${startsAtLabel}
+
+View contest: ${contestUrl}
+
+Manage reminders: ${settingsUrl}
+`;
+
+  return { subject, html, text };
 }

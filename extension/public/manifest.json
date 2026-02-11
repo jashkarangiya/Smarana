@@ -4,25 +4,24 @@
   "version": "1.0.0",
   "description": "Overlay your Smarana notes and saved solutions on supported coding problem pages.",
   "icons": {
-    "16": "icons/icon16.png",
-    "32": "icons/icon32.png",
-    "48": "icons/icon48.png",
-    "128": "icons/icon128.png"
+    "16": "icons/smarana-16.png",
+    "32": "icons/smarana-32.png",
+    "48": "icons/smarana-48.png",
+    "128": "icons/smarana-128.png"
   },
-
   "action": {
     "default_title": "Smarana",
     "default_popup": "popup.html",
     "default_icon": {
-      "16": "icons/icon16.png",
-      "32": "icons/icon32.png",
-      "48": "icons/icon48.png",
-      "128": "icons/icon128.png"
+      "16": "icons/smarana-16.png",
+      "32": "icons/smarana-32.png",
+      "48": "icons/smarana-48.png",
+      "128": "icons/smarana-128.png"
     }
   },
-
-  "permissions": ["storage"],
-
+  "permissions": [
+    "storage"
+  ],
   "host_permissions": [
     "https://smarana.vercel.app/*",
     "https://leetcode.com/*",
@@ -31,12 +30,10 @@
     "https://www.codechef.com/*",
     "https://codechef.com/*"
   ],
-
   "background": {
     "service_worker": "background.js",
     "type": "module"
   },
-
   "content_scripts": [
     {
       "matches": [
@@ -54,23 +51,24 @@
         "https://www.codechef.com/problems/*",
         "https://codechef.com/problems/*"
       ],
-      "js": ["content.js"],
-      "css": ["content.css"],
+      "js": [
+        "content.js"
+      ],
+      "css": [
+        "content.css"
+      ],
       "run_at": "document_idle"
     }
   ],
-
   "web_accessible_resources": [
     {
-      "resources": ["icons/*", "assets/*"],
+      "resources": [
+        "icons/*",
+        "fonts/*",
+        "assets/*"
+      ],
       "matches": [
-        "https://leetcode.com/*",
-        "https://*.leetcode.com/*",
-        "https://codeforces.com/*",
-        "https://www.codeforces.com/*",
-        "https://atcoder.jp/*",
-        "https://www.codechef.com/*",
-        "https://codechef.com/*"
+        "<all_urls>"
       ]
     }
   ]

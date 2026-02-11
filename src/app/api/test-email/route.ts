@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { sendEmail } from "@/lib/email/sendEmail"
 import { resetPasswordEmail } from "@/lib/email/templates/resetPassword"
 import { reviewReminderEmail } from "@/lib/email/templates/reviewReminder"
-import { contestReminderEmail } from "@/lib/email/templates/contestReminder"
+import { remindContestEmail } from "@/lib/email/templates/contestReminder"
+import { getBaseUrl } from "@/lib/baseUrl"
 
 export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams
@@ -13,8 +14,8 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: "Missing 'email' query param" }, { status: 400 })
     }
 
-    const appUrl = process.env.APP_URL || process.env.NEXTAUTH_URL || "http://localhost:3000"
-    const logoUrl = new URL("/logo-filled.jpg", appUrl).toString()
+    const appUrl = getBaseUrl()
+    const logoUrl = `${appUrl}/brand/logo-email.png`
 
     let emailContent: { subject: string, html: string, text: string }
 
@@ -50,14 +51,15 @@ export async function GET(req: NextRequest) {
             break
 
         case "contest":
-            emailContent = contestReminderEmail({
+            emailContent = remindContestEmail({
                 appUrl,
-                logoUrl,
-                username: "Test User",
+                openSmaranaUrl: `${appUrl}/contests`,
+                settingsUrl: `${appUrl}/settings`,
+                userName: "Test User",
                 platform: "LeetCode",
                 contestName: "Weekly Contest 400",
-                startTimeLocal: "Sunday, 10:30 AM",
-                startInText: "in 2 days",
+                startsAtLabel: "Sunday, 10:30 AM",
+                startsInLabel: "in 2 days",
                 contestUrl: "https://leetcode.com/contest/weekly-contest-400",
             })
             break

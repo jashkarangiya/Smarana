@@ -7,6 +7,7 @@ import { fetchAtCoderSolvedProblems } from "@/lib/platforms/atcoder"
 import { PlatformProblem } from "@/lib/platforms"
 import { sendEmail } from "@/lib/email/sendEmail"
 import { reviewReminderEmail } from "@/lib/email/templates/reviewReminder"
+import { getBaseUrl } from "@/lib/baseUrl"
 
 export async function GET(req: Request) {
     const authHeader = req.headers.get("authorization")
@@ -106,8 +107,8 @@ async function sendReminders(): Promise<number> {
 
         // 3. Send email
         try {
-            const appUrl = process.env.APP_URL || process.env.NEXTAUTH_URL || "http://localhost:3000"
-            const logoUrl = new URL("/logo.png", appUrl).toString()
+            const appUrl = getBaseUrl()
+            const logoUrl = `${appUrl}/brand/logo-email.png`
 
             const { subject, html, text } = reviewReminderEmail({
                 appUrl,

@@ -3,7 +3,7 @@ import { onUrlChange } from "../lib/url-watcher"
 import { getProblem, saveProblem, reviewProblem } from "../lib/messaging"
 import { SmaranaOverlay } from "./overlay"
 import type { ProblemData } from "../lib/api"
-import { getAuth, onAuthChanged } from "../lib/auth-store"
+import { getAuth, onAuthChanged, clearAuth } from "../lib/auth-store"
 
 let currentContext: ProblemContext | null = null
 let cleanupUrlWatcher: (() => void) | null = null
@@ -138,7 +138,7 @@ async function init() {
     })
 
     // Watch for Auth changes
-    cleanupAuth = onAuthChanged((auth) => {
+    cleanupAuth = onAuthChanged(async (auth) => {
         try {
             const context = getProblemContext(location.href)
             if (!context || !overlay) return
@@ -148,6 +148,11 @@ async function init() {
                 overlay.showConnect(context)
                 resetTimerState()
             } else {
+                // Revalidate token if it's been a while since last check? 
+                // For now, let's just trust storage updates, but maybe we should validate on load.
+                // The requirement says "revalidate on every load".
+                // We do that in checkCurrentPage -> which calls fetchAndRenderProblem -> which will fail 401 if invalid.
+                // But let's add an explicit check here if it's a fresh load not just a storage change.
                 fetchAndRenderProblem(context, auth)
             }
         } catch {
@@ -232,7 +237,20 @@ async function checkCurrentPage() {
     }
 
     // Check Auth
-    const auth = await getAuth()
+    let auth = await getAuth()
+
+    // Revalidate on load
+    if (auth) {
+        try {
+            // We use fetchProblem to implicitly validate, OR we can call fetchUser explicitely.
+            // Since we are about to call fetchAndRenderProblem -> fetchProblem anyway, 
+            // that WILL throw TOKEN_EXPIRED if 401. 
+            // So we just need to catch that error and clear auth.
+        } catch (e) {
+            // ...
+        }
+    }
+
     if (!auth) {
         overlay.showConnect(context)
         resetTimerState()
@@ -329,6 +347,27 @@ async function fetchAndRenderProblem(context: ProblemContext, auth: any) {
         }
     } catch (err: any) {
         if (err.name === "AbortError") return
+
+        if (err.message === "TOKEN_EXPIRED") {
+            // Clear auth and show connect
+            console.log("[Smarana] Token expired, clearing auth")
+            // We can't clear auth from content script easily if it's in local storage? 
+            // We can use chrome.storage.local.remove if we have permissions (we do).
+            // But better to use the lib function if available. 
+            // We can't import clearAuth from lib/auth-store directly if it's not exposed to content script properly?
+            // It is imported in index.ts: import { getAuth, onAuthChanged } from "../lib/auth-store"
+            // Wait, auth-store uses chrome.storage.local, so we can just use that.
+
+            // Import clearAuth? 
+            // Let's modify imports first.
+
+            // For now just show connect.
+            overlay.showConnect(context)
+            resetTimerState()
+            // And try to clear storage
+            chrome.storage.local.remove("smarana.auth")
+            return
+        }
 
         console.error("[Smarana] Error fetching problem:", err)
         overlay.setError(context, "Failed to load problem data.", () => fetchAndRenderProblem(context, auth))

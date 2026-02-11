@@ -9,15 +9,21 @@ const inputFile = path.join(__dirname, 'logo-original.png');
 
 async function generateIcons() {
     for (const size of sizes) {
-        const outputFile = path.join(__dirname, `icon${size}.png`);
-        await sharp(inputFile)
-            .resize(size, size, {
-                fit: 'contain',
-                background: { r: 0, g: 0, b: 0, alpha: 0 }
-            })
-            .png()
-            .toFile(outputFile);
-        console.log(`Created icon${size}.png`);
+        // Generate both naming styles
+        const files = [
+            path.join(__dirname, `smarana-${size}.png`),
+            path.join(__dirname, `icon${size}.png`),
+        ];
+        for (const outputFile of files) {
+            await sharp(inputFile)
+                .resize(size, size, {
+                    fit: 'contain',
+                    background: { r: 0, g: 0, b: 0, alpha: 0 }
+                })
+                .png()
+                .toFile(outputFile);
+        }
+        console.log(`Created smarana-${size}.png & icon${size}.png`);
     }
     console.log('\nIcons generated successfully!');
 }

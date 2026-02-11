@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { useProblems, useStats } from "@/hooks/use-problems"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -33,8 +33,22 @@ import { useSearchParams } from "next/navigation"
 export default function ReviewPage() {
     const searchParams = useSearchParams()
     const limit = searchParams.get("limit") ? parseInt(searchParams.get("limit")!) : undefined
+    const focusId = searchParams.get("focus")
+    const source = searchParams.get("src") || "web"
 
-    const { data: problems = [], isLoading } = useProblems("due", limit)
+    const { data: rawProblems = [], isLoading } = useProblems("due", limit)
+
+    // Sort problems to put focusId first if it exists
+    const problems = useMemo(() => {
+        if (!rawProblems.length) return []
+        if (!focusId) return rawProblems
+
+        const focused = rawProblems.find((p: any) => p.id === focusId)
+        if (!focused) return rawProblems
+
+        return [focused, ...rawProblems.filter((p: any) => p.id !== focusId)]
+    }, [rawProblems, focusId])
+
     const { data: stats } = useStats()
     const queryClient = useQueryClient()
     const { triggerReviewEmber } = useEmberTrail()
@@ -55,10 +69,24 @@ export default function ReviewPage() {
     // Rate mutation
     const rateMutation = useMutation({
         mutationFn: async ({ problemId, rating }: { problemId: string; rating: Rating }) => {
-            const res = await fetch(`/api/problems/${problemId}/rate`, {
+            // Use the generic /review endpoint now instead of /rate
+            // But wait, the previous code used /rate. Let's check if /rate calls completeReview internally?
+            // Checking file tree... api/problems/[id]/rate/route.ts exists. 
+            // BUT api/problems/[id]/review/route.ts ALSO exists and uses completeReview.
+            // The plan said "Update Review API (POST /api/problems/:id/review)". 
+            // So we should switch to using /review here to support source.
+
+            const res = await fetch(`/api/problems/${problemId}/review`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ rating }),
+                body: JSON.stringify({
+                    rating: rating === "remembered" ? 5 : rating === "kinda" ? 3 : 1, // Map string to 1-5
+                    source,
+                    // We can map the old rating strings to 1-5 scale:
+                    // remembered -> 5 (Easy)
+                    // kinda -> 3 (Medium/Hard)
+                    // forgot -> 1 (Hard/Fail)
+                }),
             })
             if (!res.ok) throw new Error("Failed to rate")
             return res.json() as Promise<RateResponse>

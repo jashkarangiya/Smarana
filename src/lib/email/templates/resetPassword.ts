@@ -10,11 +10,11 @@ type PasswordResetEmailArgs = {
 
 const escapeHtml = (s: string) =>
   s
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;")
 
 export function resetPasswordEmail({
   appUrl,
@@ -30,42 +30,51 @@ export function resetPasswordEmail({
   const title = "Reset your password"
   const subject = "Reset your Smarana password"
 
+  // Brand colors for inline styles
+  const brand = {
+    text: "#1C1D21",
+    muted: "#5B5E66",
+    soft: "#F7F7FA",
+    border: "#E7E7EC",
+    gold: "#BB7331",
+  }
+
   const childrenHtml = `
-    <p style="margin:0 0 12px 0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:#cfcfda;font-size:14px;line-height:1.6;">
+    <div style="margin-top:14px; font-size:16px; line-height:1.6; color:${brand.text};">
       ${greeting}
-    </p>
-
-    <p style="margin:0 0 14px 0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:#cfcfda;font-size:14px;line-height:1.6;">
-      We received a request to reset your Smarana password. Click the button below to choose a new one.
-    </p>
-
-    <div style="margin:14px 0 14px 0;padding:12px 14px;background:#0c0c10;border:1px solid #1f1f26;border-radius:14px;">
-      <p style="margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:#a3a3ad;font-size:13px;line-height:1.5;">
-        This link expires in <strong style="color:#ffffff;">${expiresMinutes} minutes</strong>.
-      </p>
     </div>
 
-    <div style="margin:16px 0 10px 0;">
+    <div style="margin-top:10px; font-size:16px; line-height:1.6; color:${brand.text};">
+      We received a request to reset your Smarana password. Click the button below to choose a new one.
+    </div>
+
+    <div style="margin:16px 0 16px 0; padding:12px 14px; background:${brand.soft}; border:1px solid ${brand.border}; border-radius:14px;">
+      <div style="margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial; color:${brand.muted}; font-size:13px; line-height:1.5;">
+        This link expires in <strong style="color:${brand.text};">${expiresMinutes} minutes</strong>.
+      </div>
+    </div>
+
+    <div style="margin:18px 0 10px 0;">
       <a href="${resetUrl}"
-         style="display:inline-block;background:#BB7331;color:#0b0b0d;text-decoration:none;
+         style="display:inline-block; background:${brand.gold}; color:#111; text-decoration:none;
                 font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
-                font-weight:800;font-size:14px;padding:12px 18px;border-radius:14px;">
+                font-weight:800; font-size:14px; padding:12px 18px; border-radius:14px; border:1px solid rgba(0,0,0,0.08);">
         Reset Password
       </a>
     </div>
 
-    <p style="margin:14px 0 6px 0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:#a3a3ad;font-size:12px;line-height:1.6;">
+    <div style="margin-top:16px; font-size:13px; color:${brand.muted}; line-height:1.6;">
       If the button doesn’t work, copy and paste this link:
-    </p>
+    </div>
 
-    <p style="margin:0 0 16px 0;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,'Liberation Mono','Courier New',monospace;
-              color:#BB7331;font-size:12px;line-height:1.5;word-break:break-all;">
-      <a href="${resetUrl}" style="color:#BB7331;text-decoration:underline;">${resetUrl}</a>
-    </p>
+    <div style="margin:4px 0 16px 0; font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,'Liberation Mono','Courier New',monospace;
+              color:${brand.gold}; font-size:12px; line-height:1.5; word-break:break-all;">
+      <a href="${resetUrl}" style="color:${brand.gold}; text-decoration:underline;">${resetUrl}</a>
+    </div>
 
-    <p style="margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:#8b8b96;font-size:12px;line-height:1.6;">
+    <div style="margin-top:16px; font-size:13px; color:${brand.muted}; line-height:1.6;">
       If you didn’t request this, you can safely ignore this email.
-    </p>
+    </div>
   `
 
   const html = renderEmailLayout({
@@ -73,9 +82,8 @@ export function resetPasswordEmail({
     title,
     appUrl,
     logoUrl,
-    topRightLink: { label: "Open Smarana", href: appUrl },
     childrenHtml,
-    footerHtml: `Security note: Smarana will never ask you for your password over email.`,
+    cardFooterHtml: "Security note: Smarana will never ask you for your password over email.",
   })
 
   const text = [

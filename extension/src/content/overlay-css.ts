@@ -28,7 +28,7 @@ export const OVERLAY_CSS = `
 }
 
 .smarana-app {
-    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-size: 14px;
     line-height: 1.5;
     color: rgba(var(--sm-text), 0.92);
@@ -323,7 +323,7 @@ export const OVERLAY_CSS = `
 .smr-prewrap { white-space: pre-wrap; }
 
 .smr-code {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     font-size: 12px;
     background: rgba(0, 0, 0, 0.30);
     border-radius: 0 0 var(--sm-radius-lg) var(--sm-radius-lg);

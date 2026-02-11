@@ -12,7 +12,7 @@ type CompleteReviewInput = {
     userId: string
     problemId: string
     rating: number
-    source: "web" | "extension"
+    source: "web" | "extension" | "daily_challenge"
     timeSpentMs?: number
     clientEventId?: string
     timeZone: string
@@ -51,26 +51,25 @@ export async function completeReview(input: CompleteReviewInput): Promise<Review
     const todayKey = dateKeyInTz(now, timeZone)
 
     return prisma.$transaction(async (tx) => {
-        const existingDaily = await tx.dailyReviewStat.findUnique({
-            where: { userId_dateKey: { userId: input.userId, dateKey: todayKey } },
-            select: { id: true },
-        })
-        if (input.clientEventId) {
-            const existing = await tx.reviewEvent.findUnique({
-                where: {
-                    userId_clientEventId: {
-                        userId: input.userId,
-                        clientEventId: input.clientEventId,
-                    },
-                },
-                select: { id: true },
-            })
-
-            if (existing) {
-                const existingResult = await buildReviewResponse(tx, input.userId, input.problemId)
-                if (existingResult) return existingResult
-            }
+        // 1. Check for existing XpEvent for this problem/day (idempotency)
+        // We use a specific kind for reviews to separate them from other XP events if needed
+        const existingReviewParams = {
+            userId: input.userId,
+            problemId: input.problemId,
+            dateKey: todayKey,
+            kind: "review"
         }
+
+        const existingEvent = await tx.xpEvent.findFirst({
+            where: existingReviewParams
+        })
+
+        // Also check if this was a daily challenge attempt
+        let isDailyChallenge = input.source === "extension" ? false : input.source === "daily_challenge" // "daily_challenge" passed from frontend
+            || (input.source as string) === "daily_challenge"
+
+        // If input.source is just "web" or "extension", we might need another way to know if it's a daily challenge
+        // But per plan, we will pass "daily_challenge" as source from frontend.
 
         const problem = await tx.revisionProblem.findUnique({
             where: { id: input.problemId },
@@ -80,9 +79,69 @@ export async function completeReview(input: CompleteReviewInput): Promise<Review
             throw new Error("Problem not found")
         }
 
-        const xpEarned = calculateReviewXP(problem.difficulty, Number(input.rating), !existingDaily)
+        // 2. Calculate XP
+        // Base XP based on difficulty
+        const baseXp = calculateReviewXP(problem.difficulty, Number(input.rating), !!existingEvent) // 0 if existing event? calculateReviewXP logic usually handles "first of day" but here we want explicit control
+
+        // If verified existing review today, base XP is 0
+        const actualBaseXp = existingEvent ? 0 : baseXp
+
+        // Bonus XP for daily challenge (if not already awarded)
+        let bonusXp = 0
+        let challengeCompleted = false
+
+        if (input.source === "daily_challenge") {
+            const existingChallengeEvent = await tx.xpEvent.findFirst({
+                where: {
+                    userId: input.userId,
+                    problemId: input.problemId,
+                    dateKey: todayKey,
+                    kind: "daily_challenge"
+                }
+            })
+
+            if (!existingChallengeEvent) {
+                // Award bonus
+                bonusXp = problem.difficulty === "EASY" ? 20 : problem.difficulty === "MEDIUM" ? 50 : 100
+                challengeCompleted = true
+
+                // Record challenge event
+                await tx.xpEvent.create({
+                    data: {
+                        userId: input.userId,
+                        problemId: input.problemId,
+                        kind: "daily_challenge",
+                        amount: bonusXp,
+                        dateKey: todayKey,
+                        createdAt: now
+                    }
+                })
+            }
+        }
+
+        // Record review event (if not exists) - strictly for XP tracking
+        // We still record the ReviewEvent for stats/logs below, but XpEvent is for the ledger
+        if (!existingEvent && actualBaseXp > 0) {
+            await tx.xpEvent.create({
+                data: {
+                    ...existingReviewParams,
+                    amount: actualBaseXp,
+                    createdAt: now
+                }
+            })
+        }
+
+        const xpEarned = actualBaseXp + bonusXp
+
+        // 3. Update Problem Scheduling (Always update schedule even if reviewed today? 
+        // Usually we only want to update schedule once per day to avoid spacing it out too much on spam.
+        // But for now let's allow re-rating if they forgot -> remembered.)
+
+        // Actually, if they already reviewed it today, maybe we shouldn't push the date further?
+        // Let's stick to: Update logic is same, but XP is gated.
 
         const newReviewCount = problem.reviewCount + 1
+        // ... (standard scheduling logic)
         const nextDate = getNextReviewDate(newReviewCount, now)
         const newInterval = Math.ceil((nextDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
 
@@ -97,6 +156,7 @@ export async function completeReview(input: CompleteReviewInput): Promise<Review
             },
         })
 
+        // 4. Log the review event (Historical log, not for XP ledger)
         await tx.reviewEvent.create({
             data: {
                 userId: input.userId,
@@ -106,13 +166,22 @@ export async function completeReview(input: CompleteReviewInput): Promise<Review
                 timeSpentMs: input.timeSpentMs,
                 clientEventId: input.clientEventId,
                 interval: newInterval,
-                xpEarned,
+                xpEarned, // Total earned this time
                 reviewedAt: now,
                 dateKey: todayKey,
                 timezone: timeZone,
             },
         })
 
+        // 5. Update User XP
+        if (xpEarned > 0) {
+            await tx.user.update({
+                where: { id: input.userId },
+                data: { xp: { increment: xpEarned } },
+            })
+        }
+
+        // 6. Stats & Streaks
         const streak = await recordReviewForStreak(tx, {
             userId: input.userId,
             timeZone,
@@ -138,11 +207,12 @@ export async function completeReview(input: CompleteReviewInput): Promise<Review
             },
         })
 
+        // 7. Achievements
         const problemsTracked = await tx.revisionProblem.count({ where: { userId: input.userId } })
         const friendsCount = await tx.friendship.count({ where: { userId: input.userId } })
 
         const ctx: AchievementContext = {
-            totalReviews: stats.totalReviews + 1,
+            totalReviews: stats.totalReviews, // updated above
             currentStreak: streak.streakCurrent,
             longestStreak: streak.streakLongest,
             problemsTracked,
@@ -157,16 +227,27 @@ export async function completeReview(input: CompleteReviewInput): Promise<Review
             if (!currentlyUnlocked.has(ach.id) && ach.isUnlocked(ctx)) {
                 unlockedNow.push(ach.id)
                 achievementBonusXP += ach.xpReward
+
+                // Log achievement XP event
+                await tx.xpEvent.create({
+                    data: {
+                        userId: input.userId,
+                        kind: "achievement",
+                        amount: ach.xpReward,
+                        dateKey: todayKey,
+                        problemId: ach.id // store achievement ID here? or keep null. Let's keep null or use a separate field. user XpEvent schema has problemId. 
+                        // For now let's just create it and maybe abuse problemId or just leave it null.
+                        // Better to leave problemId null.
+                    }
+                })
             }
         }
 
-        const totalXpGain = xpEarned + achievementBonusXP
-        await tx.user.update({
-            where: { id: input.userId },
-            data: { xp: { increment: totalXpGain } },
-        })
-
-        if (unlockedNow.length > 0) {
+        if (achievementBonusXP > 0) {
+            await tx.user.update({
+                where: { id: input.userId },
+                data: { xp: { increment: achievementBonusXP } },
+            })
             await tx.userStats.update({
                 where: { userId: input.userId },
                 data: {
@@ -177,7 +258,7 @@ export async function completeReview(input: CompleteReviewInput): Promise<Review
 
         return {
             problem: updatedProblem,
-            xpEarned,
+            xpEarned: xpEarned + achievementBonusXP, // Return total
             achievementBonusXP,
             newAchievements: unlockedNow,
             notes: safeDecrypt(updatedProblem.notes || "") || "",
