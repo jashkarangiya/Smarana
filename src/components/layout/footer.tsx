@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { Sparkles, Github } from "lucide-react"
+import { Github } from "lucide-react"
 
 export function Footer() {
     return (
@@ -87,9 +87,15 @@ export function Footer() {
                     <p>© {new Date().getFullYear()} Smarana Inc. All rights reserved.</p>
 
                     <div className="flex items-center gap-2">
-                        <span>Designed with</span>
-                        <Sparkles className="h-3 w-3 text-primary/50" />
-                        <span>for developers</span>
+                        <span>Built by</span>
+                        <a
+                            href="https://github.com/jashkarangiya"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-white/70 hover:text-[#BB7331] transition-colors"
+                        >
+                            Jash Karangiya
+                        </a>
                     </div>
                 </div>
             </div>

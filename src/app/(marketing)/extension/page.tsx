@@ -42,7 +42,7 @@ const STEPS = [
     {
         step: "01",
         title: "Install the extension",
-        description: "Download from the Chrome Web Store or install manually from our GitHub releases.",
+        description: "Add Smarana Companion from the Chrome Web Store — one click, no manual setup.",
     },
     {
         step: "02",
@@ -81,8 +81,8 @@ export default function ExtensionPage() {
                         className="h-12 px-6 text-base font-medium rounded-full shadow-lg shadow-primary/20"
                         asChild
                     >
-                        <a href="https://github.com/jashkarangiya/smarana-extension/releases" target="_blank" rel="noopener noreferrer">
-                            Download Extension
+                        <a href="https://chromewebstore.google.com/detail/smarana-companion/mbbhnangobklngdbmbjolbinofdaelnh" target="_blank" rel="noopener noreferrer">
+                            Add to Chrome
                         </a>
                     </Button>
                     <Button
@@ -228,8 +228,8 @@ export default function ExtensionPage() {
                         className="h-12 px-6 text-base font-medium rounded-full"
                         asChild
                     >
-                        <a href="https://github.com/jashkarangiya/smarana-extension/releases" target="_blank" rel="noopener noreferrer">
-                            Download for Chrome
+                        <a href="https://chromewebstore.google.com/detail/smarana-companion/mbbhnangobklngdbmbjolbinofdaelnh" target="_blank" rel="noopener noreferrer">
+                            Add to Chrome
                         </a>
                     </Button>
                 </div>

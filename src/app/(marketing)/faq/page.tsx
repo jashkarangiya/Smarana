@@ -9,7 +9,7 @@ import {
 import { Card } from "@/components/ui/card"
 
 export const metadata: Metadata = {
-    title: "FAQ · Smarana",
+    title: "FAQ",
     description: "Answers to common questions about Smarana.",
 };
 

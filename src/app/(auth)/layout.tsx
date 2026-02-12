@@ -1,3 +1,9 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+    robots: { index: false, follow: false },
+};
+
 // Auth layout - no navbar for sign-in/register pages
 export default function AuthLayout({
     children,

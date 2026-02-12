@@ -237,7 +237,7 @@ async function checkCurrentPage() {
     }
 
     // Check Auth
-    let auth = await getAuth()
+    const auth = await getAuth()
 
     // Revalidate on load
     if (auth) {

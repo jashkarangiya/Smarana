@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-    title: "Privacy Policy · Smarana",
+    title: "Privacy Policy",
     description: "How Smarana collects and uses data to power your algorithm review workflow.",
 };
 

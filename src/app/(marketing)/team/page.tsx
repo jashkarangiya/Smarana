@@ -4,12 +4,13 @@ import { User, Code2, Paintbrush, Coffee } from "lucide-react";
 
 export const metadata: Metadata = {
     title: "Team",
-    description: "The small team behind Smarana.",
+    description:
+        "Meet the team behind Smarana — built by Jash Karangiya with help from virtual interns Claude and Antigravity.",
 };
 
 const team = [
     {
-        name: "JK",
+        name: "Jash Karangiya",
         role: "Founder / Builder",
         superpower: "Ships fast, refines faster.",
         blurb: "Building Smarana to make algorithm retention feel effortless and consistent.",

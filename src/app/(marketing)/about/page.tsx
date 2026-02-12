@@ -5,7 +5,7 @@ import { Brain, Clock, Zap, Target, Layout, ListChecks, History } from "lucide-r
 
 export const metadata: Metadata = {
     title: "About",
-    description: "Why Smarana exists and how it helps you retain coding patterns.",
+    description: "Why Smarana exists: built by Jash Karangiya to stop forgetting solved algorithm patterns and make reviews automatic.",
 };
 
 export default function AboutPage() {

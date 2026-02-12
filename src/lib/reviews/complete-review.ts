@@ -65,7 +65,7 @@ export async function completeReview(input: CompleteReviewInput): Promise<Review
         })
 
         // Also check if this was a daily challenge attempt
-        let isDailyChallenge = input.source === "extension" ? false : input.source === "daily_challenge" // "daily_challenge" passed from frontend
+        const isDailyChallenge = input.source === "extension" ? false : input.source === "daily_challenge" // "daily_challenge" passed from frontend
             || (input.source as string) === "daily_challenge"
 
         // If input.source is just "web" or "extension", we might need another way to know if it's a daily challenge

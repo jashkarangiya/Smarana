@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-    title: "Cookie Policy · Smarana",
+    title: "Cookie Policy",
     description: "How Smarana uses cookies for essential functionality.",
 };
 

@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 
 export const metadata: Metadata = {
-    title: "Changelog · Smarana",
+    title: "Changelog",
     description: "Product updates and improvements to Smarana.",
 };
 
