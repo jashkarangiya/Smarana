@@ -15,6 +15,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
         "/terms",
         "/cookies",
         "/extension",
+        "/googled58f1566e39c7aa4.html",
     ];
 
     const now = new Date();
