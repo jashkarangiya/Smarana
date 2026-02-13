@@ -583,16 +583,13 @@ export class SmaranaOverlay {
     private getNotTrackedContent(): string {
         return `
             <div class="smr-empty">
-                <div class="smr-empty-icon">
-                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <path d="M12 8v4"></path>
-                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                    </svg>
-                </div>
                 <p class="smr-empty-title">Not in your list</p>
                 <p class="smr-empty-desc">This problem isn't being tracked yet. Add it from Smarana.</p>
-                <a href="${SMARANA_URL}/dashboard" target="_blank" class="smr-primary-btn">Open Smarana</a>
+                <div style="height: 20px;"></div>
+                <a href="${SMARANA_URL}/dashboard" target="_blank" class="smr-hero-btn">
+                    <span>Open</span>
+                    <span>Smarana</span>
+                </a>
             </div>
         `
     }

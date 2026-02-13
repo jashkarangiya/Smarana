@@ -9,6 +9,18 @@ export const metadata: Metadata = {
 
 const changelog = [
     {
+        version: "0.3",
+        date: "Feb 12, 2026",
+        title: "Polish & Identity",
+        items: [
+            "Added global 404 redirect with \"Traversal Failed\" theme",
+            "Updated About page with origin story and product snapshots",
+            "Added email support channel",
+            "Polished page titles and metadata",
+            "Fixed footer navigation issues",
+        ],
+    },
+    {
         version: "0.2",
         date: "Jan 29, 2026",
         title: "Polish & Filters",

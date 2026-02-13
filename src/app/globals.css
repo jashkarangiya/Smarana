@@ -334,8 +334,25 @@
   animation: shimmer 3s ease-in-out infinite;
 }
 
+
 .animate-gentle-pulse {
   animation: gentle-pulse 2s ease-in-out infinite;
+}
+
+@keyframes smaranaFloat {
+
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  50% {
+    transform: translate3d(0, 14px, 0);
+  }
+}
+
+.animate-smarana-float {
+  animation: smaranaFloat 10s ease-in-out infinite;
 }
 
 html {

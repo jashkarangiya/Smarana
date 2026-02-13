@@ -185,6 +185,14 @@ export default function ContactPage() {
 
 
                     <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6 max-w-sm">
+                        <h3 className="font-semibold mb-4">Email</h3>
+                        <a href="mailto:smarana.help@gmail.com" className="flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors">
+                            <Mail className="h-4 w-4" />
+                            smarana.help@gmail.com
+                        </a>
+                    </div>
+
+                    <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6 max-w-sm">
                         <h3 className="font-semibold mb-4">Connect on Social</h3>
                         <div className="flex gap-4">
                             <a href="https://github.com/jashkarangiya" target="_blank" className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-sm">

@@ -65,7 +65,7 @@ export function Footer() {
                     <div className="space-y-4">
                         <h4 className="font-semibold text-white">Platform</h4>
                         <ul className="space-y-3 text-sm text-white/50">
-                            <li><Link href="/problems" className="hover:text-[#BB7331] transition-colors">All Problems</Link></li>
+                            <li><Link href="/all-problems" className="hover:text-[#BB7331] transition-colors">All Problems</Link></li>
                             <li><Link href="/review" className="hover:text-[#BB7331] transition-colors">Review Session</Link></li>
                             <li><Link href="/extension" className="hover:text-[#BB7331] transition-colors">Browser Extension</Link></li>
                         </ul>

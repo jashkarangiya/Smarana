@@ -196,38 +196,82 @@ function AuthPageContent() {
                 {/* Sign In Layout: Orange Left, Form Right */}
                 <div className="flex min-h-screen" style={{ width: "100vw" }}>
                     {/* Orange Panel - Sign In */}
-                    <div className="hidden lg:flex w-1/2 bg-gradient-to-br from-primary via-primary to-primary/80 text-primary-foreground p-12 items-center justify-center relative overflow-hidden">
-                        <div className="absolute top-20 left-20 w-64 h-64 rounded-full border border-primary-foreground/10" />
-                        <div className="absolute bottom-20 right-20 w-48 h-48 rounded-full border border-primary-foreground/10" />
+                    <div className="hidden lg:flex w-1/2 bg-[#BB7331] text-white p-12 items-center justify-center relative overflow-hidden">
+                        {/* Decorative Layers */}
+                        <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+                            {/* Big ring behind headline */}
+                            <div className="absolute left-12 top-24 h-[340px] w-[340px] rounded-full border border-white/10" />
+
+                            {/* Orbit arc bottom right */}
+                            <div className="absolute right-[-60px] bottom-[-20px] h-[380px] w-[380px] rounded-full border border-white/5 [mask-image:linear-gradient(transparent,black_60%)]" />
+
+                            {/* Floating soft glow orb */}
+                            <div className="absolute -left-24 top-40 h-[420px] w-[420px] rounded-full bg-white/10 blur-3xl animate-smarana-float" />
+
+                            {/* Spark dots */}
+                            <div className="absolute left-20 top-[60%] h-1 w-1 rounded-full bg-white/40 shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
+                            <div className="absolute left-32 top-[65%] h-0.5 w-0.5 rounded-full bg-white/30" />
+                        </div>
+
                         <div className="relative z-10 max-w-sm">
                             <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight mb-4 text-white">Welcome Back!</h2>
-                            <p className="text-lg text-primary-foreground/90 mb-10 leading-relaxed">Your algorithms are waiting. Pick up right where you left off.</p>
+                            <p className="text-lg text-white/90 mb-10 leading-relaxed">Your algorithms are waiting. Pick up right where you left off.</p>
                             <div className="space-y-5">
                                 {SIGNIN_FEATURES.map((f, i) => (
-                                    <div key={i} className="flex gap-3">
-                                        <div className="w-10 h-10 rounded-lg bg-primary-foreground/10 flex items-center justify-center flex-shrink-0">
-                                            <f.icon className="h-5 w-5" />
+                                    <div key={i} className="flex gap-3 group">
+                                        <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0 group-hover:bg-white/20 transition-colors">
+                                            <f.icon className="h-5 w-5 text-white" />
                                         </div>
                                         <div>
-                                            <h3 className="font-semibold">{f.title}</h3>
-                                            <p className="text-sm text-primary-foreground/70">{f.description}</p>
+                                            <h3 className="font-semibold text-white">{f.title}</h3>
+                                            <p className="text-sm text-white/70">{f.description}</p>
                                         </div>
                                     </div>
                                 ))}
                             </div>
-                            <div className="mt-8 flex items-center gap-3 text-sm text-primary-foreground/60">
+                            <div className="mt-8 flex items-center gap-3 text-sm text-white/60">
                                 <Sparkles className="h-4 w-4" /><span>Resume instantly</span>
-                                <span className="w-1 h-1 rounded-full bg-primary-foreground/40" />
+                                <span className="w-1 h-1 rounded-full bg-white/40" />
                                 <Flame className="h-4 w-4" /><span>Keep your streak</span>
                             </div>
                         </div>
                     </div>
 
                     {/* Sign In Form */}
-                    <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-8">
-                        <div className="w-full max-w-sm">
+                    <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-8 relative overflow-hidden">
+                        {/* Seam Glow */}
+                        <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 w-[1px] bg-gradient-to-b from-transparent via-white/10 to-transparent hidden lg:block" />
+                        <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 w-[100px] bg-gradient-to-r from-[#BB7331]/15 to-transparent blur-2xl hidden lg:block" />
+
+                        {/* Black Panel Decorations */}
+                        <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+                            {/* Warm glow behind header */}
+                            <div className="absolute top-0 left-1/2 h-[300px] w-[600px] -translate-x-1/2 bg-[#BB7331]/5 blur-3xl rounded-full opacity-60" />
+
+                            {/* Faint corner rings */}
+                            <div className="absolute -right-20 top-[-50px] h-[300px] w-[300px] rounded-full border border-white/5" />
+                            <div className="absolute -left-20 bottom-[-50px] h-[300px] w-[300px] rounded-full border border-white/5" />
+
+                            {/* Subtle Grid Texture */}
+                            <div
+                                className="absolute inset-0 opacity-[0.4] [mask-image:radial-gradient(ellipse_at_top,black,transparent_70%)]"
+                                style={{
+                                    backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px)',
+                                    backgroundSize: '40px 40px'
+                                }}
+                            />
+
+                            {/* Random Glow Orbs (Sign In) */}
+                            <div className="absolute top-[20%] right-[10%] w-32 h-32 bg-[#BB7331]/5 rounded-full blur-2xl opacity-60 pointer-events-none" />
+                            <div className="absolute bottom-[15%] left-[5%] w-24 h-24 bg-[#BB7331]/5 rounded-full blur-2xl opacity-60 pointer-events-none" />
+                        </div>
+
+                        <div className="w-full max-w-sm relative z-10">
                             <div className="text-center mb-4 sm:mb-6">
-                                <Link href="/" className="flex justify-center mb-3 sm:mb-4"><Logo size="lg" /></Link>
+                                <div className="relative flex justify-center mb-6">
+                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 bg-[#BB7331]/20 rounded-full blur-xl pointer-events-none" />
+                                    <Link href="/" className="relative"><Logo size="lg" /></Link>
+                                </div>
                                 <h1 className="text-xl sm:text-2xl font-bold">Sign in</h1>
                                 <p className="text-xs sm:text-sm text-muted-foreground mt-1">
                                     New to Smarana?{" "}
@@ -270,10 +314,40 @@ function AuthPageContent() {
                 {/* Register Layout: Form Left, Orange Right */}
                 <div className="flex min-h-screen" style={{ width: "100vw" }}>
                     {/* Register Form */}
-                    <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-8">
-                        <div className="w-full max-w-sm">
+                    <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-8 relative overflow-hidden">
+                        {/* Seam Glow (Right side for Register view) */}
+                        <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 w-[1px] bg-gradient-to-b from-transparent via-white/10 to-transparent hidden lg:block" />
+                        <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 w-[100px] bg-gradient-to-l from-[#BB7331]/15 to-transparent blur-2xl hidden lg:block" />
+
+                        {/* Black Panel Decorations */}
+                        <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+                            {/* Warm glow behind header */}
+                            <div className="absolute top-0 left-1/2 h-[300px] w-[600px] -translate-x-1/2 bg-[#BB7331]/5 blur-3xl rounded-full opacity-60" />
+
+                            {/* Faint corner rings */}
+                            <div className="absolute -left-20 top-[-50px] h-[300px] w-[300px] rounded-full border border-white/5" />
+                            <div className="absolute -right-20 bottom-[-50px] h-[300px] w-[300px] rounded-full border border-white/5" />
+
+                            {/* Subtle Grid Texture */}
+                            <div
+                                className="absolute inset-0 opacity-[0.4] [mask-image:radial-gradient(ellipse_at_top,black,transparent_70%)]"
+                                style={{
+                                    backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px)',
+                                    backgroundSize: '40px 40px'
+                                }}
+                            />
+
+                            {/* Random Glow Orbs (Register) */}
+                            <div className="absolute top-[15%] left-[10%] w-32 h-32 bg-[#BB7331]/5 rounded-full blur-2xl opacity-60 pointer-events-none" />
+                            <div className="absolute bottom-[20%] right-[5%] w-24 h-24 bg-[#BB7331]/5 rounded-full blur-2xl opacity-60 pointer-events-none" />
+                        </div>
+
+                        <div className="w-full max-w-sm relative z-10">
                             <div className="text-center mb-4 sm:mb-6">
-                                <Link href="/" className="flex justify-center mb-3 sm:mb-4"><Logo size="lg" /></Link>
+                                <div className="relative flex justify-center mb-6">
+                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 bg-[#BB7331]/20 rounded-full blur-xl pointer-events-none" />
+                                    <Link href="/" className="relative"><Logo size="lg" /></Link>
+                                </div>
                                 <h1 className="text-xl sm:text-2xl font-bold">Create an account</h1>
                                 <p className="text-xs sm:text-sm text-muted-foreground mt-1">
                                     Already have an account?{" "}
@@ -384,35 +458,49 @@ function AuthPageContent() {
                                     {registering ? "Creating account..." : "Create Account"}
                                 </Button>
                                 <p className="text-xs text-center text-muted-foreground">
-                                    By signing up, you agree to our <Link href="#" className="underline">Terms</Link> and <Link href="#" className="underline">Privacy</Link>
+                                    By signing up, you agree to our <Link href="/terms" className="underline">Terms</Link> and <Link href="/privacy" className="underline">Privacy</Link>
                                 </p>
                             </form>
                         </div>
                     </div>
 
                     {/* Orange Panel - Register */}
-                    <div className="hidden lg:flex w-1/2 bg-gradient-to-br from-primary via-primary to-primary/80 text-primary-foreground p-12 items-center justify-center relative overflow-hidden">
-                        <div className="absolute top-20 right-20 w-64 h-64 rounded-full border border-primary-foreground/10" />
-                        <div className="absolute bottom-20 left-20 w-48 h-48 rounded-full border border-primary-foreground/10" />
+                    <div className="hidden lg:flex w-1/2 bg-[#BB7331] text-white p-12 items-center justify-center relative overflow-hidden">
+                        {/* Decorative Layers */}
+                        <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+                            {/* Big ring behind headline (mirrored for right side) */}
+                            <div className="absolute right-12 top-24 h-[340px] w-[340px] rounded-full border border-white/10" />
+
+                            {/* Orbit arc bottom left */}
+                            <div className="absolute left-[-60px] bottom-[-20px] h-[380px] w-[380px] rounded-full border border-white/5 [mask-image:linear-gradient(transparent,black_60%)]" />
+
+                            {/* Floating soft glow orb */}
+                            <div className="absolute -right-24 top-40 h-[420px] w-[420px] rounded-full bg-white/10 blur-3xl animate-smarana-float" />
+
+                            {/* Spark dots */}
+                            <div className="absolute right-20 top-[60%] h-1 w-1 rounded-full bg-white/40 shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
+                            <div className="absolute right-32 top-[65%] h-0.5 w-0.5 rounded-full bg-white/30" />
+                        </div>
+
                         <div className="relative z-10 max-w-sm">
                             <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight mb-4 text-white">Welcome to Smarana</h2>
-                            <p className="text-lg text-primary-foreground/90 mb-10 leading-relaxed">Master algorithms through spaced repetition and never forget.</p>
+                            <p className="text-lg text-white/90 mb-10 leading-relaxed">Master algorithms through spaced repetition and never forget.</p>
                             <div className="space-y-5">
                                 {SIGNUP_FEATURES.map((f, i) => (
-                                    <div key={i} className="flex gap-3">
-                                        <div className="w-10 h-10 rounded-lg bg-primary-foreground/10 flex items-center justify-center flex-shrink-0">
-                                            <f.icon className="h-5 w-5" />
+                                    <div key={i} className="flex gap-3 group">
+                                        <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0 group-hover:bg-white/20 transition-colors">
+                                            <f.icon className="h-5 w-5 text-white" />
                                         </div>
                                         <div>
-                                            <h3 className="font-semibold">{f.title}</h3>
-                                            <p className="text-sm text-primary-foreground/70">{f.description}</p>
+                                            <h3 className="font-semibold text-white">{f.title}</h3>
+                                            <p className="text-sm text-white/70">{f.description}</p>
                                         </div>
                                     </div>
                                 ))}
                             </div>
-                            <div className="mt-8 flex items-center gap-3 text-sm text-primary-foreground/60">
+                            <div className="mt-8 flex items-center gap-3 text-sm text-white/60">
                                 <Zap className="h-4 w-4" /><span>Free forever</span>
-                                <span className="w-1 h-1 rounded-full bg-primary-foreground/40" />
+                                <span className="w-1 h-1 rounded-full bg-white/40" />
                                 <Target className="h-4 w-4" /><span>8+ platforms</span>
                             </div>
                         </div>

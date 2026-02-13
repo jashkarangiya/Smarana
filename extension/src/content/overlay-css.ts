@@ -450,15 +450,42 @@ export const OVERLAY_CSS = `
     }
 }
 
-.smr-icon-btn:hover {
-    background: rgba(var(--sm-panel), 0.8);
-    color: rgba(var(--sm-text), 1);
-    box-shadow: 0 0 0 3px rgba(var(--sm-accent-rgb), 0.14);
-}
 
-.smr-icon-btn:active {
-    transform: translateY(1px);
-}
+    .smr-icon-btn:active {
+        transform: translateY(1px);
+    }
+    
+    .smr-hero-btn {
+        width: 160px;
+        height: 160px;
+        border-radius: 50%;
+        background: var(--sm-btn-bg);
+        color: #0b0b0d;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        font-weight: 600;
+        font-size: 16px;
+        line-height: 1.2;
+        letter-spacing: 0.01em;
+        text-decoration: none;
+        box-shadow: 0 10px 40px rgba(var(--sm-accent-rgb), 0.3);
+        transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, filter 0.2s ease;
+        margin: 10px auto;
+        border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .smr-hero-btn:hover {
+        transform: scale(1.05);
+        filter: brightness(1.05);
+        box-shadow: 0 15px 50px rgba(var(--sm-accent-rgb), 0.4);
+    }
+
+    .smr-hero-btn:active {
+        transform: scale(0.95);
+    }
 
 .smr-icon-btn--disabled {
     opacity: 0.4;

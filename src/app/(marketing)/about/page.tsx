@@ -24,7 +24,10 @@ export default function AboutPage() {
                     <p className="text-lg text-white/60 leading-relaxed max-w-md">
                         I started Smarana because I needed a revision reminder.
                         I’d solve problems, feel confident, and then blank out weeks later.
-                        Smarana began as a small system to revisit what I already knew—and grew into a spaced repetition layer for algorithms.
+                        Smarana began as a small system to revisit what I already knew, and grew into a spaced repetition layer for algorithms.
+                    </p>
+                    <p className="text-sm text-white/40 italic">
+                        Credit to Ayush Luhar for the name.
                     </p>
                 </div>
 
@@ -54,7 +57,7 @@ export default function AboutPage() {
                         </div>
                         <div className="pt-2 pb-6">
                             <h3 className="text-lg font-medium text-white">The Frustration</h3>
-                            <p className="mt-1 text-white/60">"Solved → forgot → re-solve." The endless cycle of LeetCode grind with diminishing returns.</p>
+                            <p className="mt-1 text-white/60">"Solved, forgot, re-solve." The endless cycle of LeetCode grind with diminishing returns.</p>
                         </div>
                     </div>
 
@@ -132,18 +135,24 @@ export default function AboutPage() {
                         <p className="text-xs text-center text-white/40 group-hover:text-white/60 transition-colors">Dashboard Overview</p>
                     </div>
                     <div className="group space-y-3">
-                        <div className="aspect-video rounded-xl border border-white/10 bg-white/[0.02] relative overflow-hidden">
-                            <div className="absolute inset-0 flex items-center justify-center text-white/20 bg-black/40">
-                                <ListChecks className="h-8 w-8" />
-                            </div>
+                        <div className="aspect-video rounded-xl bg-white/[0.02] relative overflow-hidden group-hover:ring-1 group-hover:ring-white/10 transition-all">
+                            <Image
+                                src="/review-session.png"
+                                alt="Review Session"
+                                fill
+                                className="object-cover object-top"
+                            />
                         </div>
                         <p className="text-xs text-center text-white/40 group-hover:text-white/60 transition-colors">Review Session</p>
                     </div>
                     <div className="group space-y-3">
-                        <div className="aspect-video rounded-xl border border-white/10 bg-white/[0.02] relative overflow-hidden">
-                            <div className="absolute inset-0 flex items-center justify-center text-white/20 bg-black/40">
-                                <Brain className="h-8 w-8" />
-                            </div>
+                        <div className="aspect-video rounded-xl bg-white/[0.02] relative overflow-hidden group-hover:ring-1 group-hover:ring-white/10 transition-all">
+                            <Image
+                                src="/extension-overlay.png"
+                                alt="Extension Overlay"
+                                fill
+                                className="object-cover object-top"
+                            />
                         </div>
                         <p className="text-xs text-center text-white/40 group-hover:text-white/60 transition-colors">Extension Overlay</p>
                     </div>
