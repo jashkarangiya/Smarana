@@ -72,6 +72,12 @@ model Session {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+enum AvatarSource {
+  GOOGLE
+  UPLOAD
+  NONE
+}
+
 model User {
   id                 String    @id @default(cuid())
   name               String?
@@ -79,7 +85,17 @@ model User {
   emailVerified      DateTime?
   passwordHash       String?
   passwordUpdatedAt  DateTime?
+  
+  // Effective avatar URL (used by NextAuth and UI)
   image              String?
+  
+  // Avatar Truth Model
+  avatarSource       AvatarSource @default(NONE)
+  googleImageUrl     String?
+  blobImageUrl       String?
+  blobPathname       String?
+  avatarUpdatedAt    DateTime     @default(now())
+
   bio                String?   @db.VarChar(160)
   timezone           String?   @default("UTC")
   username           String?   @unique

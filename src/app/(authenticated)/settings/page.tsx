@@ -19,7 +19,7 @@ import {
 import Link from "next/link"
 import { Switch } from "@/components/ui/switch"
 import { PlatformConnector } from "@/components/features/profile/platform-connector"
-import { AvatarUpload } from "@/components/features/profile/avatar-upload"
+import { AvatarUploader } from "@/components/features/profile/avatar-uploader"
 import { cn } from "@/lib/utils"
 import {
     Select,
@@ -40,28 +40,10 @@ const sections = [
     { id: "accounts" as const, label: "Accounts", icon: Shield, description: "Password and security" },
 ]
 
-// Common timezone options
-const TIMEZONES = [
-    { value: "UTC", label: "UTC (Coordinated Universal Time)" },
-    { value: "America/New_York", label: "Eastern Time (US & Canada)" },
-    { value: "America/Chicago", label: "Central Time (US & Canada)" },
-    { value: "America/Denver", label: "Mountain Time (US & Canada)" },
-    { value: "America/Los_Angeles", label: "Pacific Time (US & Canada)" },
-    { value: "America/Anchorage", label: "Alaska" },
-    { value: "Pacific/Honolulu", label: "Hawaii" },
-    { value: "Europe/London", label: "London" },
-    { value: "Europe/Paris", label: "Paris" },
-    { value: "Europe/Berlin", label: "Berlin" },
-    { value: "Europe/Moscow", label: "Moscow" },
-    { value: "Asia/Dubai", label: "Dubai" },
-    { value: "Asia/Kolkata", label: "India (IST)" },
-    { value: "Asia/Singapore", label: "Singapore" },
-    { value: "Asia/Shanghai", label: "China (CST)" },
-    { value: "Asia/Tokyo", label: "Tokyo" },
-    { value: "Asia/Seoul", label: "Seoul" },
-    { value: "Australia/Sydney", label: "Sydney" },
-    { value: "Pacific/Auckland", label: "Auckland" },
-]
+import { getAllTimezones } from "@/lib/timezones"
+
+// Generate timezones list
+const TIMEZONES = getAllTimezones()
 
 export default function ProfilePage() {
     const { data: session, update: updateSession } = useSession()
@@ -203,7 +185,10 @@ export default function ProfilePage() {
             const data = await res.json()
             if (res.ok) {
                 toast.success("Profile updated!")
-                await updateSession()
+                await updateSession({
+                    name: displayName.trim(),
+                    timezone
+                })
                 refetchUser()
             } else {
                 toast.error(data.error || "Failed to update profile")
@@ -406,25 +391,10 @@ export default function ProfilePage() {
                             {/* Profile Header Card */}
                             <Card className="border-white/10 bg-white/[0.03]">
                                 <CardContent className="p-6 flex flex-col sm:flex-row items-center gap-5">
-                                    <AvatarUpload
+                                    <AvatarUploader
                                         currentImage={session?.user?.image}
                                         name={session?.user?.name}
-                                        onSave={async (imageData) => {
-                                            const res = await fetch("/api/me/avatar", {
-                                                method: "POST",
-                                                headers: { "Content-Type": "application/json" },
-                                                body: JSON.stringify({ imageUrl: imageData }),
-                                            })
-                                            const data = await res.json()
-                                            if (res.ok) {
-                                                toast.success("Profile picture updated!")
-                                                await updateSession()
-                                                refetchUser()
-                                            } else {
-                                                toast.error(data.error || "Failed to update avatar")
-                                                throw new Error(data.error)
-                                            }
-                                        }}
+                                        avatarSource={user?.avatarSource || "NONE"}
                                     />
                                     <div className="flex-1 text-center sm:text-left">
                                         <div className="text-lg font-semibold text-white/90">{displayName || session?.user?.name}</div>
@@ -1017,7 +987,7 @@ export default function ProfilePage() {
                         </div>
                     )}
                 </div>
-            </div>
+            </div >
         </div >
     )
 }

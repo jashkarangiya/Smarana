@@ -4,6 +4,13 @@ const nextConfig: NextConfig = {
   /* config options here */
   output: 'standalone',
   transpilePackages: ['@radix-ui/react-scroll-area'],
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "*.googleusercontent.com" },
+      { protocol: "https", hostname: "*.public.blob.vercel-storage.com" },
+      { protocol: "https", hostname: "public.blob.vercel-storage.com" },
+    ],
+  },
   async headers() {
     return [
       {

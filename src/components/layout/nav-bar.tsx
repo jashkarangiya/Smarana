@@ -231,7 +231,7 @@ export function NavBar() {
                                 {/* Mobile Menu Button */}
                                 <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                                     <SheetTrigger asChild className="lg:hidden">
-                                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg hover:bg-white/5">
+                                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg hover:bg-white/5" suppressHydrationWarning>
                                             <Menu className="h-5 w-5 text-white/80" />
                                         </Button>
                                     </SheetTrigger>
@@ -342,7 +342,7 @@ export function NavBar() {
                                                 className="w-full justify-start gap-3 text-red-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl"
                                                 onClick={() => {
                                                     setMobileMenuOpen(false)
-                                                    signOut()
+                                                    signOut({ callbackUrl: "/" })
                                                 }}
                                             >
                                                 <LogOut className="h-5 w-5" />
@@ -419,7 +419,7 @@ export function NavBar() {
 
                                         <DropdownMenuSeparator className="my-1 bg-white/10" />
                                         <DropdownMenuItem
-                                            onClick={() => signOut()}
+                                            onClick={() => signOut({ callbackUrl: "/" })}
                                             className="rounded-lg cursor-pointer text-red-400 focus:text-red-400 focus:bg-red-500/10 py-2.5"
                                         >
                                             <LogOut className="mr-2 h-4 w-4" />
@@ -451,7 +451,7 @@ export function NavBar() {
                                 {/* Mobile Menu for Unauthenticated Users */}
                                 <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                                     <SheetTrigger asChild className="sm:hidden">
-                                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg hover:bg-white/5">
+                                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg hover:bg-white/5" suppressHydrationWarning>
                                             <Menu className="h-5 w-5 text-white/80" />
                                         </Button>
                                     </SheetTrigger>

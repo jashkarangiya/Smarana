@@ -8,8 +8,10 @@ import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
 import { ArrowLeft, Clock, AlertCircle } from "lucide-react"
 import Link from "next/link"
+import { useSession } from "next-auth/react"
 
 export default function UsernamePage() {
+    const { update } = useSession()
     const [username, setUsername] = useState("")
     const [originalUsername, setOriginalUsername] = useState("")
     const [usernameInfo, setUsernameInfo] = useState<{ canChange: boolean; daysUntilChange: number } | null>(null)
@@ -20,7 +22,7 @@ export default function UsernamePage() {
     useEffect(() => {
         const fetchUsernameInfo = async () => {
             try {
-                const res = await fetch("/api/me/username")
+                const res = await fetch("/api/profile/username")
                 if (res.ok) {
                     const data = await res.json()
                     setUsername(data.username || "")
@@ -77,14 +79,15 @@ export default function UsernamePage() {
 
         setSaving(true)
         try {
-            const res = await fetch("/api/me/username", {
-                method: "POST",
+            const res = await fetch("/api/profile/username", {
+                method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ username }),
             })
             const data = await res.json()
             if (res.ok) {
                 toast.success("Username updated!")
+                await update({ username })
                 setOriginalUsername(username)
                 setUsernameInfo({ canChange: false, daysUntilChange: 90 })
             } else {
