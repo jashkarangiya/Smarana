@@ -10,6 +10,7 @@ declare module "next-auth" {
             id: string
             username?: string | null
             leetcodeUsername?: string | null
+            timezone?: string | null
         } & DefaultSession["user"]
     }
 }

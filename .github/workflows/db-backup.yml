@@ -1,0 +1,30 @@
+name: DB Backup
+
+on:
+  schedule:
+    - cron: "0 3 * * *" # daily at 03:00 UTC
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Postgres client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Dump DB
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          chmod +x scripts/backup-db.sh
+          ./scripts/backup-db.sh
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-backup
+          path: backups/*.dump
+          retention-days: 30

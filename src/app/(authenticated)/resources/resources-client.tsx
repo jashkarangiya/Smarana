@@ -1,24 +1,10 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ExternalLink, BookOpen, Swords, GraduationCap, Search, PlusCircle } from "lucide-react";
+import { Search, BookOpen } from "lucide-react";
 import { SuggestResourceDialog } from "@/components/suggest-resource-dialog";
-
-type ResourceCategory = "Interview" | "DSA Sheets" | "Competitive Programming";
-
-type Resource = {
-    id: string;
-    title: string;
-    category: ResourceCategory;
-    description: string;
-    tags: string[];
-    href: string;
-};
+import { ResourceCard, Resource, ResourceCategory } from "@/components/features/resources/resource-card";
 
 const RESOURCES: Resource[] = [
     {
@@ -86,28 +72,6 @@ const RESOURCES: Resource[] = [
         href: "https://leetcode.com/discuss/general-discussion/460599/blind-75-leetcode-questions",
     },
 ];
-
-function categoryIcon(cat: ResourceCategory) {
-    switch (cat) {
-        case "Interview":
-            return <GraduationCap className="h-4 w-4 text-amber-500/80" />;
-        case "DSA Sheets":
-            return <BookOpen className="h-4 w-4 text-emerald-500/80" />;
-        case "Competitive Programming":
-            return <Swords className="h-4 w-4 text-rose-500/80" />;
-    }
-}
-
-function categoryColor(cat: ResourceCategory) {
-    switch (cat) {
-        case "Interview":
-            return "text-amber-500/70";
-        case "DSA Sheets":
-            return "text-emerald-500/70";
-        case "Competitive Programming":
-            return "text-rose-500/70";
-    }
-}
 
 export default function ResourcesClient() {
     const [query, setQuery] = React.useState("");
@@ -180,59 +144,7 @@ export default function ResourcesClient() {
             {/* Cards Grid */}
             <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {filtered.map((r) => (
-                    <Card
-                        key={r.id}
-                        className="group border-white/10 bg-white/[0.02] hover:bg-white/[0.04] hover:border-white/15 transition-all duration-200"
-                    >
-                        <CardContent className="p-5">
-                            <div className="flex items-start justify-between gap-3">
-                                <div className="min-w-0 flex-1">
-                                    {/* Category badge */}
-                                    <div className="flex items-center gap-2">
-                                        {categoryIcon(r.category)}
-                                        <p className={`text-xs font-medium ${categoryColor(r.category)}`}>
-                                            {r.category}
-                                        </p>
-                                    </div>
-
-                                    {/* Title */}
-                                    <h3 className="mt-2.5 text-base font-semibold text-white/90 truncate group-hover:text-white transition-colors">
-                                        {r.title}
-                                    </h3>
-
-                                    {/* Description */}
-                                    <p className="mt-2 text-sm text-white/50 leading-relaxed line-clamp-2">
-                                        {r.description}
-                                    </p>
-                                </div>
-
-                                {/* External link button */}
-                                <Button
-                                    asChild
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-9 w-9 shrink-0 rounded-lg bg-white/[0.03] border border-white/10 hover:bg-[#BB7331]/20 hover:border-[#BB7331]/30 transition-all"
-                                >
-                                    <Link href={r.href} target="_blank" rel="noreferrer">
-                                        <ExternalLink className="h-4 w-4 text-white/60 group-hover:text-[#BB7331]" />
-                                    </Link>
-                                </Button>
-                            </div>
-
-                            {/* Tags */}
-                            <div className="mt-4 flex flex-wrap gap-1.5">
-                                {r.tags.map((t) => (
-                                    <Badge
-                                        key={t}
-                                        variant="secondary"
-                                        className="bg-white/[0.04] text-white/60 border border-white/10 text-[10px] px-2 py-0.5"
-                                    >
-                                        {t}
-                                    </Badge>
-                                ))}
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <ResourceCard key={r.id} r={r} />
                 ))}
             </div>
 
