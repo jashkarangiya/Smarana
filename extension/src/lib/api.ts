@@ -5,7 +5,7 @@ const API_BASE_URL =
     import.meta.env.VITE_API_BASE_URL ||
     (import.meta.env.MODE === "development"
         ? "http://localhost:3000"
-        : "https://smarana.vercel.app")
+        : "https://www.smarana.io")
 
 export interface ProblemData {
     id: string
@@ -301,7 +301,7 @@ export async function reviewProblem(
         body: payloadBody,
     })
 
-    if (!response.ok && API_BASE_URL.includes("smarana.vercel.app")) {
+    if (!response.ok && (API_BASE_URL.includes("smarana.vercel.app") || API_BASE_URL.includes("smarana.io"))) {
         response = await fetch(`http://localhost:3000/api/extension/problem/review`, {
             method: "POST",
             headers: {

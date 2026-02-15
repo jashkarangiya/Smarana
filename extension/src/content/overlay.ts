@@ -4,7 +4,7 @@ import { getDifficultyColor, getPlatformName, type Platform, type ProblemContext
 import { OVERLAY_CSS } from "./overlay-css"
 import { clearAuth } from "../lib/auth-store"
 
-const SMARANA_URL = "https://smarana.vercel.app"
+const SMARANA_URL = "https://www.smarana.io"
 const LOGO_URL = chrome.runtime.getURL("icons/smarana-48.png")
 
 type UIMode = "bubble" | "panel"

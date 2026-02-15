@@ -1,7 +1,7 @@
 import { renderEmailLayout } from "../layout";
 
 type ContestReminderEmailProps = {
-  appUrl: string;            // e.g. https://smarana.vercel.app
+  appUrl: string;            // e.g. https://www.smarana.io
   openSmaranaUrl: string;    // deep link to contest page or /contests
   settingsUrl: string;       // link to notification settings
   userName: string;          // "Jash"

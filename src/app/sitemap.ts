@@ -1,9 +1,8 @@
 import type { MetadataRoute } from "next";
-import { getBaseUrl } from "@/lib/baseUrl";
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://smarana.io";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-    const appUrl = getBaseUrl();
-
     const routes = [
         "",
         "/about",
@@ -15,13 +14,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
         "/terms",
         "/cookies",
         "/extension",
-        "/googled58f1566e39c7aa4.html",
     ];
 
     const now = new Date();
 
     return routes.map((route) => ({
-        url: `${appUrl}${route}`,
+        url: `${siteUrl}${route}`,
         lastModified: now,
         changeFrequency: "weekly" as const,
         priority: route === "" ? 1 : 0.6,

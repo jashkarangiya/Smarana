@@ -1,4 +1,3 @@
-import { sendEmail } from "../src/lib/email/sendEmail";
 import { remindContestEmail } from "../src/lib/email/templates/contestReminder";
 import fs from 'fs';
 import path from 'path';
@@ -25,6 +24,9 @@ try {
 }
 
 async function main() {
+    // Dynamic import to ensure process.env is populated before mailer is initialized
+    const { sendEmail } = await import("../src/lib/email/sendEmail");
+
     const email = process.argv[2];
 
     if (!email) {

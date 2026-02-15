@@ -275,7 +275,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
             const url = new URL(tab.url)
 
             if (
-                url.hostname === "smarana.vercel.app" &&
+                (url.hostname === "smarana.vercel.app" || url.hostname === "www.smarana.io" || url.hostname === "smarana.io") &&
                 url.pathname.includes("/extension/callback")
             ) {
                 const code = url.searchParams.get("code")
