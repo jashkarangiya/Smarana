@@ -116,6 +116,15 @@ async function main() {
 
     const hashedPassword = await hash('smarana123', 10)
 
+    // Calculate XP for Level 42
+    // Formula from src/lib/xp.ts: 450 + level * 60 + level^2 * 2
+    let totalXpForLevel42 = 0;
+    for (let l = 1; l < 42; l++) {
+        totalXpForLevel42 += 450 + l * 60 + l * l * 2;
+    }
+    // Add some progress into level 42
+    totalXpForLevel42 += 500;
+
     // Create or Update Smarana user
     const user = await prisma.user.upsert({
         where: { email: 'smarana@smarana.app' },
@@ -127,8 +136,8 @@ async function main() {
             passwordUpdatedAt: new Date(),
             leetcodeUsername: 'smarana_demo',
             codeforcesUsername: 'smarana_cf',
-            xp: 12450, // High XP for demo
-            level: 42, // Meaningful number
+            xp: totalXpForLevel42,
+            level: 42,
             profileVisibility: 'PUBLIC',
             showStreakToPublic: true,
             showPlatformsToPublic: true,
@@ -143,14 +152,14 @@ async function main() {
             passwordUpdatedAt: new Date(),
             leetcodeUsername: 'smarana_demo',
             codeforcesUsername: 'smarana_cf',
-            xp: 12450,
+            xp: totalXpForLevel42,
             level: 42,
             profileVisibility: 'PUBLIC',
             showStreakToPublic: true,
             showPlatformsToPublic: true,
         },
     })
-    console.log('✅ Created/Updated Smarana user profile')
+    console.log(`✅ Created/Updated Smarana user profile (Level 42, XP: ${totalXpForLevel42})`)
 
     // Create UserStats
     await prisma.userStats.upsert({
@@ -206,12 +215,26 @@ async function main() {
         where: { userId: user.id },
     })
 
-    // Create RevisionProblems with varied states
+    const codeforcesProblems = [
+        { slug: '4A', title: 'Watermelon', difficulty: 'Easy', url: 'https://codeforces.com/problemset/problem/4/A' },
+        { slug: '71A', title: 'Way Too Long Words', difficulty: 'Easy', url: 'https://codeforces.com/problemset/problem/71/A' },
+        { slug: '231A', title: 'Team', difficulty: 'Easy', url: 'https://codeforces.com/problemset/problem/231/A' },
+        { slug: '158A', title: 'Next Round', difficulty: 'Easy', url: 'https://codeforces.com/problemset/problem/158/A' },
+        { slug: '50A', title: 'Domino piling', difficulty: 'Easy', url: 'https://codeforces.com/problemset/problem/50/A' },
+        { slug: '282A', title: 'Bit++', difficulty: 'Easy', url: 'https://codeforces.com/problemset/problem/282/A' },
+        { slug: '112A', title: 'Petya and Strings', difficulty: 'Easy', url: 'https://codeforces.com/problemset/problem/112/A' },
+        { slug: '339A', title: 'Helpful Maths', difficulty: 'Easy', url: 'https://codeforces.com/problemset/problem/339/A' },
+        { slug: '263A', title: 'Beautiful Matrix', difficulty: 'Easy', url: 'https://codeforces.com/problemset/problem/263/A' },
+        { slug: '266A', title: 'Stones on the Table', difficulty: 'Easy', url: 'https://codeforces.com/problemset/problem/266/A' },
+    ]
+
+    // Create RevisionProblems (LeetCode)
     const intervals = [1, 3, 7, 14, 30, 90] // Added 90 for mastery
     const problems = []
 
     for (let i = 0; i < leetcodeProblems.length; i++) {
         const p = leetcodeProblems[i]
+        // ... (existing logic for leetcode) ...
         // Make many problems reviewed to populate the dashboard
         const reviewCount = Math.floor(Math.random() * 10)
         const interval = intervals[Math.min(reviewCount, intervals.length - 1)]
@@ -260,10 +283,48 @@ async function main() {
         })
     }
 
+    // Create RevisionProblems (Codeforces)
+    for (let i = 0; i < codeforcesProblems.length; i++) {
+        const p = codeforcesProblems[i]
+        // Randomly assign status
+        const reviewCount = Math.floor(Math.random() * 5) // Fewer reviews for CF to show variety
+        const interval = intervals[Math.min(reviewCount, intervals.length - 1)]
+
+        const firstSolvedAt = randomDate(daysAgo(60), daysAgo(5))
+        const lastReviewedAt = reviewCount > 0 ? daysAgo(interval) : null
+
+        // Randomize next review
+        let nextReviewAt: Date
+        if (reviewCount === 0) {
+            nextReviewAt = daysFromNow(1)
+        } else if (Math.random() > 0.5) {
+            nextReviewAt = daysFromNow(Math.floor(Math.random() * 10) + 1) // Upcoming
+        } else {
+            nextReviewAt = daysAgo(Math.floor(Math.random() * 3)) // Overdue or Due soon
+        }
+
+        problems.push({
+            userId: user.id,
+            platform: 'codeforces',
+            problemSlug: p.slug,
+            title: p.title,
+            difficulty: p.difficulty,
+            url: p.url,
+            firstSolvedAt,
+            lastSolvedAt: lastReviewedAt || firstSolvedAt,
+            nextReviewAt,
+            interval,
+            reviewCount,
+            lastReviewedAt,
+            notes: '',
+            solution: '',
+        })
+    }
+
     await prisma.revisionProblem.createMany({
         data: problems,
     })
-    console.log(`✅ Created ${problems.length} revision problems`)
+    console.log(`✅ Created ${problems.length} revision problems (LeetCode + Codeforces)`)
 
     // Get created problems for review events
     const createdProblems = await prisma.revisionProblem.findMany({
@@ -303,18 +364,30 @@ async function main() {
     })
 
     const reviewLogs = []
-    for (let i = 0; i < 90; i++) {
-        // Fill most days to look active
-        if (Math.random() > 0.85) continue
-
+    // 1. Guarantee items for the last 42 days for the streak
+    for (let i = 0; i < 42; i++) {
         const date = daysAgo(i)
-        // ensure date string format matches schema
         const dayString = date.toISOString().split('T')[0]
 
         reviewLogs.push({
             userId: user.id,
             day: dayString,
-            count: Math.floor(Math.random() * 12) + 2, // 2-14 reviews per day
+            count: Math.floor(Math.random() * 5) + 3, // 3-7 reviews
+            xpEarned: (Math.floor(Math.random() * 5) + 3) * 25,
+        })
+    }
+
+    // 2. Sprinkle some older logs
+    for (let i = 42; i < 90; i++) {
+        if (Math.random() > 0.7) continue
+
+        const date = daysAgo(i)
+        const dayString = date.toISOString().split('T')[0]
+
+        reviewLogs.push({
+            userId: user.id,
+            day: dayString,
+            count: Math.floor(Math.random() * 12) + 2,
             xpEarned: (Math.floor(Math.random() * 12) + 2) * 25,
         })
     }
