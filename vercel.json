@@ -6,7 +6,7 @@
         },
         {
             "path": "/api/cron/contests",
-            "schedule": "30 16 * * 0"
+            "schedule": "0 0 * * *"
         }
     ]
 }

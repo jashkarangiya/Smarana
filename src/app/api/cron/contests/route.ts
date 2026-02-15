@@ -24,7 +24,12 @@ export async function GET(req: Request) {
 
         const upcomingContests = allContests.filter(c => {
             const start = new Date(c.startsAt);
-            return start > now && start < sevenDaysFromNow;
+            const end = new Date(start.getTime() + c.durationSeconds * 1000);
+
+            // Include if:
+            // 1. Ends in the future (so active or upcoming)
+            // 2. Starts within the next 7 days (don't show stuff too far out)
+            return end > now && start < sevenDaysFromNow;
         });
 
         console.log(`Fetched ${allContests.length}, filtering to ${upcomingContests.length} upcoming (7 days)`);
