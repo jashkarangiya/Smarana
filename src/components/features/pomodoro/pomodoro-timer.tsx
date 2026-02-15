@@ -162,23 +162,26 @@ export function PomodoroTimer() {
 
                 <Progress value={getProgress()} className={`h-2 mb-6 ${phase !== "FOCUS" ? "bg-emerald-500/20 [&>div]:bg-emerald-500" : ""}`} />
 
-                <div className="flex justify-center gap-3">
+                <div className="relative flex items-center justify-center">
                     <Button
                         variant={isActive ? "outline" : "default"}
                         size="icon"
-                        className={`h-12 w-12 rounded-full ${isActive ? "" : "shadow-[0_0_15px_rgba(234,179,8,0.3)]"}`}
+                        className={`h-14 w-14 rounded-full ${isActive ? "" : "shadow-[0_0_15px_rgba(234,179,8,0.3)]"}`}
                         onClick={() => isActive ? pauseTimer() : startTimer()}
                     >
-                        {isActive ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-1" />}
+                        {isActive ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6 ml-1" />}
                     </Button>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-12 w-12 rounded-full text-muted-foreground hover:text-foreground"
-                        onClick={resetTimer}
-                    >
-                        <RotateCcw className="h-5 w-5" />
-                    </Button>
+
+                    <div className="absolute right-0">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-10 w-10 rounded-full text-muted-foreground hover:text-foreground"
+                            onClick={resetTimer}
+                        >
+                            <RotateCcw className="h-4 w-4" />
+                        </Button>
+                    </div>
                 </div>
             </CardContent>
         </Card>

@@ -82,7 +82,7 @@ function stopTimerInterval() {
 }
 
 function syncTimerInterval() {
-    if (timerState.enabled && canCountActiveTime() && overlayOpen) {
+    if (timerState.enabled && canCountActiveTime()) {
         startTimerInterval()
     } else {
         stopTimerInterval()
@@ -90,7 +90,7 @@ function syncTimerInterval() {
 }
 
 function startTimer() {
-    if (!timerState.enabled || !overlayOpen) return
+    if (!timerState.enabled) return
     if (!canCountActiveTime()) return
     reviewTimer.start()
     timerState.running = true
@@ -162,7 +162,7 @@ async function init() {
 
     document.addEventListener("visibilitychange", () => {
         if (!timerState.enabled) return
-        if (document.visibilityState === "visible" && overlayOpen && !isSubmittingReview) {
+        if (document.visibilityState === "visible" && !isSubmittingReview) {
             startTimer()
         } else {
             pauseTimer()
@@ -171,7 +171,7 @@ async function init() {
 
     window.addEventListener("focus", () => {
         if (!timerState.enabled) return
-        if (overlayOpen && !isSubmittingReview) {
+        if (!isSubmittingReview) {
             startTimer()
         }
     })
@@ -231,7 +231,10 @@ async function checkCurrentPage() {
             },
             () => {
                 overlayOpen = false
-                pauseTimer()
+                // Don't pause timer on close - keep running in bubble mode
+                if (timerState.enabled && !isSubmittingReview) {
+                    startTimer()
+                }
             }
         )
     }
@@ -342,9 +345,9 @@ async function fetchAndRenderProblem(context: ProblemContext, auth: any) {
         timerState.enabled = true
         timerState.running = false
         updateTimerUI()
-        if (overlayOpen) {
-            startTimer()
-        }
+        timerState.running = false
+        updateTimerUI()
+        startTimer()
     } catch (err: any) {
         if (err.name === "AbortError") return
 

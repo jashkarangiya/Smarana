@@ -13,7 +13,6 @@ export function TimezoneSync() {
         if (!tz) return;
 
         // avoid spamming updates if already correct
-        // @ts-ignore - session type extended in next-auth.d.ts but TS might complain until fully refreshed
         if (session?.user && session.user.timezone === tz) return;
 
         fetch("/api/profile/timezone", {

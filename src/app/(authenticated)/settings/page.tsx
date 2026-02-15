@@ -110,6 +110,7 @@ export default function ProfilePage() {
         if (user) {
             setDisplayName(user.name || "")
             setBio(user.bio || "")
+            setUsername(user.username || "")
             setTimezone(user.timezone || "UTC")
             setProfileVisibility(user.profileVisibility as "PUBLIC" | "FRIENDS_ONLY" | "PRIVATE" || "PUBLIC")
             setShowStreakPublicly(user.showStreakToPublic ?? true)
@@ -124,24 +125,26 @@ export default function ProfilePage() {
             setInitialEmailReminders(user.emailReviewRemindersEnabled ?? false)
         } else if (session?.user?.name) {
             setDisplayName(session.user.name)
+            if (session.user.username) setUsername(session.user.username)
         }
     }, [user, session])
 
     useEffect(() => {
         const fetchUsernameInfo = async () => {
             try {
-                const res = await fetch("/api/me/username")
+                const res = await fetch("/api/profile/username")
                 if (res.ok) {
                     const data = await res.json()
-                    setUsername(data.username || "")
+                    // Only update username if not already set by useUser to avoid jitter
+                    if (!username) setUsername(data.username || "")
                     setUsernameInfo({ canChange: data.canChange, daysUntilChange: data.daysUntilChange })
                 }
             } catch (e) {
-                console.error("Failed to fetch username", e)
+                console.error("Failed to fetch username info", e)
             }
         }
         fetchUsernameInfo()
-    }, [])
+    }, [username])
 
     useEffect(() => {
         const fetchPasswordStatus = async () => {
@@ -394,7 +397,7 @@ export default function ProfilePage() {
                                     <AvatarUploader
                                         currentImage={session?.user?.image}
                                         name={session?.user?.name}
-                                        avatarSource={user?.avatarSource || "NONE"}
+                                        avatarSource={(user as any)?.avatarSource || "NONE"}
                                     />
                                     <div className="flex-1 text-center sm:text-left">
                                         <div className="text-lg font-semibold text-white/90">{displayName || session?.user?.name}</div>

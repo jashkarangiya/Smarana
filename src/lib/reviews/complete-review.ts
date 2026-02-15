@@ -232,12 +232,10 @@ export async function completeReview(input: CompleteReviewInput): Promise<Review
                 await tx.xpEvent.create({
                     data: {
                         userId: input.userId,
-                        kind: "achievement",
+                        kind: `achievement:${ach.id}`, // specific kind to ensure uniqueness per achievement per day
                         amount: ach.xpReward,
                         dateKey: todayKey,
-                        problemId: ach.id // store achievement ID here? or keep null. Let's keep null or use a separate field. user XpEvent schema has problemId. 
-                        // For now let's just create it and maybe abuse problemId or just leave it null.
-                        // Better to leave problemId null.
+                        problemId: null
                     }
                 })
             }

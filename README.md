@@ -1,10 +1,14 @@
 # <img src="public/logo-filled.jpg" width="30" height="30" alt="Smarana Logo" /> Smarana
 
+<div align="center">
+  <img src="public/adobe-banner.png" alt="Smarana Banner" width="100%" />
+</div>
+
 **Master Algorithms with Spaced Repetition & Gamification.**
 
 Smarana ("Remembrance" in Sanskrit) is a specialized spaced repetition platform for competitive programmers. It seamlessly integrates with your workflow to help you track, schedule, and master algorithmic problems from LeetCode, Codeforces, and AtCoder.
 
-![Smarana Promo](public/chrome-promo-marquee.png)
+[![Add to Chrome](https://img.shields.io/badge/Chrome_Web_Store-Add_to_Chrome-4285F4?style=for-the-badge&logo=google-chrome&logoColor=white)](https://chromewebstore.google.com/detail/smarana-companion/mbbhnangobklngdbmbjolbinofdaelnh)
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Next.js](https://img.shields.io/badge/Next.js-16.1-black)
@@ -18,15 +22,16 @@ Smarana ("Remembrance" in Sanskrit) is a specialized spaced repetition platform 
 - **Review Queue**: A prioritized daily dashboard of problems you need to review.
 - **Problem Sync**: Automatic history tracking from **LeetCode**, **Codeforces**, and **AtCoder**.
 
-![Review Session](public/review-session.png)
-![Dashboard](public/dashboard.png)
+![Review Session](public/823_1x_shots_so.png)
 
 ### 🧩 Browser Extension
 - **In-Context Overlay**: Solve problems directly on LeetCode with a non-intrusive floating panel.
 - **Focus Timer**: High-precision timer that tracks solve duration and auto-pauses when you switch tabs.
 - **One-Click Review**: Instantly save solutions, notes, and difficulty ratings to your dashboard without leaving the problem page.
 
-![Extension Overlay](public/extension-overlay.png)
+[![Add to Chrome](https://img.shields.io/badge/Chrome_Web_Store-Add_to_Chrome-4285F4?style=for-the-badge&logo=google-chrome&logoColor=white)](https://chromewebstore.google.com/detail/smarana-companion/mbbhnangobklngdbmbjolbinofdaelnh)
+
+![LeetCode Overlay](public/leetcode-overlay.png)
 
 ### 🎮 Gamification
 - **XP & Ranking**: Earn XP for consistency and solving hard problems. Climb from "Novice" to "Grandmaster".
