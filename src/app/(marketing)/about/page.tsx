@@ -126,7 +126,7 @@ export default function AboutPage() {
                     <div className="group space-y-3">
                         <div className="aspect-video rounded-xl bg-white/[0.02] relative overflow-hidden">
                             <Image
-                                src="/803_1x_shots_so.webp"
+                                src="/823_1x_shots_so.png"
                                 alt="Dashboard Overview"
                                 fill
                                 className="object-cover object-top"
