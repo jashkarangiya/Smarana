@@ -1,15 +1,14 @@
 import type { MetadataRoute } from "next";
-import { getBaseUrl } from "@/lib/baseUrl";
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://smarana.io";
 
 export default function robots(): MetadataRoute.Robots {
-    const appUrl = getBaseUrl();
-
     return {
         rules: {
             userAgent: "*",
             allow: "/",
             disallow: ["/api/", "/settings/", "/dashboard/", "/problems/", "/admin/"],
         },
-        sitemap: `${appUrl}/sitemap.xml`,
+        sitemap: `${siteUrl}/sitemap.xml`,
     };
 }
