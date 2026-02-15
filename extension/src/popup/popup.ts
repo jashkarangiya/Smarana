@@ -1,8 +1,8 @@
 import { connect } from "../lib/messaging"
 import { getAuth, clearAuth, onAuthChanged } from "../lib/auth-store"
 
-const DASHBOARD_URL = "https://smarana.vercel.app/dashboard"
-const SETTINGS_URL = "https://smarana.vercel.app/profile"
+const DASHBOARD_URL = "https://www.smarana.io/dashboard"
+const SETTINGS_URL = "https://www.smarana.io/profile"
 
 async function init() {
     const content = document.getElementById("content")
@@ -45,7 +45,7 @@ function renderNotConnected(container: HTMLElement) {
             <p class="disclosure">Smarana reads the current problem URL to match your saved notes and solutions. Data is fetched from your Smarana account only.</p>
         </div>
         <div class="footer">
-            <p>Don't have an account? <a href="https://smarana.vercel.app" target="_blank">Sign up free</a></p>
+            <p>Don't have an account? <a href="https://www.smarana.io" target="_blank">Sign up free</a></p>
         </div>
     `
 

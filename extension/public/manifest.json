@@ -23,7 +23,7 @@
     "storage"
   ],
   "host_permissions": [
-    "https://smarana.vercel.app/*",
+    "https://www.smarana.io/*",
     "https://leetcode.com/*",
     "https://codeforces.com/*",
     "https://atcoder.jp/*",
