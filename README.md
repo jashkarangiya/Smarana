@@ -8,6 +8,7 @@
 
 Smarana ("Remembrance" in Sanskrit) is a specialized spaced repetition platform for competitive programmers. It seamlessly integrates with your workflow to help you track, schedule, and master algorithmic problems from LeetCode, Codeforces, and AtCoder.
 
+[![Add to Chrome](https://img.shields.io/badge/Chrome_Web_Store-Add_to_Chrome-4285F4?style=for-the-badge&logo=google-chrome&logoColor=white)](https://chromewebstore.google.com/detail/smarana-companion/mbbhnangobklngdbmbjolbinofdaelnh)
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Next.js](https://img.shields.io/badge/Next.js-16.1-black)
@@ -28,7 +29,9 @@ Smarana ("Remembrance" in Sanskrit) is a specialized spaced repetition platform 
 - **Focus Timer**: High-precision timer that tracks solve duration and auto-pauses when you switch tabs.
 - **One-Click Review**: Instantly save solutions, notes, and difficulty ratings to your dashboard without leaving the problem page.
 
-![Extension Overlay](public/extension-overlay.png)
+[![Add to Chrome](https://img.shields.io/badge/Chrome_Web_Store-Add_to_Chrome-4285F4?style=for-the-badge&logo=google-chrome&logoColor=white)](https://chromewebstore.google.com/detail/smarana-companion/mbbhnangobklngdbmbjolbinofdaelnh)
+
+![LeetCode Overlay](public/leetcode-overlay.png)
 
 ### 🎮 Gamification
 - **XP & Ranking**: Earn XP for consistency and solving hard problems. Climb from "Novice" to "Grandmaster".
