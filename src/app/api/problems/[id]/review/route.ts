@@ -57,7 +57,26 @@ export async function POST(
             timeZone: user.timezone || "UTC",
         })
 
-        return NextResponse.json(result)
+        // Fetch updated user to get new XP/Level
+        const updatedUser = await prisma.user.findUnique({
+            where: { id: user.id },
+            select: { xp: true }
+        })
+
+        const currentXp = updatedUser?.xp || 0
+        const { calculateLevelFromXP } = await import("@/lib/xp")
+        const { level: newLevel } = calculateLevelFromXP(currentXp)
+        const { level: oldLevel } = calculateLevelFromXP(user.xp)
+
+        return NextResponse.json({
+            success: true,
+            xpReward: result.xpEarned, // Map xpEarned to xpReward
+            newXp: currentXp,
+            newLevel,
+            leveledUp: newLevel > oldLevel,
+            newInterval: result.problem.interval,
+            nextReviewAt: result.problem.nextReviewAt,
+        })
     } catch (error) {
         return handleApiError(error)
     }
