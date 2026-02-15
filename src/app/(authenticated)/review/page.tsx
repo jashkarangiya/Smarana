@@ -92,11 +92,12 @@ export default function ReviewPage() {
             return res.json() as Promise<RateResponse>
         },
         onSuccess: (data) => {
-            setSessionXp(prev => prev + data.xpReward)
+            const xp = typeof data.xpReward === 'number' ? data.xpReward : 0
+            setSessionXp(prev => prev + xp)
             setReviewedCount(prev => prev + 1)
 
             // Show XP toast
-            toast.success(`+${data.xpReward} XP`, {
+            toast.success(`+${xp} XP`, {
                 description: data.leveledUp
                     ? `🎉 Level Up! You're now Level ${data.newLevel}!`
                     : `Next review in ${data.newInterval} day${data.newInterval > 1 ? 's' : ''}`

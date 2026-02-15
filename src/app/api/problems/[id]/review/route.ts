@@ -70,7 +70,7 @@ export async function POST(
 
         return NextResponse.json({
             success: true,
-            xpReward: result.xpEarned, // Map xpEarned to xpReward
+            xpReward: result.xpEarned || 0, // Map xpEarned to xpReward and default to 0
             newXp: currentXp,
             newLevel,
             leveledUp: newLevel > oldLevel,
