@@ -1,6 +1,6 @@
 {
   "name": "smarana-extension",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Smarana browser extension for spaced repetition review of coding problems",
   "private": true,
   "type": "module",
